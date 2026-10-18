@@ -549,7 +549,7 @@ async def test_ai_review(ha_base, hass_ws_client):
         return reply["result"]
 
     state = await ws(type="hauskarte/state")
-    assert state["ai"]["floors"][0]["name"] == "Obere Wohnung"
+    assert state["ai"]["floors"] == []  # floors are set by hand, the AI only places rooms
     assert state["ai"]["rooms"][0]["area_id"] == bath.id
     plug_row = next(d for g in state["devices"] for d in g["devices"] if d["device_id"] == plug.id)
     assert plug_row["ai_kind"]["kind"] == "water"

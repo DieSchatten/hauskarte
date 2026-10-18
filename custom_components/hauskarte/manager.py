@@ -982,24 +982,8 @@ class HauskarteManager:
             return {}
         floors_now = inv["floors"]
 
-        # a suggestion holds only while the thing is as it was when the AI looked: whatever was changed since
-        # (by taking the suggestion or deciding otherwise) is decided
-        def untouched(f: dict) -> bool:
-            now = floors_now[f["floor_id"]]
-            return now["name"] == f.get("old_name", now["name"]) and now.get("level") == f.get(
-                "old_level", now.get("level")
-            )
-
-        floors = [
-            f
-            for f in (ai.get("floors") or {}).get("floors", [])
-            if f["floor_id"] in floors_now
-            and untouched(f)
-            and (
-                floors_now[f["floor_id"]]["name"] != f["name"]
-                or floors_now[f["floor_id"]].get("level") != f["level"]
-            )
-        ]
+        # floors are set by hand (a handful, no AI wanted there); only rooms-to-floors is suggested.
+        # A suggestion holds only while the room is where it was when the AI looked – changed since = decided.
         rooms = [
             r
             for r in (ai.get("floors") or {}).get("rooms", [])
@@ -1008,7 +992,7 @@ class HauskarteManager:
             and inv["areas"][r["area_id"]].get("floor_id") == r.get("current_floor_id")
             and r.get("current_floor_id") != r["floor_id"]
         ]
-        return {"at": ai.get("at"), "errors": ai.get("errors", {}), "floors": floors, "rooms": rooms}
+        return {"at": ai.get("at"), "errors": ai.get("errors", {}), "floors": [], "rooms": rooms}
 
     # --- floors and rooms -------------------------------------------------
 
