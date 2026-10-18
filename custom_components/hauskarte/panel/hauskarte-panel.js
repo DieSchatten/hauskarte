@@ -191,7 +191,7 @@ const TEXT = {
       duplicates: "Dasselbe Gerät über zwei Systeme (z. B. Loxone und Shelly, KNX, Zigbee, MQTT). Zusammenführen heißt: Der Assistent nutzt nur die gewählte Entität, die anderen werden ausgeblendet und nicht freigegeben. Sie laufen weiter – Automationen und die Systeme selbst bleiben unberührt. Lässt sich jederzeit trennen.",
       open: "Vorschläge für Raum, Name und Freigabe. Prüfen, bei Bedarf anpassen, übernehmen.",
       telemetry: "Was HA am meisten zumüllt: technische Werte und Funktionen, die ständig schreiben. Auswählen und auf einen Status setzen – „Ausgeblendet“ räumt Dashboards auf, „Deaktiviert“ spart zusätzlich die Datenbank. Nach Integration gruppiert, die meistschreibenden zuerst.",
-      silent: "Diese Geräte melden gerade nichts. Nicht mehr gebraucht? Deaktivieren (rücknehmbar) oder löschen.",
+      silent: "Ohne Lebenszeichen = ganze Geräte, die HA noch kennt, die aber gerade nichts melden (alle Werte „nicht verfügbar“) – anders als „Verwaist“, wo die Integration einzelne Einträge gar nicht mehr liefert. Wege: Status setzen (z. B. Deaktiviert), „📦 Ins Archiv“ (bleibt, wird hier nicht mehr gezeigt) oder Löschen – Löschen übernimmt die Integration; manche Geräte (z. B. Zigbee) muss man danach neu anlernen.",
     },
     allDone: "Hier ist alles erledigt.",
     noFloorRooms: (n) => `${n} Räume ohne Etage`,
@@ -294,13 +294,27 @@ const TEXT = {
     onlySilent: "nur Geräte ohne Lebenszeichen",
     orphans: "Verwaist",
     orphansInfo:
-      "Diese Entitäten liefert ihre Integration gerade nicht. Oft heißt das nur: Gerät aus oder offline (Drucker, Tablet), Zubehör nicht angesteckt, oder die Integration legt sie erst an, wenn das Gerät meldet. Nur entfernen, was sicher weg ist: Entfernen lässt sich nicht zurücknehmen. Kommt das Gerät wieder, legt die Integration die Entität neu an – ohne eigene Namen und Räume.",
+      "Verwaist = einzelne Entitäten, die keine Integration mehr liefert (das Gerät oder der Wert ist aus HA verschwunden, nur der Eintrag ist übrig). Oft nur vorübergehend: Gerät aus, Zubehör ab, Wert kommt nur bei Meldung. Drei Wege: „Entfernen“ – landet im Archiv und lässt sich dort samt Name, Raum und Aliasen wiederherstellen. „Ins Archiv“ – bleibt in HA, taucht hier aber nicht mehr auf. Oder einfach stehen lassen.",
+    archiveIn: "📦 Ins Archiv",
+    archiveTip: "Behalten, aber hier nicht mehr zeigen. Im Archiv jederzeit zurückholbar.",
+    archiveChip: (n) => `📦 Archiv ${n}`,
+    openChip: (n) => `Offen ${n}`,
+    archiveInfo:
+      "Was du behalten oder entfernt hast. Behaltenes kommt mit „Zurück in die Liste“ wieder; Entferntes legt „Wiederherstellen“ wieder an – mit Name, Raum, Aliasen und Status. Liefert die Integration es später wieder, findet sie es über dieselbe ID.",
+    archiveKept: "behalten",
+    archiveRemoved: "entfernt",
+    archiveBack: "Zurück in die Liste",
+    archiveRestore: "Wiederherstellen",
+    archiveEmpty: "Das Archiv ist leer.",
+    archived: (n) => `${n} ins Archiv`,
+    restoredOk: "Wiederhergestellt – nach dem nächsten HA-Neustart steht es wieder als verwaist da, bis die Integration es liefert.",
+    restoredNo: "Nicht nötig – der Eintrag ist schon wieder da.",
     deviceLive: "Gerät ist da, nur dieser Wert fehlt",
     deviceGone: "ganzes Gerät meldet nichts",
     integrationDown: "Integration läuft gerade nicht",
     all: "alle",
     removeSelected: "Ausgewählte entfernen",
-    confirmOrphans: (n) => `${n} Entitäten endgültig aus der Registry entfernen? Das lässt sich nicht zurücknehmen.`,
+    confirmOrphans: (n) => `${n} Entitäten aus der Registry entfernen? Sie landen im Archiv und lassen sich dort wiederherstellen.`,
     removed: (n) => `${n} entfernt`,
     tray: "Noch ohne Raum – auf einen Raum ziehen",
     trayHint: (n) => `${n} Geräte haben noch keinen Raum. Zum Einordnen „Grundriss bearbeiten“.`,
@@ -545,7 +559,7 @@ const TEXT = {
       duplicates: "The same device through two systems (e.g. Loxone and Shelly, KNX, Zigbee, MQTT). Merging means: the assistant only uses the chosen entity; the others are hidden and not exposed. They keep running – automations and the systems themselves stay untouched. Can be split again any time.",
       open: "Proposals for area, name and exposure. Review, adjust if needed, apply.",
       telemetry: "What clutters HA most: technical values and functions that write all the time. Select and set a status – “Hidden” tidies dashboards, “Disabled” also spares the database. Grouped by integration, the busiest first.",
-      silent: "These devices report nothing right now. Not needed any more? Disable (undoable) or delete.",
+      silent: "Silent = whole devices HA still knows but which report nothing right now (all values unavailable) – unlike “Orphaned”, where the integration no longer provides single entries at all. Ways: set a status (e.g. Disabled), “📦 To archive” (stays, no longer shown here) or delete – deleting is done by the integration; some devices (e.g. Zigbee) must be paired again afterwards.",
     },
     allDone: "All done here.",
     noFloorRooms: (n) => `${n} rooms without floor`,
@@ -648,13 +662,27 @@ const TEXT = {
     onlySilent: "silent devices only",
     orphans: "Orphaned",
     orphansInfo:
-      "Their integration does not provide these entities right now. Often that only means: device off or offline (printer, tablet), accessory unplugged, or the integration creates them only while the device reports. Only remove what is surely gone: removal cannot be undone. If the device comes back, the integration creates the entity again – without your names and areas.",
+      "Orphaned = single entities no integration provides any more (the device or value is gone from HA, only the entry is left). Often only for a while: device off, accessory unplugged, value only while reporting. Three ways: “Remove” – goes to the archive and can be restored there with name, area and aliases. “To archive” – stays in HA but no longer shows here. Or just leave it.",
+    archiveIn: "📦 To archive",
+    archiveTip: "Keep it, but stop showing it here. Can be brought back from the archive any time.",
+    archiveChip: (n) => `📦 Archive ${n}`,
+    openChip: (n) => `Open ${n}`,
+    archiveInfo:
+      "What you kept or removed. Kept items return with “Back to the list”; removed ones are created again by “Restore” – with name, area, aliases and status. If the integration provides them again later, it finds them by the same id.",
+    archiveKept: "kept",
+    archiveRemoved: "removed",
+    archiveBack: "Back to the list",
+    archiveRestore: "Restore",
+    archiveEmpty: "The archive is empty.",
+    archived: (n) => `${n} archived`,
+    restoredOk: "Restored – after the next HA restart it shows as orphaned again until the integration provides it.",
+    restoredNo: "Not needed – the entry is back already.",
     deviceLive: "device is there, only this value is missing",
     deviceGone: "the whole device reports nothing",
     integrationDown: "integration is not running",
     all: "all",
     removeSelected: "Remove selected",
-    confirmOrphans: (n) => `Remove ${n} entities from the registry for good? This cannot be undone.`,
+    confirmOrphans: (n) => `Remove ${n} entities from the registry? They go to the archive and can be restored there.`,
     removed: (n) => `${n} removed`,
     tray: "No area yet – drag onto a room",
     trayHint: (n) => `${n} devices have no area yet. Use “Edit floor plan” to place them.`,
@@ -713,7 +741,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.14.4";
+const PANEL_VERSION = "0.15.0";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -758,6 +786,10 @@ const groupOutline = (rects) => {
   return { cells, lines };
 };
 const STATUSES = ["assistant", "ha", "hidden", "disabled"];
+// a few common symbols to pick with one click in the symbol popup
+const ICON_PICKS = ["mdi:ceiling-light", "mdi:lamp", "mdi:floor-lamp", "mdi:led-strip-variant", "mdi:power-socket-de", "mdi:blinds",
+  "mdi:window-shutter", "mdi:radiator", "mdi:air-conditioner", "mdi:fan", "mdi:speaker", "mdi:television", "mdi:robot-vacuum",
+  "mdi:water-pump", "mdi:garage", "mdi:door", "mdi:thermometer", "mdi:motion-sensor", "mdi:washing-machine", "mdi:coffee-maker"];
 // a proposal speaks about the assistant; what HA hides stays hidden
 const proposedStatus = (e) => (e.proposed.exposed ? "assistant" : e.current.status === "hidden" ? "hidden" : "ha");
 const STATUS_ICON = { assistant: "🗣️", ha: "🏠", hidden: "🙈", disabled: "⛔" };
@@ -929,9 +961,14 @@ class HauskartePanel extends HTMLElement {
         <div id="tools"></div>
         <div id="list"></div>
       </main>
-      <div id="toast" hidden></div>`;
+      <div id="toast" hidden></div>
+      <dialog id="icondlg"></dialog>`;
     this.shadowRoot.addEventListener("click", (ev) => this._click(ev));
     this.shadowRoot.addEventListener("input", (ev) => {
+      if (ev.target.id === "icon-mdi") {
+        this._iconPreview();
+        return;
+      }
       if (ev.target.id === "search") {
         this._search = ev.target.value.toLowerCase();
         this._shown = PAGE;
@@ -939,6 +976,11 @@ class HauskartePanel extends HTMLElement {
       }
     });
     this.shadowRoot.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && ev.target.id === "icon-mdi") {
+        ev.preventDefault(); // Enter takes the symbol instead of just closing the popup
+        this.shadowRoot.querySelector('#icondlg [data-act="map-icon-apply"]')?.click();
+        return;
+      }
       if (ev.key === "Enter" && ev.target.id === "pending-name" && ev.target.value.trim()) {
         this.shadowRoot.querySelector('[data-act="map-place-pending"]')?.click();
       }
@@ -1278,11 +1320,16 @@ class HauskartePanel extends HTMLElement {
           ${d.areas.map((a) => `<option value="${esc(a.area_id)}" ${this._devRoom === a.area_id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select>
         <div class="chips"><button data-devgroup="room" class="chip ${this._devGroup === "room" ? "active" : ""}">${esc(t.byRoom)}</button>
           <button data-devgroup="integration" class="chip ${this._devGroup === "integration" ? "active" : ""}">${esc(t.byIntegration)}</button></div>
-        ${view === "devices" ? `<label class="check"><input id="only-silent" type="checkbox" ${this._onlySilent ? "checked" : ""}> ${esc(t.onlySilent)}</label>` : ""}`;
+        ${view === "devices" ? `<label class="check"><input id="only-silent" type="checkbox" ${this._onlySilent ? "checked" : ""}> ${esc(t.onlySilent)}</label>` : this._archiveChips("device", c.silent)}`;
       tools.querySelector("#search").value = this._search;
     } else if (view === "orphans") {
-      tools.innerHTML = `${d.orphans.some((g) => g.ai) ? `<button data-act="ai-orphans-pick" class="secondary ai">${esc(t.aiPick)}</button>` : ""}
-        <span class="grow"></span><button data-act="remove-orphans" class="secondary danger">${esc(t.removeSelected)}</button>`;
+      tools.innerHTML = this._archiveView
+        ? this._archiveChips("entity", c.orphans)
+        : `${this._archiveChips("entity", c.orphans)}
+        ${d.orphans.some((g) => g.ai) ? `<button data-act="ai-orphans-pick" class="secondary ai">${esc(t.aiPick)}</button>` : ""}
+        <span class="grow"></span>
+        <button data-act="archive-orphans" class="secondary" title="${esc(t.archiveTip)}">${esc(t.archiveIn)}</button>
+        <button data-act="remove-orphans" class="secondary danger">${esc(t.removeSelected)}</button>`;
     } else if (view === "history") {
       tools.innerHTML = `<span class="grow"></span><button data-act="undo" class="secondary">${esc(t.undo)}</button>`;
     } else {
@@ -1335,6 +1382,10 @@ class HauskartePanel extends HTMLElement {
     }
     if (this._tab === "duplicates") {
       list.innerHTML = info + this._duplicatesHtml();
+      return;
+    }
+    if ((this._tab === "silent" || this._tab === "orphans") && this._archiveView) {
+      list.innerHTML = this._archiveHtml(this._tab === "silent" ? "device" : "entity");
       return;
     }
     if (this._tab === "devices" || this._tab === "silent") {
@@ -1777,6 +1828,7 @@ class HauskartePanel extends HTMLElement {
                 <div class="devbtns">
                   <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id || "")}</select>
                   ${x.status ? `<select class="stsel" data-dev-status="${esc(x.device_id)}" data-name="${esc(x.name)}" title="${esc(t.st.deviceTip)}">${this._statusOptions(x.status)}</select>` : ""}
+                  ${!wiz && x.silent ? `<button data-act="dev-archive" data-device="${esc(x.device_id)}" class="flat" title="${esc(t.archiveTip)}">${esc(t.archiveIn)}</button>` : ""}
                   ${wiz ? "" : `<button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>`}
                 </div>
               </div>`;
@@ -1922,6 +1974,32 @@ class HauskartePanel extends HTMLElement {
     x.exposed = status === "assistant";
     if (status === "assistant" || status === "ha") x.hidden = false;
     if (status === "hidden") x.hidden = true;
+  }
+
+  // Open / archive switch of the orphaned and silent steps – the same pattern as "Rejected" for proposals.
+  _archiveChips(kind, open) {
+    const t = this._t;
+    const n = (this._data.archive || []).filter((i) => i.kind === kind).length;
+    return `<div class="chips"><button data-archive-view="0" class="chip ${this._archiveView ? "" : "active"}">${esc(t.openChip(open))}</button>
+      <button data-archive-view="1" class="chip ${this._archiveView ? "active" : ""}">${esc(t.archiveChip(n))}</button></div>`;
+  }
+
+  _archiveHtml(kind) {
+    const t = this._t;
+    const items = (this._data.archive || []).filter((i) => i.kind === kind);
+    const when = (iso) => new Date(iso).toLocaleDateString(this._hass?.language);
+    return `<div class="info">${esc(t.archiveInfo)}</div>
+      ${items.length
+        ? items
+            .map(
+              (i) => `<div class="card row archrow"><span>${i.how === "removed" ? "🗑️" : "📦"}</span>
+                <div class="ename"><b>${esc(i.title)}</b>
+                  <span class="muted small">${esc([i.kind === "entity" ? i.id : null, i.integration, `${i.how === "removed" ? t.archiveRemoved : t.archiveKept} ${when(i.at)}`].filter(Boolean).join(" · "))}</span></div>
+                <span class="grow"></span>
+                <button data-act="unarchive" data-key="${esc(i.key)}" class="secondary">${esc(i.how === "removed" ? t.archiveRestore : t.archiveBack)}</button></div>`,
+            )
+            .join("")
+        : `<p class="muted">${esc(t.archiveEmpty)}</p>`}`;
   }
 
   _devicesHtml(silentOnly) {
@@ -2365,7 +2443,6 @@ class HauskartePanel extends HTMLElement {
       </div></div>
       ${this._sensorsHtml(rooms)}
       </div>`;
-    if (this._iconFor && rooms.some((r) => r.devices.some((d) => d.id === this._iconFor.id))) html += this._iconForm();
     if (pending) html += this._pendingForm();
     if (f.detected.length) html += this._detectedForm(f);
     if (unplaced.length) {
@@ -2460,16 +2537,48 @@ class HauskartePanel extends HTMLElement {
         .join("")}</aside>`;
   }
 
-  _iconForm() {
+  // Own symbol for a device, in a popup with a live preview of the icon name being typed.
+  _openIconDialog() {
     const t = this._t;
     const f = this._iconFor;
-    return `<div class="card row iconform"><b>${esc(t.iconFor(f.name))}</b>
-      <input id="icon-mdi" placeholder="${esc(t.iconMdi)}" value="${esc(f.mdi || "")}">
-      <button data-act="map-icon-apply">${esc(t.iconApply)}</button>
-      <label class="filebtn">${esc(t.iconUpload)}<input type="file" accept="image/*" data-iconfile hidden></label>
-      <button data-act="map-icon-reset" class="flat">${esc(t.iconReset)}</button>
-      <a href="https://pictogrammers.com/library/mdi/" target="_blank" rel="noopener" class="muted">${esc(t.iconSearch)} ↗</a>
-      <button data-act="map-icon-cancel" class="flat">${esc(t.cancel)}</button></div>`;
+    const dlg = this.shadowRoot.querySelector("#icondlg");
+    const canIcon = !!customElements.get("ha-icon");
+    dlg.innerHTML = `<form method="dialog" class="iconform">
+      <h2>${esc(t.iconFor(f.name))}</h2>
+      <div class="iconrow"><span class="iconpreview" id="icon-preview"></span>
+        <input id="icon-mdi" placeholder="${esc(t.iconMdi)}" value="${esc(f.mdi || "")}" autocomplete="off"></div>
+      ${canIcon
+        ? `<div class="iconpicks">${ICON_PICKS.map((i) => `<button type="button" class="iconpick" data-icon-pick="${i}" title="${i}"><ha-icon icon="${i}"></ha-icon></button>`).join("")}</div>`
+        : ""}
+      <a href="https://pictogrammers.com/library/mdi/" target="_blank" rel="noopener" class="muted small">${esc(t.iconSearch)} ↗</a>
+      <div class="row">
+        <button type="button" data-act="map-icon-apply">${esc(t.iconApply)}</button>
+        <label class="filebtn">${esc(t.iconUpload)}<input type="file" accept="image/*" data-iconfile hidden></label>
+        <span class="grow"></span>
+        <button type="button" data-act="map-icon-reset" class="flat">${esc(t.iconReset)}</button>
+        <button type="button" data-act="map-icon-cancel" class="flat">${esc(t.cancel)}</button></div></form>`;
+    dlg.onclose = () => (this._iconFor = null);
+    this._iconPreview();
+    if (!dlg.open) dlg.showModal();
+    dlg.querySelector("#icon-mdi").focus();
+  }
+
+  _iconName(value) {
+    const v = (value || "").trim();
+    return v && !v.includes(":") ? `mdi:${v}` : v;
+  }
+
+  _iconPreview() {
+    const root = this.shadowRoot;
+    const box = root.querySelector("#icon-preview");
+    if (!box) return;
+    const name = this._iconName(root.querySelector("#icon-mdi")?.value);
+    box.innerHTML = name && customElements.get("ha-icon") ? `<ha-icon icon="${esc(name)}"></ha-icon>` : "🎨";
+  }
+
+  _closeIconDialog() {
+    this._iconFor = null;
+    this.shadowRoot.querySelector("#icondlg")?.close();
   }
 
   async _uploadIcon(input) {
@@ -2486,7 +2595,7 @@ class HauskartePanel extends HTMLElement {
       const h = img.height * scale;
       canvas.getContext("2d").drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       await this._ws("item_icon", { item_id: this._iconFor.id, image: canvas.toDataURL("image/png") });
-      this._iconFor = null;
+      this._closeIconDialog();
       await this._load();
     } catch (err) {
       this._toast(err.message || String(err));
@@ -2850,15 +2959,14 @@ class HauskartePanel extends HTMLElement {
       return;
     }
     if (act === "map-icon-cancel") {
-      this._iconFor = null;
-      this._renderList();
+      this._closeIconDialog();
       return;
     }
     if (act === "map-icon-apply" || act === "map-icon-reset") {
-      const mdi = act === "map-icon-apply" ? this.shadowRoot.querySelector("#icon-mdi").value.trim() : null;
+      const mdi = act === "map-icon-apply" ? this._iconName(this.shadowRoot.querySelector("#icon-mdi").value) : null;
       try {
         await this._ws("item_icon", { item_id: this._iconFor.id, ...(mdi ? { mdi } : {}) });
-        this._iconFor = null;
+        this._closeIconDialog();
         await this._load();
       } catch (err) {
         this._toast(err.message || String(err));
@@ -3085,14 +3193,17 @@ class HauskartePanel extends HTMLElement {
       location.reload();
       return;
     }
+    const pick = ev.target.closest?.("[data-icon-pick]");
+    if (pick) {
+      this.shadowRoot.querySelector("#icon-mdi").value = pick.dataset.iconPick;
+      this._iconPreview();
+      return;
+    }
     const iconEdit = ev.target.closest?.("[data-iconedit]");
     if (iconEdit && this._edit) {
       const item = this._data.map.rooms.flatMap((r) => r.devices).find((d) => d.id === iconEdit.dataset.iconedit);
       this._iconFor = { id: iconEdit.dataset.iconedit, name: iconEdit.dataset.name, mdi: item?.icon?.mdi };
-      this._renderList();
-      // the form sits below the floor plan: bring it into view
-      this.shadowRoot.querySelector(".iconform")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      this.shadowRoot.querySelector("#icon-mdi")?.focus({ preventScroll: true });
+      this._openIconDialog();
       return;
     }
     const sensor = ev.target.closest?.("[data-more-info]");
@@ -3139,8 +3250,14 @@ class HauskartePanel extends HTMLElement {
       }
       return;
     }
+    if (el.dataset.archiveView !== undefined) {
+      this._archiveView = el.dataset.archiveView === "1";
+      this._render();
+      return;
+    }
     if (el.dataset.step) {
       this._step = el.dataset.step;
+      this._archiveView = false;
       if (el.dataset.step === "telemetry") this._telemetry = null;
       this._search = "";
       this._shown = PAGE;
@@ -3370,6 +3487,18 @@ class HauskartePanel extends HTMLElement {
         const input = el.closest(".addrow").querySelector("[data-new-room]");
         if (!input.value.trim()) return;
         await this._ws("area_create", { name: input.value.trim(), floor_id: input.dataset.newRoom || null });
+      } else if (act === "archive-orphans") {
+        const ids = [...this.shadowRoot.querySelectorAll("[data-orphan]:checked")].map((c) => c.dataset.orphan);
+        if (!ids.length) return this._toast(t.tele.none);
+        const r = await this._ws("archive", { items: ids.map((id) => ({ kind: "entity", id })) });
+        this._toast(t.archived(r.archived));
+      } else if (act === "dev-archive") {
+        const r = await this._ws("archive", { items: [{ kind: "device", id: el.dataset.device }] });
+        this._toast(t.archived(r.archived));
+      } else if (act === "unarchive") {
+        const r = await this._ws("unarchive", { key: el.dataset.key });
+        if (el.dataset.key.startsWith("entity:") && el.textContent.trim() === t.archiveRestore) this._toast(r.restored ? t.restoredOk : t.restoredNo);
+        else this._toast(t.saved);
       } else if (act === "remove-orphans") {
         const ids = [...this.shadowRoot.querySelectorAll("[data-orphan]:checked")].map((c) => c.dataset.orphan);
         if (!ids.length || !confirm(t.confirmOrphans(ids.length))) return;
@@ -3662,6 +3791,19 @@ const STYLE = `
   .stsel { width: auto; max-width: 170px; }
   .fnwhat { font-size: 13px; }
   .aibar { gap: 6px; margin: 4px 0; }
+  .archrow { align-items: center; gap: 10px; }
+  #icondlg { border: none; border-radius: 16px; padding: 20px; max-width: min(520px, 92vw); width: 100%;
+    background: var(--card-background-color); color: var(--primary-text-color); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  #icondlg::backdrop { background: rgba(0,0,0,.5); }
+  #icondlg .iconform { display: flex; flex-direction: column; gap: 12px; }
+  #icondlg h2 { margin: 0; font-size: 18px; font-weight: 500; }
+  .iconrow { display: flex; gap: 12px; align-items: center; }
+  .iconrow input { flex: 1; }
+  .iconpreview { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--secondary-background-color); font-size: 24px; flex: none; --mdc-icon-size: 28px; }
+  .iconpicks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .iconpick { background: var(--secondary-background-color); color: var(--primary-text-color); border-radius: 10px; padding: 6px;
+    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
   .fnroomnav select { flex: 1; min-width: 160px; }
   .telrow.st-disabled .ename { opacity: .6; }
   .fnlist { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; margin: 4px 0; }

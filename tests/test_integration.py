@@ -697,3 +697,52 @@ async def test_functions_review_and_telemetry(ha_base, hass_ws_client):
     assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is er.RegistryEntryDisabler.USER
     await ws(type="hauskarte/undo")
     assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is None
+
+
+async def test_archive_keeps_and_brings_back(ha_base, hass_ws_client):
+    hass = ha_base
+    _kitchen, lamp, _plug = await _house(hass)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    async def ws(**msg):
+        await client.send_json_auto_id(msg)
+        reply = await client.receive_json()
+        assert reply["success"], reply
+        return reply["result"]
+
+    reg = er.async_get(hass)
+    reg.async_update_entity("switch.plug", name="Kaffee", aliases=["Espresso"])
+    hass.states.async_set("switch.plug", "unavailable", {"restored": True})
+    unique_id = reg.async_get("switch.plug").unique_id
+
+    # removed orphans are in the archive and come back exactly as they were
+    assert (await ws(type="hauskarte/remove_orphans", entity_ids=["switch.plug"]))["removed"] == 1
+    assert reg.async_get("switch.plug") is None
+    state = await ws(type="hauskarte/state")
+    item = next(i for i in state["archive"] if i["id"] == "switch.plug")
+    assert item["how"] == "removed" and "snapshot" not in item
+    hass.states.async_remove("switch.plug")
+    assert (await ws(type="hauskarte/unarchive", key=item["key"]))["restored"] is True
+    back = reg.async_get("switch.plug")
+    assert back is not None and back.unique_id == unique_id and back.name == "Kaffee"
+    assert "Espresso" in alias_strings(back.aliases)
+    assert not (await ws(type="hauskarte/state"))["archive"]
+
+    # kept orphans and silent devices leave the lists, and return from the archive
+    hass.states.async_set("switch.plug", "unavailable", {"restored": True})
+    await ws(
+        type="hauskarte/archive",
+        items=[{"kind": "entity", "id": "switch.plug"}, {"kind": "device", "id": lamp.id}],
+    )
+    state = await ws(type="hauskarte/state")
+    assert not any(e["entity_id"] == "switch.plug" for g in state["orphans"] for e in g["entities"])
+    devices = {d["device_id"]: d for g in state["devices"] for d in g["devices"]}
+    assert devices[lamp.id]["archived"] is True and devices[lamp.id]["silent"] is False
+    assert {i["how"] for i in state["archive"]} == {"kept"}
+    await ws(type="hauskarte/unarchive", key="entity:switch.plug")
+    state = await ws(type="hauskarte/state")
+    assert any(e["entity_id"] == "switch.plug" for g in state["orphans"] for e in g["entities"])
+    # undo brings the last archive step back
+    await ws(type="hauskarte/undo")
+    assert any(i["key"] == "entity:switch.plug" for i in (await ws(type="hauskarte/state"))["archive"])

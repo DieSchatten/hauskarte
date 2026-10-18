@@ -16,6 +16,7 @@ from homeassistant.components.homeassistant.exposed_entities import (
     async_should_expose,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import area_registry as ar
@@ -110,6 +111,7 @@ class HauskarteManager:
             "icons": {},
             "groups": [],
             "irrelevant": {},
+            "archive": {},
         }
         self.progress: dict[str, Any] = {
             "running": False,
@@ -481,9 +483,11 @@ class HauskarteManager:
                 "kind_override",
                 "icon",
                 "irrelevant",
+                "archive",
             ):
                 store = {
                     "irrelevant": "irrelevant",
+                    "archive": "archive",
                     "layout": "layout",
                     "pin": "pins",
                     "map_visible": "shown",
@@ -644,7 +648,11 @@ class HauskarteManager:
             elif kind == "entity_aliases":
                 ent = ent_reg.async_get(target)
                 ent_reg.async_update_entity(target, aliases=deserialize_aliases(ent.aliases, old))
-            else:  # entity_removed cannot be brought back
+            elif kind == "entity_removed" and isinstance(old, dict):
+                if not self._restore_entity(old):
+                    skipped += 1
+                    continue
+            else:  # removed before 0.15: nothing kept to bring it back
                 skipped += 1
                 continue
             reverted += 1
@@ -1610,6 +1618,7 @@ class HauskarteManager:
         dev_reg = dr.async_get(self.hass)
         ent_reg = er.async_get(self.hass)
         area_reg = ar.async_get(self.hass)
+        archived = self._archived("device")
         groups: dict[str, dict] = {}
         for dev in device_entries(dev_reg):
             if dev.entry_type is dr.DeviceEntryType.SERVICE:
@@ -1652,7 +1661,8 @@ class HauskarteManager:
                     "functions": (functions := [self._function(inv, e, inv_dev) for e in entities]),
                     "status": fn_status.DISABLED if dev.disabled_by else fn_status.device_status(functions),
                     "what": ((self.data.get("fn_ai") or {}).get(dev.id) or {}).get("what"),
-                    "silent": silent and not dev.disabled_by,
+                    "silent": silent and not dev.disabled_by and dev.id not in archived,
+                    "archived": dev.id in archived,
                     "disabled": dev.disabled_by is not None,
                     "deletable": bool(entry and entry.supports_remove_device),
                 }
@@ -2199,6 +2209,122 @@ class HauskarteManager:
     def set_entity_aliases(self, entity_id: str, aliases: list[str]) -> list[str]:
         return self.update_entity(entity_id, {"aliases": aliases})["aliases"]
 
+    # --- archive: decided to keep (or removed, restorable), no longer shown in the clean-up lists ----
+
+    def _entity_snapshot(self, ent: er.RegistryEntry) -> dict:
+        """Everything needed to put a removed registry entry back exactly as it was."""
+        return {
+            "entity_id": ent.entity_id,
+            "domain": ent.domain,
+            "platform": ent.platform,
+            "unique_id": ent.unique_id,
+            "config_entry_id": ent.config_entry_id,
+            "device_id": ent.device_id,
+            "area_id": ent.area_id,
+            "name": ent.name,
+            "original_name": ent.original_name,
+            "aliases": alias_strings(ent.aliases),
+            "hidden_by": ent.hidden_by.value if ent.hidden_by else None,
+            "disabled_by": ent.disabled_by.value if ent.disabled_by else None,
+            "entity_category": ent.entity_category.value if ent.entity_category else None,
+            "original_device_class": ent.original_device_class,
+            "unit_of_measurement": ent.unit_of_measurement,
+            "exposed": async_should_expose(self.hass, ASSISTANT, ent.entity_id),
+        }
+
+    def _restore_entity(self, snap: dict) -> bool:
+        """Create the registry entry again; the integration finds it by its unique id when it is back."""
+        ent_reg = er.async_get(self.hass)
+        if ent_reg.async_get(snap["entity_id"]) or ent_reg.async_get_entity_id(
+            snap["domain"], snap["platform"], snap["unique_id"]
+        ):
+            return False  # there again (came back by itself, or the id is taken)
+        config_entry = self.hass.config_entries.async_get_entry(snap.get("config_entry_id") or "")
+        device_ok = snap.get("device_id") and dr.async_get(self.hass).async_get(snap["device_id"])
+        extra: dict[str, Any] = {}
+        if config_entry is not None:
+            extra["config_entry"] = config_entry
+        if snap.get("entity_category"):
+            extra["entity_category"] = EntityCategory(snap["entity_category"])
+        new = ent_reg.async_get_or_create(
+            snap["domain"],
+            snap["platform"],
+            snap["unique_id"],
+            suggested_object_id=snap["entity_id"].split(".", 1)[1],
+            device_id=snap["device_id"] if device_ok else None,
+            original_name=snap.get("original_name"),
+            original_device_class=snap.get("original_device_class"),
+            unit_of_measurement=snap.get("unit_of_measurement"),
+            **extra,
+        )
+        entity_id = new.entity_id
+        if entity_id != snap["entity_id"]:
+            ent_reg.async_update_entity(entity_id, new_entity_id=snap["entity_id"])
+            entity_id = snap["entity_id"]
+        area_ok = snap.get("area_id") and ar.async_get(self.hass).async_get_area(snap["area_id"])
+        ent_reg.async_update_entity(
+            entity_id,
+            name=snap.get("name"),
+            area_id=snap["area_id"] if area_ok else None,
+            aliases=build_aliases(ent_reg.async_get(entity_id).aliases, snap.get("aliases") or []),
+            hidden_by=er.RegistryEntryHider(snap["hidden_by"]) if snap.get("hidden_by") else None,
+            disabled_by=er.RegistryEntryDisabler(snap["disabled_by"]) if snap.get("disabled_by") else None,
+        )
+        async_expose_entity(self.hass, ASSISTANT, entity_id, bool(snap.get("exposed")))
+        return True
+
+    def archive(self, items: list[dict]) -> dict:
+        """Keep these orphaned entities / silent devices as they are, but stop showing them. One undo step."""
+        inv = self._inventory()
+        dev_reg = dr.async_get(self.hass)
+        store = self.data.setdefault("archive", {})
+        records = []
+        at = dt_util.utcnow().isoformat()
+        for item in items:
+            kind, target = item.get("kind"), item.get("id")
+            key = f"{kind}:{target}"
+            if kind == "entity" and target in inv["entities"]:
+                ent = inv["entities"][target]
+                title, integration = ent.get("title") or target, ent.get("platform")
+            elif kind == "device" and (dev := dev_reg.async_get(target)) is not None:
+                title = dev.name_by_user or dev.name or target
+                entry = self.hass.config_entries.async_get_entry(device_entry_id(dev) or "")
+                integration = entry.domain if entry else None
+            else:
+                continue
+            new = {
+                "key": key,
+                "kind": kind,
+                "id": target,
+                "title": title,
+                "integration": integration,
+                "how": "kept",
+                "at": at,
+            }
+            records.append({"type": "archive", "target": key, "old": store.get(key), "new": new})
+            store[key] = new
+        if records:
+            self._push_undo(None, f"{len(records)} ins Archiv", records)
+            self._changed()
+        return {"archived": len(records)}
+
+    def unarchive(self, key: str) -> dict:
+        """Back into the clean-up list; a removed entity is created again first."""
+        store = self.data.setdefault("archive", {})
+        item = store.get(key)
+        if item is None:
+            raise HomeAssistantError("Not in the archive")
+        restored = False
+        if item["how"] == "removed" and item.get("snapshot"):
+            restored = self._restore_entity(item["snapshot"])
+        del store[key]
+        self._push_undo(None, item["title"], [{"type": "archive", "target": key, "old": item, "new": None}])
+        self._changed()
+        return {"restored": restored}
+
+    def _archived(self, kind: str) -> set[str]:
+        return {i["id"] for i in (self.data.get("archive") or {}).values() if i["kind"] == kind}
+
     def remove_orphans(self, entity_ids: list[str]) -> dict:
         """Remove the chosen registry entries, but only those still not provided by anyone."""
         ent_reg = er.async_get(self.hass)
@@ -2207,11 +2333,27 @@ class HauskarteManager:
             state = self.hass.states.get(entity_id)
             if ent_reg.async_get(entity_id) is None or not (state and state.attributes.get("restored")):
                 continue
-            records.append({"type": "entity_removed", "target": entity_id, "old": None, "new": None})
+            snap = self._entity_snapshot(ent_reg.async_get(entity_id))
+            records.append({"type": "entity_removed", "target": entity_id, "old": snap, "new": None})
             ent_reg.async_remove(entity_id)
-        self._push_undo(None, f"{len(records)} verwaiste Entitäten", records)
+            key = f"entity:{entity_id}"
+            item = {
+                "key": key,
+                "kind": "entity",
+                "id": entity_id,
+                "title": state.name if state else entity_id,
+                "integration": snap["platform"],
+                "how": "removed",
+                "at": dt_util.utcnow().isoformat(),
+                "snapshot": snap,
+            }
+            archive = self.data.setdefault("archive", {})
+            records.append({"type": "archive", "target": key, "old": archive.get(key), "new": item})
+            archive[key] = item
+        removed = sum(1 for r in records if r["type"] == "entity_removed")
+        self._push_undo(None, f"{removed} verwaiste Entitäten", records)
         self._changed()
-        return {"removed": len(records)}
+        return {"removed": removed}
 
     def description_text(self) -> str:
         return description.build_description(
@@ -2302,7 +2444,14 @@ class HauskarteManager:
             ),
             "sensor": sensor,
             "orphans": [
-                {**g, "ai": (ai.get("orphans") or {}).get(g["integration"])} for g in rules.orphans(inv)
+                {**g, "ai": (ai.get("orphans") or {}).get(g["integration"])}
+                for g in rules.orphans(inv, skip=self._archived("entity"))
+            ],
+            "archive": [
+                {k: v for k, v in item.items() if k != "snapshot"}
+                for item in sorted(
+                    (self.data.get("archive") or {}).values(), key=lambda i: i["at"], reverse=True
+                )
             ],
             "devices": self._devices_with_ai(inv, ai),
             "duplicates": [

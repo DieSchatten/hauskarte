@@ -44,6 +44,8 @@ def async_register(hass: HomeAssistant) -> None:
         ws_device_disabled,
         ws_device_status,
         ws_telemetry,
+        ws_archive,
+        ws_unarchive,
         ws_ai_functions,
         ws_ai_functions_take,
         ws_device_name,
@@ -395,6 +397,27 @@ def ws_set_status(hass, connection, msg) -> None:
 @callback
 def ws_device_name(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.set_device_name(msg["device_id"], msg["name"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "hauskarte/archive",
+        vol.Required("items"): [
+            {vol.Required("kind"): vol.In(["entity", "device"]), vol.Required("id"): str}
+        ],
+    }
+)
+@callback
+def ws_archive(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.archive(msg["items"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): "hauskarte/unarchive", vol.Required("key"): str})
+@callback
+def ws_unarchive(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.unarchive(msg["key"]))
 
 
 @websocket_api.require_admin

@@ -378,7 +378,7 @@ def merge_llm(prop: dict, suggestion: dict, inv: dict) -> dict:
     return _finish(prop)
 
 
-def orphans(inv: dict) -> list[dict]:
+def orphans(inv: dict, skip: set[str] | None = None) -> list[dict]:
     """Entities no integration provides right now, grouped by integration.
 
     Restored entities of a running integration can be gone for good, or just offline,
@@ -387,7 +387,7 @@ def orphans(inv: dict) -> list[dict]:
     """
     groups: dict[str, dict] = {}
     for ent in inv["entities"].values():
-        if not ent.get("restored"):
+        if not ent.get("restored") or ent["entity_id"] in (skip or ()):
             continue
         dev = inv["devices"].get(ent.get("device_id") or "")
         device_live = bool(dev) and any(
