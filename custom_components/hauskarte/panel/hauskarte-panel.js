@@ -575,7 +575,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.11.2";
+const PANEL_VERSION = "0.11.3";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -585,6 +585,42 @@ const KIND_ICON = {
   setting: "🎚️", update: "⬆️", other: "▫️",
 };
 const kindIcon = (kind) => KIND_ICON[kind] || "▫️";
+// Union of rectangles {x, y, w, h}: the covered cells and the outer edges (shared edges between members drop out).
+const groupOutline = (rects) => {
+  const xs = [...new Set(rects.flatMap((r) => [r.x, r.x + r.w]))].sort((a, b) => a - b);
+  const ys = [...new Set(rects.flatMap((r) => [r.y, r.y + r.h]))].sort((a, b) => a - b);
+  const inside = (i, j) =>
+    i >= 0 && j >= 0 && i < xs.length - 1 && j < ys.length - 1 &&
+    rects.some((r) => r.x <= xs[i] && xs[i + 1] <= r.x + r.w && r.y <= ys[j] && ys[j + 1] <= r.y + r.h);
+  const cells = [];
+  const h = new Map(); // y -> [x1, x2][]
+  const v = new Map(); // x -> [y1, y2][]
+  const add = (m, k, a, b) => (m.has(k) ? m.get(k) : m.set(k, []).get(k)).push([a, b]);
+  for (let i = 0; i < xs.length - 1; i++) {
+    for (let j = 0; j < ys.length - 1; j++) {
+      if (!inside(i, j)) continue;
+      cells.push([xs[i], ys[j], xs[i + 1] - xs[i], ys[j + 1] - ys[j]]);
+      if (!inside(i, j - 1)) add(h, ys[j], xs[i], xs[i + 1]);
+      if (!inside(i, j + 1)) add(h, ys[j + 1], xs[i], xs[i + 1]);
+      if (!inside(i - 1, j)) add(v, xs[i], ys[j], ys[j + 1]);
+      if (!inside(i + 1, j)) add(v, xs[i + 1], ys[j], ys[j + 1]);
+    }
+  }
+  const merge = (segs) =>
+    segs.sort((a, b) => a[0] - b[0]).reduce((out, s) => {
+      const last = out[out.length - 1];
+      if (last && last[1] === s[0]) last[1] = s[1];
+      else out.push([...s]);
+      return out;
+    }, []);
+  const lines = [
+    ...[...h].flatMap(([y, segs]) => merge(segs).map(([a, b]) => [a, y, b, y])),
+    ...[...v].flatMap(([x, segs]) => merge(segs).map(([a, b]) => [x, a, x, b])),
+  ];
+  return { cells, lines };
+};
+// attributes for a <details> whose open state is kept across re-renders
+const keepOpen = (key, open) => `data-keep="${esc(key)}" data-def="${open ? 1 : 0}" ${open ? "open" : ""}`;
 
 // Tapping a symbol switches these directly; everything else opens Home Assistant's own controls.
 const TOGGLE_DOMAINS = new Set(["light", "switch", "fan", "input_boolean", "siren", "humidifier"]);
@@ -907,7 +943,7 @@ class HauskartePanel extends HTMLElement {
     const focusKey = active?.matches?.("input, select, textarea") ? this._fieldKey(active) : null;
     const caret = focusKey && typeof active.selectionStart === "number" ? [active.selectionStart, active.selectionEnd] : null;
     const scroll = window.scrollY;
-    this._renderAll();
+    this._keepDetails(() => this._renderAll());
     fields().forEach((el) => {
       const key = this._fieldKey(el);
       const k = key !== this._savedKey ? kept.get(key) : null; // the field just saved shows what was stored
@@ -924,6 +960,14 @@ class HauskartePanel extends HTMLElement {
     this._savedKey = null;
     window.scrollTo({ top: scroll });
     this._live();
+  }
+
+  // Rooms too narrow for their name show it in full on hover.
+  _markCutNames() {
+    this.shadowRoot?.querySelectorAll(".room[data-area]").forEach((el) => {
+      const b = el.querySelector(".roomhead b");
+      el.classList.toggle("cut", !!b && b.scrollWidth > b.clientWidth + 1);
+    });
   }
 
   _renderAll() {
@@ -1025,7 +1069,23 @@ class HauskartePanel extends HTMLElement {
     this._renderList();
   }
 
+  // Open/closed state the user chose survives re-rendering, as long as the default did not change.
+  _keepDetails(render) {
+    const root = this.shadowRoot;
+    const opened = new Map([...root.querySelectorAll("details[data-keep]")].map((el) => [el.dataset.keep, [el.dataset.def, el.open]]));
+    render();
+    root.querySelectorAll("details[data-keep]").forEach((el) => {
+      const prev = opened.get(el.dataset.keep);
+      if (prev && prev[0] === el.dataset.def) el.open = prev[1];
+    });
+    requestAnimationFrame(() => this._markCutNames());
+  }
+
   _renderList() {
+    this._keepDetails(() => this._renderListNow());
+  }
+
+  _renderListNow() {
     const t = this._t;
     const d = this._data;
     const list = this.shadowRoot.querySelector("#list");
@@ -1056,7 +1116,7 @@ class HauskartePanel extends HTMLElement {
         (d.orphans.length
           ? d.orphans
               .map(
-                (g) => `<details class="card" data-group data-ai-advice="${g.ai?.advice || ""}">
+                (g) => `<details class="card" data-group ${keepOpen(`orphans:${g.integration}`, false)} data-ai-advice="${g.ai?.advice || ""}">
             <summary><b>${esc(g.integration)}</b> · ${g.entities.length}${g.running ? "" : ` · <span class="danger">${esc(t.integrationDown)}</span>`}
               ${g.ai ? `<span class="aibadge ${g.ai.advice}">🤖 ${esc(t.advice[g.ai.advice])}</span>` : ""}</summary>
             ${g.ai ? `<div class="ailine ${g.ai.advice === "remove" ? "yes" : g.ai.advice === "keep" ? "no" : ""}">🤖 ${esc(t.aiAdvice(t.advice[g.ai.advice]))} · ${esc(g.ai.reason)}</div>` : ""}
@@ -1387,7 +1447,7 @@ class HauskartePanel extends HTMLElement {
     return sorted
       .map(([key, items]) => {
         const silent = items.filter((x) => x.silent).length;
-        return `<details class="card" ${open || silent ? "open" : ""}>
+        return `<details class="card" ${keepOpen(`devices:${key}`, open || !!silent)}>
           <summary><b>${esc(key)}</b> · ${items.length}${silent ? ` · <span class="danger">${silent} ${esc(t.silent)}</span>` : ""}</summary>
           ${items.map((x) => this._deviceRow(x)).join("")}
         </details>`;
@@ -1583,7 +1643,7 @@ class HauskartePanel extends HTMLElement {
     this._edit = true;
     return `<div class="info">${esc(t.wiz.planInfo)}</div>${this._modeChips()}
       ${floors
-        .map((f, i) => `<details class="card" ${i === 0 || f.image ? "open" : ""}><summary><b>${esc(f.name)}</b></summary>${this._floorHtml(f)}</details>`)
+        .map((f, i) => `<details class="card" ${keepOpen(`plan:${f.floor_id}`, i === 0 || !!f.image)}><summary><b>${esc(f.name)}</b></summary>${this._floorHtml(f)}</details>`)
         .join("")}`;
   }
 
@@ -1668,7 +1728,7 @@ class HauskartePanel extends HTMLElement {
       ${floors
         .map((f) => {
           const rooms = m.rooms.filter((r) => (r.floor_id || null) === f.floor_id);
-          return `<details class="card ${f.floor_id ? "" : "warnline"}" open><summary><b>${esc(f.name)}</b> · ${esc(t.roomsCount(rooms.length))}</summary>
+          return `<details class="card ${f.floor_id ? "" : "warnline"}" ${keepOpen(`check:${f.floor_id}`, true)}><summary><b>${esc(f.name)}</b> · ${esc(t.roomsCount(rooms.length))}</summary>
             ${rooms
               .map(
                 (r) => `<div class="wroom"><div class="wroomhead"><b>${esc(r.name)}</b><span class="counts">${this._countsHtml(r.counts)}</span></div>
@@ -1734,7 +1794,7 @@ class HauskartePanel extends HTMLElement {
       html += `<div class="muted">🏠 <button data-section-go="rooms" class="flat inline">${esc(t.allRooms)}</button></div>`;
     }
     html += m.floors.map((f) => this._floorHtml(f)).join("");
-    html += `<details class="card" ${this._edit ? "open" : ""}><summary><b>${esc(t.notes)}</b></summary>
+    html += `<details class="card" ${keepOpen("notes", !!this._edit)}><summary><b>${esc(t.notes)}</b></summary>
       <label class="note">${esc(t.houseNote)}<textarea data-note="_house" rows="2">${esc(m.house_note)}</textarea></label>
       ${m.rooms.map((r) => `<label class="note">${esc(r.name)}<input data-note="${esc(r.area_id)}" value="${esc(r.note)}"></label>`).join("")}
     </details>`;
@@ -1826,7 +1886,9 @@ class HauskartePanel extends HTMLElement {
         return this._pinHtml(d, pos);
       })
       .join("");
-    return `<div class="room" data-area="${esc(r.area_id)}" data-name="${esc(r.name)}" style="${this._place(r.position, cols, rows)}">
+    const side = r.position.x + r.position.w / 2 > cols / 2 ? "east" : "";
+    return `<div class="room ${side}" data-area="${esc(r.area_id)}" data-name="${esc(r.name)}" style="${this._place(r.position, cols, rows)}">
+      <span class="fullname">${esc(r.name)}</span>
       <div class="roomhead"><b>${esc(r.name)}</b>${speaker ? " 🎙️" : ""}${open ? `<span class="badge">${open}</span>` : ""}${head}
         ${this._edit ? `<button class="x" data-act="map-unplace" title="${esc(t.removeFromMap)}">×</button>` : ""}</div>
       ${pins}
@@ -1834,17 +1896,20 @@ class HauskartePanel extends HTMLElement {
     </div>`;
   }
 
-  // A dashed frame around the drawn rooms of each room group on this floor.
+  // A dashed outline around exactly the drawn rooms of each room group on this floor (not their bounding box).
   _groupFrames(placed, cols, rows) {
     return (this._data.groups || [])
       .map((g) => {
         const rs = placed.filter((r) => g.area_ids.includes(r.area_id)).map((r) => r.position);
-        if (rs.length < 1) return "";
-        const x = Math.min(...rs.map((p) => p.x));
-        const y = Math.min(...rs.map((p) => p.y));
-        const w = Math.max(...rs.map((p) => p.x + p.w)) - x;
-        const h = Math.max(...rs.map((p) => p.y + p.h)) - y;
-        return `<div class="groupframe" style="${this._place({ x, y, w, h }, cols, rows)}"><span>${esc(g.name)}</span></div>`;
+        if (!rs.length) return "";
+        const { cells, lines } = groupOutline(rs);
+        const fill = cells.map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join("");
+        const path = lines.map(([x1, y1, x2, y2]) => `M${x1} ${y1}L${x2} ${y2}`).join("");
+        // name at the bottom right of the lowest room
+        const [lx, ly, lw, lh] = cells.reduce((a, c) => (c[1] + c[3] > a[1] + a[3] || (c[1] + c[3] === a[1] + a[3] && c[0] + c[2] > a[0] + a[2]) ? c : a));
+        return `<svg class="groupframe" viewBox="0 0 ${cols} ${rows}" preserveAspectRatio="none">
+            <g class="gfill">${fill}</g><path d="${path}" vector-effect="non-scaling-stroke"/></svg>
+          <span class="grouplabel" style="right:${(1 - (lx + lw) / cols) * 100}%;bottom:${(1 - (ly + lh) / rows) * 100}%">${esc(g.name)}</span>`;
       })
       .join("");
   }
@@ -2880,11 +2945,18 @@ const STYLE = `
   .groupcard { border-left: 4px solid var(--accent-color, #ff9800); }
   .grouprow { border-top: 1px solid var(--divider-color); padding: 8px 0; display: flex; flex-direction: column; gap: 6px; }
   .roomacts { display: flex; flex-wrap: wrap; gap: 2px; }
-  /* drawn over the rooms (clicks go through), a little outside them so both borders stay visible */
-  .groupframe { position: absolute; box-sizing: content-box; border: 2px dashed var(--accent-color, #ff9800); border-radius: 14px;
-    pointer-events: none; z-index: 3; margin: -6px; padding: 4px; }
-  .groupframe span { position: absolute; right: 10px; bottom: 4px; font-size: 11px; line-height: 16px; padding: 0 8px;
-    border-radius: 8px; background: var(--accent-color, #ff9800); color: #000; white-space: nowrap; }
+  /* drawn over the rooms (clicks go through): outline of exactly the member rooms, lightly tinted */
+  .groupframe { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
+  .groupframe .gfill { fill: var(--accent-color, #ff9800); opacity: .07; }
+  .groupframe path { fill: none; stroke: var(--accent-color, #ff9800); stroke-width: 3; stroke-dasharray: 8 5; }
+  .grouplabel { position: absolute; margin: 0 8px 6px 0; z-index: 3; pointer-events: none; font-size: 11px; line-height: 16px;
+    padding: 0 8px; border-radius: 8px; background: var(--accent-color, #ff9800); color: #000; white-space: nowrap; }
+  .room .fullname { display: none; position: absolute; top: 2px; left: 2px; z-index: 6; padding: 1px 8px; border-radius: 6px;
+    background: var(--primary-color); color: var(--text-primary-color, #fff); font-size: 13px; font-weight: 600;
+    white-space: nowrap; pointer-events: none; }
+  .room.east .fullname { left: auto; right: 2px; }
+  .room.cut:hover { overflow: visible; z-index: 4; }
+  .room.cut:hover .fullname { display: block; }
   .modechips { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 12px; }
   .grid.editing.mode-rooms .pin { opacity: .28; pointer-events: none; z-index: 1; }
   .grid.editing.mode-rooms .pin .lbl, .grid.editing.mode-rooms .pin .hide, .grid.editing.mode-rooms .pin .iconedit { display: none; }
