@@ -1965,8 +1965,8 @@ class HauskarteManager:
         dev_reg = dr.async_get(self.hass)
         items = []
         for ent in ent_reg.entities.values():
-            if ent.platform == DOMAIN:
-                continue  # our own description sensor
+            if ent.platform == DOMAIN or ent.disabled_by is not None:
+                continue  # our own description sensor; what is off already clutters nothing
             n = writes.get(ent.entity_id)
             technical = ent.entity_category is not None
             if not technical and (n or 0) < fn_status.WRITES_BUSY:
