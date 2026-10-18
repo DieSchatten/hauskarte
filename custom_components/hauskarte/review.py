@@ -266,3 +266,48 @@ def parse_switches(data: dict, switches: list[dict]) -> dict[str, dict]:
             "confidence": _conf(s.get("confidence")),
         }
     return out
+
+
+# --- functions: what is the device, which status for each function ---------------
+
+FUNCTION_STATUSES = ("assistant", "ha", "hidden", "disabled")
+
+
+def functions_task(devices: list[dict], language: str) -> str:
+    return f"""Task: what is each device, and which status should each of its functions get.
+Statuses go in one direction; each includes the ones before:
+- "assistant": the voice assistant may use it – things people switch or ask about by voice: lights, covers,
+  climate, locks, sockets with a clear purpose, room temperature and humidity, door/window state.
+- "ha": stays visible in Home Assistant, not for the voice assistant: energy, power, voltage, settings.
+- "hidden": hidden in Home Assistant but still recorded: diagnostic values someone may need later.
+- "disabled": switched off, no data at all: pure telemetry nobody needs (signal strength, uptime, IP, firmware,
+  fast counters). Never "disabled" when "used_in" > 0 (automations or scripts use it).
+"writes_per_day" = rows it adds to the database per day (high = costly). "technical" = diagnostic/config value.
+Be conservative: keep the current status when unsure. Reason: at most 12 words, concrete.
+"what": one or two sentences in the language "{language}": what the device is and what it does, only from
+the data (manufacturer, model, integration, functions).
+Answer: {{"devices": [{{"device_id": "...", "what": "...", "functions": [{{"entity_id": "...", "status": "ha", "reason": "..."}}]}}]}}
+Data:
+{_dump(devices)}"""
+
+
+def parse_functions(data: dict, devices: list[dict]) -> dict[str, dict]:
+    """Per device: its explanation and a checked status suggestion per function."""
+    by_id = {d["device_id"]: d for d in devices}
+    out = {}
+    for d in data.get("devices") or []:
+        if not isinstance(d, dict) or d.get("device_id") not in by_id:
+            continue
+        known = {f["entity_id"]: f for f in by_id[d["device_id"]]["functions"]}
+        functions = {}
+        for f in d.get("functions") or []:
+            if not isinstance(f, dict) or f.get("entity_id") not in known:
+                continue
+            wanted = f.get("status")
+            if wanted not in FUNCTION_STATUSES:
+                continue
+            if wanted == "disabled" and known[f["entity_id"]].get("used_in"):
+                wanted = "hidden"  # something uses it: never switch it off
+            functions[f["entity_id"]] = {"status": wanted, "reason": _reason(f.get("reason"))}
+        out[d["device_id"]] = {"what": str(d.get("what") or "").strip()[:300], "functions": functions}
+    return out

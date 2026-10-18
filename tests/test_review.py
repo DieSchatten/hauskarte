@@ -86,3 +86,37 @@ def test_switch_kinds():
         switches,
     )
     assert list(out) == ["switch.a"] and out["switch.a"]["kind"] == "light"
+
+
+def test_functions_never_switch_off_what_is_used():
+    devices = [
+        {
+            "device_id": "d",
+            "functions": [
+                {"entity_id": "sensor.power", "used_in": 2},
+                {"entity_id": "sensor.rssi", "used_in": 0},
+            ],
+        }
+    ]
+    out = review.parse_functions(
+        {
+            "devices": [
+                {
+                    "device_id": "d",
+                    "what": "Zwischenstecker",
+                    "functions": [
+                        {"entity_id": "sensor.power", "status": "disabled", "reason": "x"},
+                        {"entity_id": "sensor.rssi", "status": "disabled", "reason": "y"},
+                        {"entity_id": "sensor.rssi2", "status": "disabled"},
+                        {"entity_id": "sensor.rssi", "status": "gone"},
+                    ],
+                },
+                {"device_id": "unknown", "functions": []},
+            ]
+        },
+        devices,
+    )
+    assert list(out) == ["d"]
+    assert out["d"]["functions"]["sensor.power"]["status"] == "hidden"  # an automation uses it
+    assert out["d"]["functions"]["sensor.rssi"]["status"] == "disabled"
+    assert "sensor.rssi2" not in out["d"]["functions"]

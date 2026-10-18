@@ -13,6 +13,7 @@ import re
 from typing import Any
 
 from .const import LLM_MAX_CONFIDENCE, SAFE_CONFIDENCE
+from .status import entity_status
 
 # Things people ask a voice assistant to switch or read.
 CONTROL_DOMAINS = {
@@ -168,7 +169,12 @@ def _entity_row(ent: dict) -> dict:
         "title": ent.get("title") or ent["entity_id"],
         "domain": ent["domain"],
         "category": ent.get("entity_category"),
-        "current": {"exposed": ent.get("exposed", False), "aliases": list(ent.get("aliases", []))},
+        "current": {
+            "exposed": ent.get("exposed", False),
+            "aliases": list(ent.get("aliases", [])),
+            # disabled entities are not in the inventory, so only these three occur here
+            "status": entity_status(ent.get("exposed", False), bool(ent.get("hidden")), False),
+        },
         "proposed": {
             "exposed": ent.get("exposed", False),
             "aliases": list(ent.get("aliases", [])),

@@ -11,6 +11,9 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN, STATUS_IGNORED, STATUS_LATER, STATUS_OPEN
 from .manager import HauskarteManager
+from .status import STATUSES
+
+_STATUS = vol.In(list(STATUSES))
 
 
 def _manager(hass: HomeAssistant) -> HauskarteManager | None:
@@ -39,12 +42,15 @@ def async_register(hass: HomeAssistant) -> None:
         ws_item_visible,
         ws_remove_orphans,
         ws_device_disabled,
-        ws_device_irrelevant,
+        ws_device_status,
+        ws_telemetry,
+        ws_ai_functions,
+        ws_ai_functions_take,
         ws_device_name,
         ws_exposure,
         ws_entity_aliases,
         ws_entity_update,
-        ws_set_exposed,
+        ws_set_status,
         ws_merge,
         ws_unmerge,
         ws_not_duplicate,
@@ -88,6 +94,7 @@ def _run(hass: HomeAssistant, connection, msg, func) -> None:
 def ws_state(hass, connection, msg) -> None:
     def state(m: HauskarteManager) -> dict:
         m.mark_seen()
+        m.refresh_writes_soon()
         return m.snapshot()
 
     _run(hass, connection, msg, state)
@@ -114,6 +121,7 @@ def ws_scan(hass, connection, msg) -> None:
             vol.Optional("entities"): {
                 str: {
                     vol.Optional("exposed"): bool,
+                    vol.Optional("status"): _STATUS,
                     vol.Optional("aliases"): [str],
                     vol.Optional("remove"): bool,
                 }
@@ -344,7 +352,7 @@ def ws_entity_aliases(hass, connection, msg) -> None:
         vol.Required("type"): "hauskarte/entity_update",
         vol.Required("entity_id"): str,
         vol.Required("changes"): {
-            vol.Optional("use"): bool,
+            vol.Optional("status"): _STATUS,
             vol.Optional("name"): vol.Any(str, None),
             vol.Optional("aliases"): [str],
             vol.Optional("kind"): vol.Any(str, None),
@@ -366,14 +374,14 @@ def ws_exposure(hass, connection, msg) -> None:
 @websocket_api.require_admin
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "hauskarte/set_exposed",
+        vol.Required("type"): "hauskarte/set_status",
         vol.Required("entity_ids"): [str],
-        vol.Required("exposed"): bool,
+        vol.Required("status"): _STATUS,
     }
 )
 @callback
-def ws_set_exposed(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.set_exposed(msg["entity_ids"], msg["exposed"]))
+def ws_set_status(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.set_status(msg["entity_ids"], msg["status"]))
 
 
 @websocket_api.require_admin
@@ -390,16 +398,45 @@ def ws_device_name(hass, connection, msg) -> None:
 
 
 @websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): "hauskarte/telemetry"})
+@websocket_api.async_response
+async def ws_telemetry(hass, connection, msg) -> None:
+    manager = _manager(hass)
+    if manager is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauskarte is not set up")
+        return
+    connection.send_result(msg["id"], await manager.telemetry())
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {vol.Required("type"): "hauskarte/ai_functions", vol.Required("device_ids"): [str]}
+)
+@callback
+def ws_ai_functions(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: {"started": m.start_functions_review(msg["device_ids"])})
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {vol.Required("type"): "hauskarte/ai_functions_take", vol.Required("device_ids"): [str]}
+)
+@callback
+def ws_ai_functions_take(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.take_function_suggestions(msg["device_ids"]))
+
+
+@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "hauskarte/device_irrelevant",
+        vol.Required("type"): "hauskarte/device_status",
         vol.Required("device_id"): str,
-        vol.Required("irrelevant"): bool,
+        vol.Required("status"): _STATUS,
     }
 )
 @callback
-def ws_device_irrelevant(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.set_irrelevant(msg["device_id"], msg["irrelevant"]))
+def ws_device_status(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.set_device_status(msg["device_id"], msg["status"]))
 
 
 @websocket_api.require_admin

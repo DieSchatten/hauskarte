@@ -27,7 +27,6 @@ const TEXT = {
     remove: "entfernen",
     more: "weitere Entitäten",
     accept: "Übernehmen",
-    notForAssistant: "Nicht für Assistent",
     postpone: "Später",
     ignore: "Ignorieren",
     showAgain: "Wieder anzeigen",
@@ -53,7 +52,7 @@ const TEXT = {
       finish: "Einrichtung abschließen",
       later: "Später weitermachen",
       all: "Alle Schritte",
-      labels: { welcome: "Willkommen", floors: "Etagen", rooms: "Räume den Etagen zuordnen", plan: "Grundriss (optional)", devices: "Geräte zuordnen", duplicates: "Doppelte aussortieren", check: "Kontrolle", done: "Fertig" },
+      labels: { welcome: "Willkommen", floors: "Etagen", rooms: "Räume den Etagen zuordnen", plan: "Grundriss (optional)", devices: "Geräte zuordnen", duplicates: "Doppelte aussortieren", functions: "Funktionen je Raum", check: "Kontrolle", done: "Fertig" },
       intro:
         "Dieser Assistent richtet das Haus einmal sauber ein – in fester Reihenfolge, damit jeder Schritt auf dem vorigen aufbaut. Du kannst jederzeit aufhören, er merkt sich, wo du warst. Nichts wird ohne deinen Klick geändert, alles lässt sich zurücknehmen.",
       plan: [
@@ -62,6 +61,7 @@ const TEXT = {
         "Grundriss (optional)",
         "Geräte ohne Raum zuordnen – mit Name, Modell, Entitäten und Begründung; Doppelte noch ausgenommen",
         "Doppelte aussortieren – Hauptentität wählen und ihr den Raum geben",
+        "Funktionen je Raum – was jedes Gerät ist und kann, welche Funktion der Assistent bekommt, was HA ausblendet oder abschaltet; die KI erklärt und schlägt vor",
         "Kontrolle: Etage → Raum → Geräte",
       ],
       aiStart: "🤖 KI-Durchsicht im Hintergrund starten",
@@ -95,10 +95,15 @@ const TEXT = {
       byName: (word) => `aus dem Namen („${word}“)`,
       noneLeft: "Alle Geräte (außer Doppelten) haben einen Raum. 👍",
       withRoom: (n) => `${n} Geräte haben schon einen Raum – siehe Kontrolle.`,
-      irrelevantList: (n) => `Als unwichtig ausgeblendet (${n})`,
+      hiddenList: (n) => `Ausgeblendet oder deaktiviert (${n})`,
       dupsInfo: "Dasselbe Gerät über zwei Systeme. Wähle, welche Entität der Assistent nutzt, und gib ihr den Raum. Die anderen werden ausgeblendet, laufen aber weiter.",
       dupRoom: "Raum für die Hauptentität",
       dupsNone: "Keine Doppelten mehr. 👍",
+      fnInfo: "Raum für Raum: Was ist jedes Gerät, was kann es, und welchen Status bekommt jede Funktion? Die KI erklärt die Geräte und schlägt Stufen vor – übernommen wird nur, was du anklickst.",
+      fnRoom: (i, n) => `Raum ${i} von ${n}`,
+      fnNoRoom: "Ohne Raum",
+      fnEmpty: "In diesem Raum sind keine Geräte.",
+      fnAsk: (n) => `🤖 Die ${n} Geräte dieses Raums durchsehen`,
       checkInfo: "So steht das Haus jetzt da. Fehlt etwas oder steht falsch? Zurück zum passenden Schritt oder unter Räume/Geräte ändern.",
       empty: "leer",
       rest: (s) => `Noch offen unter Aufräumen: ${s.open} Vorschläge (Freigaben, Namen) · ${s.orphans} verwaiste Entitäten · ${s.silent} Geräte ohne Lebenszeichen`,
@@ -107,7 +112,7 @@ const TEXT = {
     },
     aiReview: "🤖 KI-Durchsicht",
     aiAt: "KI-Durchsicht",
-    aiTasks: { floors: "Etagen", duplicates: "Doppelte", orphans: "Verwaist", silent: "Ohne Lebenszeichen", switches: "Schalter" },
+    aiTasks: { floors: "Etagen", duplicates: "Doppelte", orphans: "Verwaist", silent: "Ohne Lebenszeichen", switches: "Schalter", functions: "Funktionen" },
     aiRunning: (task, n, total) => `KI prüft: ${task} (${n}/${total})`,
     aiNone: "Noch keine KI-Durchsicht. „🤖 KI-Durchsicht“ fragt dein Sprachmodell zu allen Schritten – nacheinander, damit der Sprachassistent frei bleibt.",
     aiFloorsTitle: "🤖 KI-Vorschlag: Räume zu Etagen",
@@ -176,11 +181,12 @@ const TEXT = {
       noRoom: "Ohne Raum",
       changed: (n) => `${n} geändert`,
     },
-    steps: { rooms: "Etagen", duplicates: "Doppelte", open: "Vorschläge", silent: "Ohne Lebenszeichen", orphans: "Verwaist", history: "Verlauf" },
+    steps: { rooms: "Etagen", duplicates: "Doppelte", open: "Vorschläge", silent: "Ohne Lebenszeichen", orphans: "Verwaist", telemetry: "Telemetrie", history: "Verlauf" },
     stepInfo: {
       rooms: "Jeder Raum sollte zu einer Etage gehören – sonst weiß der Assistent nicht, was „oben“ oder „unten“ ist.",
       duplicates: "Dasselbe Gerät über zwei Systeme (z. B. Loxone und Shelly, KNX, Zigbee, MQTT). Zusammenführen heißt: Der Assistent nutzt nur die gewählte Entität, die anderen werden ausgeblendet und nicht freigegeben. Sie laufen weiter – Automationen und die Systeme selbst bleiben unberührt. Lässt sich jederzeit trennen.",
       open: "Vorschläge für Raum, Name und Freigabe. Prüfen, bei Bedarf anpassen, übernehmen.",
+      telemetry: "Was HA am meisten zumüllt: technische Werte und Funktionen, die ständig schreiben. Auswählen und auf einen Status setzen – „Ausgeblendet“ räumt Dashboards auf, „Deaktiviert“ spart zusätzlich die Datenbank. Nach Integration gruppiert, die meistschreibenden zuerst.",
       silent: "Diese Geräte melden gerade nichts. Nicht mehr gebraucht? Deaktivieren (rücknehmbar) oder löschen.",
     },
     allDone: "Hier ist alles erledigt.",
@@ -204,8 +210,6 @@ const TEXT = {
     needRoom: "Raum fehlt – bitte wählen",
     changeName: (a, b) => `Name: ${a} → ${b}`,
     needName: "Technischer Name – besser umbenennen",
-    hideFor: (list) => `Für den Assistenten ausblenden: ${list}`,
-    showFor: (list) => `Für den Assistenten freigeben: ${list}`,
     aliasesSet: (list) => `Aliase: ${list}`,
     speakerNoRoom: "Sprachgerät ohne Raum – der Assistent weiß nicht, wo gesprochen wird",
     adjust: "Anpassen",
@@ -233,26 +237,52 @@ const TEXT = {
     devicesInfo:
       "Alle Geräte nach Integration, Geräte ohne Lebenszeichen zuerst. Deaktivieren blendet ein Gerät samt Entitäten aus und lässt sich zurücknehmen. Löschen entfernt es endgültig – nur wenn die Integration das erlaubt; ist es wieder erreichbar, kann sie es neu anlegen.",
     silent: "meldet nichts",
-    disabledLbl: "deaktiviert",
-    disable: "Deaktivieren",
-    irrelevant: "Unwichtig",
+    st: {
+      assistant: "Assistent",
+      ha: "Nur HA",
+      hidden: "Ausgeblendet",
+      disabled: "Deaktiviert",
+      legendTitle: "ⓘ Was bedeuten die Stufen?",
+      legendHead: ["Stufe", "Assistent", "in HA sichtbar", "zeichnet Daten auf"],
+      legendNote:
+        "Jede Stufe schließt die vorige ein: Was HA ausblendet, bekommt auch der Assistent nicht. „Deaktiviert“ spart Datenbank und Rechenzeit – Automationen, die so eine Funktion nutzen, laufen dann aber ins Leere. Am Gerät ist der Status eine Obergrenze für alle seine Funktionen; „Deaktiviert“ schaltet dort das ganze Gerät ab.",
+      deviceTip: "Status für das ganze Gerät – eine Obergrenze für alle seine Funktionen. Deaktiviert = Gerät in HA abschalten.",
+      confirmDevice: (n) => `„${n}“ in Home Assistant deaktivieren? Es liefert dann keine Werte mehr; Automationen damit laufen ins Leere. Rückgängig machbar.`,
+      change: (name, from, to) => `${name}: ${from} → ${to}`,
+      because: (r) => `Grund: ${r}`,
+    },
+    role: { control: "steuert", measure: "misst", technical: "Technik", other: "Sonstiges" },
+    roleCount: { control: (n) => `${n} ${n === 1 ? "steuert" : "steuern"}`, measure: (n) => `${n} ${n === 1 ? "misst" : "messen"}`, technical: (n) => `${n} Technik`, other: (n) => `${n} sonstige` },
+    writes: (n) => `~${n} Werte/Tag`,
+    deviceFns: (n) => `${n} Funktionen`,
+    fnAi: {
+      ask: "🤖 Was ist das?",
+      again: "🤖 Neu fragen",
+      take: (n) => `🤖 ${n} KI-Vorschläge übernehmen`,
+      running: "🤖 KI sieht sich die Funktionen an …",
+    },
+    tele: {
+      summary: (n, busy) => `${n} Funktionen sind technisch oder schreiben mehr als ${busy} Werte am Tag in die Datenbank.`,
+      noCount: "Die Schreibrate ließ sich nicht aus dem Recorder lesen – gezeigt werden nur die technischen Funktionen.",
+      loading: "Lade und zähle die Schreibrate der letzten 24 Stunden …",
+      apply: "Für Auswahl setzen",
+      askAi: "🤖 KI zu Auswahl fragen",
+      none: "Nichts ausgewählt.",
+      used: (n) => `⚠️ ${n}× in Automationen/Skripten benutzt`,
+      confirmUsed: (n) => `${n} der ausgewählten Funktionen werden in Automationen oder Skripten benutzt. Deaktiviert liefern sie keine Werte mehr. Trotzdem deaktivieren?`,
+      group: (n, w) => `${n} · ${w}`,
+    },
     devNamePh: "Name in Home Assistant, z. B. Licht Flur",
     aliasPh: "weitere Namen, mit Komma getrennt – z. B. Licht oben, Deckenlicht",
     fn: {
       title: "⚙️ Funktionen",
-      none: "⚙️ Funktionen festlegen",
-      off: (n) => `${n} nicht für Assistent`,
-      info: "Was dieses Gerät kann. „für Assistent“ = der Sprachassistent sieht und steuert diese Funktion (dasselbe wie im Reiter Assistent). Name = so heißt sie überall, Art = wofür sie steht (z. B. ein Schalter, der ein Licht schaltet), Aliase = weitere Rufnamen. Alles wird sofort gespeichert und ist rückgängig machbar.",
-      hiddenInHa: "in HA ausgeblendet",
+      info: "Was dieses Gerät kann – je Funktion: was sie tut, ihr Status (siehe Legende), Name (so heißt sie überall), Art (wofür sie steht, z. B. ein Schalter, der ein Licht schaltet) und Aliase (weitere Rufnamen). Alles wird sofort gespeichert und ist rückgängig machbar.",
       kindAuto: (k) => `Art: automatisch (${k})`,
       namePh: (n) => `Name – jetzt: ${n}`,
       technical: (n) => `Technische Werte (${n})`,
     },
     devNameTip: "Eigener Name für das Gerät in Home Assistant (leer = Name der Integration). Entitäten, die nach dem Gerät heißen, übernehmen ihn – so versteht ihn auch der Assistent. Rückgängig machbar.",
     originalName: (n) => `Original: ${n}`,
-    irrelevantTip: "Unwichtig fürs Zuhause: verschwindet aus den Raum-Listen, der Assistent sieht es nicht mehr, auf der Karte ausgeblendet. Rückgängig machbar.",
-    irrelevantLbl: "unwichtig",
-    enable: "Aktivieren",
     del: "Löschen",
     noDelete: "Diese Integration erlaubt kein Löschen einzelner Geräte – deaktivieren oder in der Integration entfernen.",
     confirmDelete: (name) => `„${name}“ endgültig löschen? Das lässt sich nicht zurücknehmen.`,
@@ -347,7 +377,6 @@ const TEXT = {
     remove: "remove",
     more: "more entities",
     accept: "Apply",
-    notForAssistant: "Not for assistant",
     postpone: "Later",
     ignore: "Ignore",
     showAgain: "Show again",
@@ -373,7 +402,7 @@ const TEXT = {
       finish: "Finish setup",
       later: "Continue later",
       all: "All steps",
-      labels: { welcome: "Welcome", floors: "Floors", rooms: "Rooms to floors", plan: "Floor plan (optional)", devices: "Assign devices", duplicates: "Sort out duplicates", check: "Check", done: "Done" },
+      labels: { welcome: "Welcome", floors: "Floors", rooms: "Rooms to floors", plan: "Floor plan (optional)", devices: "Assign devices", duplicates: "Sort out duplicates", functions: "Functions per room", check: "Check", done: "Done" },
       intro:
         "This assistant sets up the home once, cleanly – in a fixed order, so every step builds on the previous one. You can stop any time; it remembers where you were. Nothing changes without your click, everything can be undone.",
       plan: [
@@ -382,6 +411,7 @@ const TEXT = {
         "Floor plan (optional)",
         "Devices without area – with name, model, entities and reason; duplicates left out for now",
         "Sort out duplicates – choose the main entity and give it its room",
+        "Functions per room – what each device is and can do, which function the assistant gets, what HA hides or switches off; the AI explains and suggests",
         "Check: floor → room → devices",
       ],
       aiStart: "🤖 Start AI review in the background",
@@ -415,10 +445,15 @@ const TEXT = {
       byName: (word) => `from the name (“${word}”)`,
       noneLeft: "Every device (except duplicates) has a room. 👍",
       withRoom: (n) => `${n} devices already have a room – see Check.`,
-      irrelevantList: (n) => `Hidden as not relevant (${n})`,
+      hiddenList: (n) => `Hidden or disabled (${n})`,
       dupsInfo: "The same device through two systems. Choose which entity the assistant uses and give it its room. The others are hidden but keep running.",
       dupRoom: "Room for the main entity",
       dupsNone: "No duplicates left. 👍",
+      fnInfo: "Room by room: what is each device, what can it do, and which status does each function get? The AI explains the devices and suggests levels – only what you click is applied.",
+      fnRoom: (i, n) => `Room ${i} of ${n}`,
+      fnNoRoom: "Without room",
+      fnEmpty: "No devices in this room.",
+      fnAsk: (n) => `🤖 Look through the ${n} devices of this room`,
       checkInfo: "This is how the home looks now. Something missing or wrong? Go back to the matching step or change it under Rooms/Devices.",
       empty: "empty",
       rest: (s) => `Still open under Clean up: ${s.open} proposals (exposure, names) · ${s.orphans} orphaned entities · ${s.silent} silent devices`,
@@ -427,7 +462,7 @@ const TEXT = {
     },
     aiReview: "🤖 AI review",
     aiAt: "AI review",
-    aiTasks: { floors: "floors", duplicates: "duplicates", orphans: "orphaned", silent: "silent", switches: "switches" },
+    aiTasks: { floors: "floors", duplicates: "duplicates", orphans: "orphaned", silent: "silent", switches: "switches", functions: "functions" },
     aiRunning: (task, n, total) => `AI checks: ${task} (${n}/${total})`,
     aiNone: "No AI review yet. “🤖 AI review” asks your language model about every step – one question at a time, so the voice assistant stays free.",
     aiFloorsTitle: "🤖 AI proposal: rooms to floors",
@@ -496,11 +531,12 @@ const TEXT = {
       noRoom: "Without room",
       changed: (n) => `${n} changed`,
     },
-    steps: { rooms: "Floors", duplicates: "Duplicates", open: "Proposals", silent: "Silent", orphans: "Orphaned", history: "History" },
+    steps: { rooms: "Floors", duplicates: "Duplicates", open: "Proposals", silent: "Silent", orphans: "Orphaned", telemetry: "Telemetry", history: "History" },
     stepInfo: {
       rooms: "Every room should belong to a floor – otherwise the assistant cannot tell what “upstairs” means.",
       duplicates: "The same device through two systems (e.g. Loxone and Shelly, KNX, Zigbee, MQTT). Merging means: the assistant only uses the chosen entity; the others are hidden and not exposed. They keep running – automations and the systems themselves stay untouched. Can be split again any time.",
       open: "Proposals for area, name and exposure. Review, adjust if needed, apply.",
+      telemetry: "What clutters HA most: technical values and functions that write all the time. Select and set a status – “Hidden” tidies dashboards, “Disabled” also spares the database. Grouped by integration, the busiest first.",
       silent: "These devices report nothing right now. Not needed any more? Disable (undoable) or delete.",
     },
     allDone: "All done here.",
@@ -524,8 +560,6 @@ const TEXT = {
     needRoom: "Area missing – please choose",
     changeName: (a, b) => `Name: ${a} → ${b}`,
     needName: "Technical name – better rename",
-    hideFor: (list) => `Hide from the assistant: ${list}`,
-    showFor: (list) => `Expose to the assistant: ${list}`,
     aliasesSet: (list) => `Aliases: ${list}`,
     speakerNoRoom: "Voice device without area – the assistant cannot tell where someone speaks",
     adjust: "Adjust",
@@ -553,26 +587,52 @@ const TEXT = {
     devicesInfo:
       "All devices by integration, silent ones first. Disabling hides a device with its entities and can be undone. Deleting removes it for good – only where the integration allows it; if it is reachable again, the integration may create it again.",
     silent: "reports nothing",
-    disabledLbl: "disabled",
-    disable: "Disable",
-    irrelevant: "Not relevant",
+    st: {
+      assistant: "Assistant",
+      ha: "HA only",
+      hidden: "Hidden",
+      disabled: "Disabled",
+      legendTitle: "ⓘ What do the levels mean?",
+      legendHead: ["Level", "Assistant", "visible in HA", "records data"],
+      legendNote:
+        "Each level includes the one before: what HA hides, the assistant does not get either. “Disabled” saves database and CPU – automations using such a function then run into nothing. On a device the status is a ceiling for all its functions; “Disabled” switches off the whole device there.",
+      deviceTip: "Status for the whole device – a ceiling for all its functions. Disabled = switch the device off in HA.",
+      confirmDevice: (n) => `Disable “${n}” in Home Assistant? It sends no more values; automations using it run into nothing. Can be undone.`,
+      change: (name, from, to) => `${name}: ${from} → ${to}`,
+      because: (r) => `reason: ${r}`,
+    },
+    role: { control: "controls", measure: "measures", technical: "technical", other: "other" },
+    roleCount: { control: (n) => `${n} ${n === 1 ? "controls" : "control"}`, measure: (n) => `${n} ${n === 1 ? "measures" : "measure"}`, technical: (n) => `${n} technical`, other: (n) => `${n} other` },
+    writes: (n) => `~${n} values/day`,
+    deviceFns: (n) => `${n} functions`,
+    fnAi: {
+      ask: "🤖 What is this?",
+      again: "🤖 Ask again",
+      take: (n) => `🤖 Apply ${n} AI suggestions`,
+      running: "🤖 The AI is looking at the functions …",
+    },
+    tele: {
+      summary: (n, busy) => `${n} functions are technical or write more than ${busy} values a day to the database.`,
+      noCount: "The write rate could not be read from the recorder – only the technical functions are shown.",
+      loading: "Loading and counting the write rate of the last 24 hours …",
+      apply: "Set for selection",
+      askAi: "🤖 Ask the AI about the selection",
+      none: "Nothing selected.",
+      used: (n) => `⚠️ used ${n}× in automations/scripts`,
+      confirmUsed: (n) => `${n} of the selected functions are used in automations or scripts. Disabled, they send no values. Disable anyway?`,
+      group: (n, w) => `${n} · ${w}`,
+    },
     devNamePh: "Name in Home Assistant, e.g. Hall light",
     aliasPh: "more names, separated by commas – e.g. ceiling light, top light",
     fn: {
       title: "⚙️ Functions",
-      none: "⚙️ Choose functions",
-      off: (n) => `${n} not for the assistant`,
-      info: "What this device can do. “for assistant” = the voice assistant sees and controls this function (the same as in the Assistant tab). Name = what it is called everywhere, kind = what it stands for (e.g. a switch that drives a light), aliases = more names to call it. Everything is saved at once and can be undone.",
-      hiddenInHa: "hidden in HA",
+      info: "What this device can do – per function: what it does, its status (see legend), name (what it is called everywhere), kind (what it stands for, e.g. a switch that drives a light) and aliases (more names to call it). Everything is saved at once and can be undone.",
       kindAuto: (k) => `Kind: automatic (${k})`,
       namePh: (n) => `Name – now: ${n}`,
       technical: (n) => `Technical values (${n})`,
     },
     devNameTip: "Own name for the device in Home Assistant (empty = the integration's name). Entities named after the device follow – so the assistant understands it too. Can be undone.",
     originalName: (n) => `Original: ${n}`,
-    irrelevantTip: "Not relevant for the home: leaves the room lists, the assistant no longer sees it, hidden on the map. Can be undone.",
-    irrelevantLbl: "not relevant",
-    enable: "Enable",
     del: "Delete",
     noDelete: "This integration does not allow deleting single devices – disable it or remove it in the integration.",
     confirmDelete: (name) => `Delete “${name}” for good? This cannot be undone.`,
@@ -645,7 +705,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.13.1";
+const PANEL_VERSION = "0.14.0";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -689,6 +749,18 @@ const groupOutline = (rects) => {
   ];
   return { cells, lines };
 };
+const STATUSES = ["assistant", "ha", "hidden", "disabled"];
+// a proposal speaks about the assistant; what HA hides stays hidden
+const proposedStatus = (e) => (e.proposed.exposed ? "assistant" : e.current.status === "hidden" ? "hidden" : "ha");
+const STATUS_ICON = { assistant: "🗣️", ha: "🏠", hidden: "🙈", disabled: "⛔" };
+const ROLE_ICON = { control: "🎛️", measure: "📈", technical: "🔧", other: "▫️" };
+// the same split as status.py on the server
+const CONTROL_DOMAINS = new Set(["alarm_control_panel", "button", "climate", "cover", "fan", "humidifier", "input_boolean", "input_button",
+  "input_number", "input_select", "lawn_mower", "light", "lock", "media_player", "number", "remote", "scene", "script", "select", "siren",
+  "switch", "text", "vacuum", "valve", "water_heater"]);
+const MEASURE_DOMAINS = new Set(["binary_sensor", "camera", "device_tracker", "event", "image", "person", "sensor", "weather"]);
+const roleOf = (domain, category) =>
+  category ? "technical" : CONTROL_DOMAINS.has(domain) ? "control" : MEASURE_DOMAINS.has(domain) ? "measure" : "other";
 // attributes for a <details> whose open state is kept across re-renders
 const keepOpen = (key, open) => `data-keep="${esc(key)}" data-def="${open ? 1 : 0}" ${open ? "open" : ""}`;
 
@@ -697,7 +769,7 @@ const TOGGLE_DOMAINS = new Set(["light", "switch", "fan", "input_boolean", "sire
 const ACTIVE_STATES = new Set(["on", "open", "opening", "closing", "playing", "heat", "cool", "heat_cool", "auto", "dry", "fan_only", "unlocked", "unlocking"]);
 
 const SECTION_ICON = { start: "🧭", clean: "🧹", map: "🗺️", rooms: "🏠", devices: "📦", assist: "🗣️" };
-const STEPS = ["rooms", "duplicates", "open", "silent", "orphans", "history"];
+const STEPS = ["rooms", "duplicates", "open", "silent", "orphans", "telemetry", "history"];
 
 const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -813,6 +885,9 @@ class HauskartePanel extends HTMLElement {
       this._toast(err.message || String(err));
       return;
     }
+    // a background run just finished: lists loaded on their own fetch its results again
+    if (this._wasRunning && !this._data.progress.running) this._telemetry = null;
+    this._wasRunning = this._data.progress.running;
     // while something runs the page polls; do not rebuild it under the user's fingers
     const focused = this.shadowRoot.activeElement;
     const typing = focused && ["INPUT", "SELECT", "TEXTAREA"].includes(focused.tagName);
@@ -881,6 +956,15 @@ class HauskartePanel extends HTMLElement {
         this._upload(ev.target);
         return;
       }
+      if (ev.target.dataset.telGroup !== undefined) {
+        ev.target.closest("details").querySelectorAll("[data-tel]").forEach((c) => (c.checked = ev.target.checked));
+        return;
+      }
+      if (ev.target.id === "fn-room") {
+        this._fnRoom = ev.target.value;
+        this._render();
+        return;
+      }
       if (ev.target.dataset.orphanGroup !== undefined) {
         ev.target.closest("details").querySelectorAll("[data-orphan]").forEach((c) => (c.checked = ev.target.checked));
         return;
@@ -908,9 +992,15 @@ class HauskartePanel extends HTMLElement {
       if (tg.dataset.devArea !== undefined) return this._save("device_area", { device_id: tg.dataset.devArea, area_id: tg.value || null });
       if (tg.dataset.devName !== undefined) return this._save("device_name", { device_id: tg.dataset.devName, name: tg.value });
       const listed = (id) => this._exposure?.entities.find((e) => e.entity_id === id) || {};
-      if (tg.dataset.fnUse !== undefined) {
-        listed(tg.dataset.fnUse).exposed = tg.checked;
-        return this._save("entity_update", { entity_id: tg.dataset.fnUse, changes: { use: tg.checked } });
+      if (tg.dataset.fnStatus !== undefined) {
+        return this._setStatus([tg.dataset.fnStatus], tg.value).catch((err) => this._toast(err.message || String(err)));
+      }
+      if (tg.dataset.devStatus !== undefined) {
+        if (tg.value === "disabled" && !confirm(t.st.confirmDevice(tg.dataset.name))) {
+          this._render();
+          return;
+        }
+        return this._save("device_status", { device_id: tg.dataset.devStatus, status: tg.value });
       }
       if (tg.dataset.fnName !== undefined) {
         const e = listed(tg.dataset.fnName);
@@ -1120,7 +1210,7 @@ class HauskartePanel extends HTMLElement {
       this._section === "clean"
         ? `<div class="steps">${STEPS.map(
             (st, i) => `<button data-step="${st}" class="step ${this._step === st ? "active" : ""}">
-              <span class="num">${i + 1}</span>${esc(t.steps[st])}${c[st] ? `<span class="count">${c[st]}</span>` : st === "history" ? "" : `<span class="ok">✓</span>`}
+              <span class="num">${i + 1}</span>${esc(t.steps[st])}${c[st] ? `<span class="count">${c[st]}</span>` : st === "history" || st === "telemetry" ? "" : `<span class="ok">✓</span>`}
             </button>`,
           ).join("")}</div>`
         : "";
@@ -1141,6 +1231,13 @@ class HauskartePanel extends HTMLElement {
         <input id="search" type="search" placeholder="${esc(t.search)}">
         <span class="grow"></span>
         <button data-act="apply-safe" class="secondary" ${!pc.safe || p.running ? "disabled" : ""}>${esc(t.applySafe)} (${pc.safe})</button>`;
+      tools.querySelector("#search").value = this._search;
+    } else if (view === "telemetry") {
+      tools.innerHTML = `<input id="search" type="search" placeholder="${esc(t.search)}">
+        <span class="grow"></span>
+        <select id="tel-status" class="stsel">${this._statusOptions("hidden")}</select>
+        <button data-act="tel-apply" class="secondary">${esc(t.tele.apply)}</button>
+        ${d.llm ? `<button data-act="tel-ai" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.tele.askAi)}</button>` : ""}`;
       tools.querySelector("#search").value = this._search;
     } else if (view === "assist") {
       const kindsPresent = [...new Set((this._exposure?.entities || []).map((x) => x.kind))].sort((a, b) =>
@@ -1188,6 +1285,7 @@ class HauskartePanel extends HTMLElement {
       const prev = opened.get(el.dataset.keep);
       if (prev && prev[0] === el.dataset.def) el.open = prev[1];
     });
+    this._live();
     requestAnimationFrame(() => this._markCutNames());
   }
 
@@ -1201,6 +1299,10 @@ class HauskartePanel extends HTMLElement {
     const list = this.shadowRoot.querySelector("#list");
     if (this._tab === "assist") {
       this._renderAssist(list);
+      return;
+    }
+    if (this._tab === "telemetry") {
+      this._renderTelemetry(list);
       return;
     }
     const info = t.stepInfo[this._tab] ? `<div class="info">${esc(t.stepInfo[this._tab])}</div>` : "";
@@ -1530,15 +1632,50 @@ class HauskartePanel extends HTMLElement {
     return `<input class="alias" data-alias="${esc(entityId)}" value="${esc(aliases.join(", "))}" placeholder="${esc(this._t.aliasPh)}">`;
   }
 
-  // One function (entity): for the assistant or not, name, kind, aliases. The same block wherever an entity is edited.
-  _fnRow(e, withUse = true) {
+  _statusOptions(selected) {
+    const t = this._t;
+    return STATUSES.map((s) => `<option value="${s}" ${s === selected ? "selected" : ""}>${STATUS_ICON[s]} ${esc(t.st[s])}</option>`).join("");
+  }
+
+  // The same legend wherever a status can be chosen.
+  _statusLegend() {
+    const t = this._t;
+    const yes = (b) => (b ? "✓" : "–");
+    const rows = [
+      ["assistant", true, true, true],
+      ["ha", false, true, true],
+      ["hidden", false, false, true],
+      ["disabled", false, false, false],
+    ];
+    return `<details class="legend" ${keepOpen("legend", false)}><summary>${esc(t.st.legendTitle)}</summary>
+      <table class="legendtab"><tr>${t.st.legendHead.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>
+        ${rows.map(([s, a, v, d]) => `<tr><td>${STATUS_ICON[s]} ${esc(t.st[s])}</td><td>${yes(a)}</td><td>${yes(v)}</td><td>${yes(d)}</td></tr>`).join("")}</table>
+      <p class="muted small">${esc(t.st.legendNote)}</p></details>`;
+  }
+
+  // What a function is, in words: what it does, its value now and how much it writes.
+  _fnWhat(e) {
+    const t = this._t;
+    const role = e.role || "other";
+    const kind = t.kinds[e.kind] || e.kind || "";
+    const value = e.status === "disabled" ? "" : ` · <span data-state-entity="${esc(e.entity_id)}"></span>`;
+    const writes = e.writes != null ? ` · ${esc(t.writes(Number(e.writes).toLocaleString(this._hass?.language)))}` : "";
+    return `<span class="fnwhat">${ROLE_ICON[role]} ${esc(t.role[role])}${kind ? ` ${esc(kind)}` : ""}</span>${value}${writes}`;
+  }
+
+  // One function (entity): what it is, its status, name, kind, aliases. The same block wherever an entity is edited.
+  _fnRow(e) {
     const t = this._t;
     const kindChoices = Object.keys(t.kinds).sort((a, b) => t.kinds[a].localeCompare(t.kinds[b]));
-    return `<div class="fnrow ${e.exposed ? "" : "off"}">
-        ${withUse
-          ? `<div class="fnhead"><label class="check"><input type="checkbox" data-fn-use="${esc(e.entity_id)}" ${e.exposed ? "checked" : ""}> ${esc(t.exposed)}</label>
-          <span class="muted small">${esc(e.entity_id)}${e.hidden ? ` · ${esc(t.fn.hiddenInHa)}` : ""}</span></div>`
-          : e.hidden ? `<span class="muted small">${esc(t.fn.hiddenInHa)}</span>` : ""}
+    const ai = e.ai && e.ai.status !== e.status
+      ? `<div class="ailine">🤖 ${STATUS_ICON[e.ai.status]} ${esc(t.st[e.ai.status])} · ${esc(e.ai.reason)}
+          <button data-act="fn-ai-take" data-eid="${esc(e.entity_id)}" data-status="${esc(e.ai.status)}" class="flat inline">${esc(t.take)}</button></div>`
+      : "";
+    return `<div class="fnrow st-${e.status}">
+        <div class="fnhead"><select class="stsel" data-fn-status="${esc(e.entity_id)}">${this._statusOptions(e.status)}</select>
+          <span>${this._fnWhat(e)}</span>
+          <span class="muted small">${esc(e.entity_id)}</span></div>
+        ${ai}
         <div class="fnfields">
           <input data-fn-name="${esc(e.entity_id)}" value="${esc(e.own_name || "")}" placeholder="${esc(t.fn.namePh(e.name))}">
           <select data-fn-kind="${esc(e.entity_id)}"><option value="">${esc(t.fn.kindAuto(t.kinds[e.kind] || e.kind))}</option>
@@ -1546,23 +1683,61 @@ class HauskartePanel extends HTMLElement {
           ${this._aliasInput(e.entity_id, e.aliases)}</div></div>`;
   }
 
-  // The functions of a device, folded; the summary shows what the assistant gets.
-  _functionsBlock(x) {
+  // The functions of a device, folded; the summary says what the device is made of and what the assistant gets.
+  _functionsBlock(x, open = false) {
     const t = this._t;
     const fns = x.functions || [];
     if (!fns.length) return "";
     const main = fns.filter((e) => !e.technical);
     const tech = fns.filter((e) => e.technical);
-    const used = main.filter((e) => e.exposed);
-    const off = main.length - used.length;
-    const summary = used.length
-      ? `${t.fn.title}: ${used.map((e) => `${kindIcon(e.kind)} ${e.name}${e.aliases.length ? ` (🏷️ ${e.aliases.join(", ")})` : ""}`).join(" · ")}${off ? ` · ${t.fn.off(off)}` : ""}`
-      : t.fn.none;
-    return `<details class="aliases fns" ${keepOpen(`fn:${x.device_id}`, false)}><summary>${esc(summary)}</summary>
+    const roles = ["control", "measure", "technical", "other"]
+      .map((r) => [r, fns.filter((e) => e.role === r).length])
+      .filter(([, n]) => n)
+      .map(([r, n]) => t.roleCount[r](n))
+      .join(" · ");
+    const used = main.filter((e) => e.status === "assistant");
+    const summary = `${t.fn.title} · ${t.deviceFns(fns.length)}: ${roles}${used.length ? ` · 🗣️ ${used.map((e) => e.name).join(", ")}` : ""}`;
+    return `<details class="aliases fns" ${keepOpen(`fn:${x.device_id}`, open)}><summary>${esc(summary)}</summary>
       <span class="muted small">${esc(t.fn.info)}</span>
+      ${this._fnAiBar([x])}
+      ${this._statusLegend()}
       ${main.map((e) => this._fnRow(e)).join("")}
       ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map((e) => this._fnRow(e)).join("")}</details>` : ""}
     </details>`;
+  }
+
+  // AI for one or more devices: explain them and suggest a status per function; take the suggestions.
+  _fnAiBar(devices) {
+    const t = this._t;
+    const d = this._data;
+    if (!d.llm || !devices.length) return "";
+    const ids = devices.map((x) => x.device_id).join(",");
+    const open = devices.flatMap((x) => (x.functions || []).filter((f) => f.ai && f.ai.status !== f.status)).length;
+    if (d.progress.running && d.progress.task === "functions") return `<div class="ailine running">${esc(t.fnAi.running)}</div>`;
+    const asked = devices.some((x) => x.what);
+    return `<div class="row aibar">
+      <button data-act="ai-fn" data-devices="${esc(ids)}" class="secondary ai small" ${d.progress.running ? "disabled" : ""}>${esc(devices.length > 1 ? t.wiz.fnAsk(devices.length) : asked ? t.fnAi.again : t.fnAi.ask)}</button>
+      ${open ? `<button data-act="ai-fn-take" data-devices="${esc(ids)}" class="small">${esc(t.fnAi.take(open))}</button>` : ""}</div>`;
+  }
+
+  // On a clean-up card: everything the device consists of, so it is clear what is being decided about.
+  _cardFunctions(p) {
+    const t = this._t;
+    const dev = p.id.startsWith("device:")
+      ? this._data.devices.flatMap((g) => g.devices).find((x) => x.device_id === p.id.slice(7))
+      : null;
+    const what = dev
+      ? `${dev.what ? `<div class="muted small">🤖 ${esc(dev.what)}</div>` : ""}${this._fnAiBar([dev])}`
+      : "";
+    if (!p.entities || p.entities.length < 2) return what;
+    return `${what}<div class="fnlist"><span class="muted">${esc(t.deviceFns(p.entities.length))}:</span>
+      ${p.entities
+        .map((e) => {
+          const role = roleOf(e.domain, e.category);
+          const value = e.current.status === "disabled" ? "" : ` <span class="muted" data-state-entity="${esc(e.entity_id)}"></span>`;
+          return `<span>${ROLE_ICON[role]} ${esc(e.title)}${value} ${STATUS_ICON[e.current.status]}</span>`;
+        })
+        .join("")}</div>`;
   }
 
   // One device row, used in the Devices tab and in the setup step (wiz = {area, why}: suggested room there).
@@ -1576,21 +1751,16 @@ class HauskartePanel extends HTMLElement {
                   <span class="muted">${esc([t.kinds[x.kind], x.model, where].filter(Boolean).join(" · "))}</span>
                   ${wiz?.why ? `<span class="ailine">${esc(wiz.why)}
                     <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(wiz.area)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
+                  ${x.what ? `<span class="muted small">🤖 ${esc(x.what)}</span>` : ""}
                   ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
-                  ${x.disabled ? `<span class="reason">${esc(t.disabledLbl)}</span>` : ""}
-                  ${x.irrelevant ? `<span class="reason">🚫 ${esc(t.irrelevantLbl)}</span>` : ""}
                   ${x.ai ? `<span class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</span>` : ""}
                   ${x.ai_kind ? `<span class="ailine">🤖 ${esc(t.aiKind(t.kinds[x.ai_kind.kind] || x.ai_kind.kind))} · ${esc(x.ai_kind.reason)}
                     <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
-                  ${this._functionsBlock(x)}</div>
+                  ${this._functionsBlock(x, wiz?.open)}</div>
                 <div class="devbtns">
                   <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id || "")}</select>
-                  <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="${x.irrelevant ? 0 : 1}" class="flat"
-                    ${x.irrelevant ? "" : `title="${esc(t.irrelevantTip)}"`}>${esc(x.irrelevant ? t.showAgain : `🚫 ${t.irrelevant}`)}</button>
-                  ${wiz
-                    ? ""
-                    : `<button data-act="dev-toggle" class="secondary">${esc(x.disabled ? t.enable : t.disable)}</button>
-                  <button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>`}
+                  ${x.status ? `<select class="stsel" data-dev-status="${esc(x.device_id)}" data-name="${esc(x.name)}" title="${esc(t.st.deviceTip)}">${this._statusOptions(x.status)}</select>` : ""}
+                  ${wiz ? "" : `<button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>`}
                 </div>
               </div>`;
   }
@@ -1621,53 +1791,116 @@ class HauskartePanel extends HTMLElement {
     const all = this._exposure.entities;
     const shown = all.filter(
       (x) =>
-        (this._assistTech || !x.technical) &&
+        (this._assistTech || !x.quiet) &&
         (!this._devKind || x.kind === this._devKind) &&
         (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
         (!s || [x.name, x.entity_id, x.area, x.floor, x.device, t.kinds[x.kind], ...x.aliases].join(" ").toLowerCase().includes(s)),
     );
     const limit = this._assistShown || 150;
     const column = (exposed) => {
-      const items = shown.filter((x) => x.exposed === exposed);
+      const items = shown.filter((x) => (x.status === "assistant") === exposed);
       let room;
       const rows = items
         .slice(0, limit)
         .map((x) => {
           const head = x.area !== room ? `<h3 class="wizsec">${esc(x.area ? (x.floor ? `${x.area} · ${x.floor}` : x.area) : a.noRoom)}</h3>` : "";
           room = x.area;
-          const tags = [
-            x.twin ? `⧉ ${a.twinLbl}` : "",
-            x.irrelevant ? `🚫 ${t.irrelevantLbl}` : "",
-            x.technical ? a.techLbl : "",
-          ].filter(Boolean);
+          const tags = [x.twin ? `⧉ ${a.twinLbl}` : "", x.technical ? a.techLbl : ""].filter(Boolean);
           return `${head}<div class="devrow arow"><span class="kicon">${kindIcon(x.kind)}</span>
-            <div class="ename"><b>${esc(x.name)}</b>
+            <div class="ename"><b>${exposed ? "" : `${STATUS_ICON[x.status]} `}${esc(x.name)}</b>
+              <span class="muted small">${this._fnWhat(x)}</span>
               <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
               ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}
               <details class="aliases" ${keepOpen(`edit:${x.entity_id}`, false)}><summary>✏️ ${esc(t.adjust)}${x.aliases.length ? ` · 🏷️ ${esc(x.aliases.join(", "))}` : ""}</summary>
-                ${this._fnRow(x, false)}</details></div>
-            <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? 0 : 1}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
+                ${this._fnRow(x)}</details></div>
+            <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? "ha" : "assistant"}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
         })
         .join("");
       const bulk = items.length > 1 && (s || this._devKind || this._devRoom)
-        ? `<button data-act="assist-all" data-to="${exposed ? 0 : 1}" class="flat">${esc(exposed ? a.hideAll(items.length) : a.showAll(items.length))}</button>`
+        ? `<button data-act="assist-all" data-to="${exposed ? "ha" : "assistant"}" class="flat">${esc(exposed ? a.hideAll(items.length) : a.showAll(items.length))}</button>`
         : "";
       return `<div class="card acol"><div class="floorhead"><h2>${esc(exposed ? a.sees : a.notSees)} (${items.length})</h2><span class="grow"></span>${bulk}</div>
         ${rows || `<p class="muted">${esc(a.none)}</p>`}
         ${items.length > limit ? `<button data-act="assist-more" class="secondary wide">${esc(t.showMore)} (${items.length - limit})</button>` : ""}</div>`;
     };
-    const seen = all.filter((x) => x.exposed).length;
-    list.innerHTML = `<div class="info">${esc(a.info)}</div><p class="muted">${esc(a.summary(seen, all.length))}</p>
+    const seen = all.filter((x) => x.status === "assistant").length;
+    list.innerHTML = `<div class="info">${esc(a.info)}</div>${this._statusLegend()}<p class="muted">${esc(a.summary(seen, all.length))}</p>
       <div class="acols">${column(true)}${column(false)}</div>`;
-    this._assistIds = (exposed) => shown.filter((x) => x.exposed === exposed).map((x) => x.entity_id);
+    this._assistIds = (exposed) => shown.filter((x) => (x.status === "assistant") === exposed).map((x) => x.entity_id);
   }
 
-  async _setExposed(ids, exposed) {
-    const res = await this._ws("set_exposed", { entity_ids: ids, exposed });
-    // switch locally at once; the next visit reloads everything
-    for (const x of this._exposure.entities) if (ids.includes(x.entity_id)) x.exposed = exposed;
+  // Technical and busy functions over the whole house, grouped by integration; loaded when the step opens.
+  _renderTelemetry(list) {
+    const t = this._t;
+    const info = `<div class="info">${esc(t.stepInfo.telemetry)}</div>${this._statusLegend()}`;
+    if (!this._telemetry) {
+      list.innerHTML = `${info}<p class="muted running">${esc(t.tele.loading)}</p>`;
+      if (!this._telemetryLoading) {
+        this._telemetryLoading = true;
+        this._ws("telemetry").then(
+          (res) => {
+            this._telemetry = res;
+            this._telemetryLoading = false;
+            if (this._tab === "telemetry") this._renderList();
+          },
+          (err) => {
+            this._telemetryLoading = false;
+            this._toast(err.message || String(err));
+          },
+        );
+      }
+      return;
+    }
+    const s = this._search;
+    const items = this._telemetry.entities.filter(
+      (x) => !s || [x.name, x.entity_id, x.device, x.integration, t.kinds[x.kind]].join(" ").toLowerCase().includes(s),
+    );
+    const groups = new Map();
+    for (const x of items) {
+      if (!groups.has(x.integration)) groups.set(x.integration, []);
+      groups.get(x.integration).push(x);
+    }
+    const sum = (xs) => xs.reduce((n, x) => n + (x.writes || 0), 0);
+    const ordered = [...groups.entries()].sort((a, b) => sum(b[1]) - sum(a[1]) || a[0].localeCompare(b[0]));
+    const lang = this._hass?.language;
+    const html = ordered
+      .map(
+        ([integ, xs]) => `<details class="card" ${keepOpen(`tel:${integ}`, false)}>
+          <summary><label class="check" onclick="event.stopPropagation()"><input type="checkbox" data-tel-group></label>
+            <b>${esc(integ)}</b> · ${esc(t.tele.group(xs.length, t.writes(sum(xs).toLocaleString(lang))))}</summary>
+          ${xs
+            .map(
+              (x) => `<div class="devrow telrow st-${x.status}"><label class="check"><input type="checkbox" data-tel="${esc(x.entity_id)}" data-used="${x.used_in || 0}"></label>
+                <div class="ename"><b>${STATUS_ICON[x.status]} ${esc(x.name)}</b>
+                  <span class="muted small">${this._fnWhat(x)}</span>
+                  <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
+                  ${x.used_in ? `<span class="reason">${esc(t.tele.used(x.used_in))}</span>` : ""}
+                  ${x.ai && x.ai.status !== x.status ? `<span class="ailine">🤖 ${STATUS_ICON[x.ai.status]} ${esc(t.st[x.ai.status])} · ${esc(x.ai.reason)}
+                    <button data-act="fn-ai-take" data-eid="${esc(x.entity_id)}" data-status="${esc(x.ai.status)}" class="flat inline">${esc(t.take)}</button></span>` : ""}</div>
+                <select class="stsel" data-fn-status="${esc(x.entity_id)}">${this._statusOptions(x.status)}</select></div>`,
+            )
+            .join("")}</details>`,
+      )
+      .join("");
+    list.innerHTML = `${info}<p class="muted">${esc(t.tele.summary(items.length, this._telemetry.busy))}</p>
+      ${this._telemetry.counted ? "" : `<p class="muted">${esc(t.tele.noCount)}</p>`}${html}`;
+  }
+
+  // One status for several functions; lists already loaded (Assistant tab, telemetry) follow at once.
+  async _setStatus(ids, status) {
+    const res = await this._ws("set_status", { entity_ids: ids, status });
+    for (const list of [this._exposure?.entities, this._telemetry?.entities]) {
+      for (const x of list || []) if (ids.includes(x.entity_id)) this._patchStatus(x, status);
+    }
     this._toast(this._t.assist.changed(res.changes));
-    this._renderList();
+    await this._load();
+  }
+
+  _patchStatus(x, status) {
+    x.status = status;
+    x.exposed = status === "assistant";
+    if (status === "assistant" || status === "ha") x.hidden = false;
+    if (status === "hidden") x.hidden = true;
   }
 
   _devicesHtml(silentOnly) {
@@ -1714,7 +1947,7 @@ class HauskartePanel extends HTMLElement {
   }
 
   _wizSteps() {
-    return ["welcome", "floors", "rooms", "plan", "devices", "duplicates", "check", "done"].map((id) => ({ id }));
+    return ["welcome", "floors", "rooms", "plan", "devices", "duplicates", "functions", "check", "done"].map((id) => ({ id }));
   }
 
   _wizIndex(steps) {
@@ -1754,6 +1987,7 @@ class HauskartePanel extends HTMLElement {
       plan: () => this._wizPlan(),
       devices: () => this._wizDevices(),
       duplicates: () => this._wizDups(),
+      functions: () => this._wizFunctions(),
       check: () => this._wizCheck(),
       done: () => this._wizDone(),
     }[step.id]();
@@ -1898,17 +2132,13 @@ class HauskartePanel extends HTMLElement {
     const d = this._data;
     const dupDevices = new Set(d.duplicates.flatMap((g) => g.members.map((m) => m.device_id)).filter(Boolean));
     const all = d.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration })));
-    const todo = all.filter((x) => !x.area_id && !x.disabled && !x.irrelevant && !dupDevices.has(x.device_id));
-    const skipped = all.filter((x) => x.irrelevant && !x.area_id);
+    // hidden or disabled as a whole: nothing to place, listed apart so they can come back
+    const out = (x) => x.status === "hidden" || x.status === "disabled";
+    const todo = all.filter((x) => !x.area_id && !out(x) && !dupDevices.has(x.device_id));
+    const skipped = all.filter((x) => out(x) && !x.area_id);
     const skippedHtml = skipped.length
-      ? `<details class="card" ${keepOpen("wiz-irrelevant", false)}><summary>${esc(t.wiz.irrelevantList(skipped.length))}</summary>
-          ${skipped
-            .map(
-              (x) => `<div class="devrow"><span class="kicon">${kindIcon(x.kind)}</span>
-                <div class="ename"><b>${esc(x.name)}</b><span class="muted">${esc([x.model, x.integration].filter(Boolean).join(" · "))}</span></div>
-                <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="0" class="secondary">${esc(t.showAgain)}</button></div>`,
-            )
-            .join("")}</details>`
+      ? `<details class="card" ${keepOpen("wiz-hidden", false)}><summary>${esc(t.wiz.hiddenList(skipped.length))}</summary>
+          ${skipped.map((x) => this._deviceRow(x, {})).join("")}</details>`
       : "";
     const placed = all.filter((x) => x.area_id).length;
     const aiBtn = d.llm
@@ -1965,6 +2195,33 @@ class HauskartePanel extends HTMLElement {
     const d = this._data;
     return `<div class="info">${esc(t.wiz.dupsInfo)}</div>
       ${d.duplicates.length ? d.duplicates.map((g) => this._dupCard(g, true)).join("") : `<p class="muted">${esc(t.wiz.dupsNone)}</p>`}`;
+  }
+
+  // Room by room: every device with its functions open, the AI bar for the whole room.
+  _wizFunctions() {
+    const t = this._t;
+    const d = this._data;
+    const m = d.map;
+    const floorOrder = new Map(m.floors.map((f, i) => [f.floor_id ?? "", i]));
+    const rooms = [...m.rooms]
+      .sort((a, b) => (floorOrder.get(a.floor_id ?? "") ?? 99) - (floorOrder.get(b.floor_id ?? "") ?? 99) || a.name.localeCompare(b.name))
+      .map((r) => ({ id: r.area_id, name: r.name }));
+    rooms.push({ id: "-", name: t.wiz.fnNoRoom });
+    const all = d.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration })));
+    const inRoom = (id) =>
+      all.filter((x) => (id === "-" ? !x.area_id && x.status !== "disabled" && x.status !== "hidden" : x.area_id === id));
+    for (const r of rooms) r.n = inRoom(r.id).length;
+    if (!rooms.some((r) => r.id === this._fnRoom)) this._fnRoom = (rooms.find((r) => r.n) || rooms[0]).id;
+    const i = rooms.findIndex((r) => r.id === this._fnRoom);
+    const here = inRoom(this._fnRoom).sort((a, b) => a.name.localeCompare(b.name));
+    return `<div class="info">${esc(t.wiz.fnInfo)}</div>
+      <div class="card row fnroomnav">
+        <button data-act="fn-room" data-to="${esc(rooms[Math.max(0, i - 1)].id)}" class="secondary small" ${i === 0 ? "disabled" : ""}>‹</button>
+        <select id="fn-room">${rooms.map((r) => `<option value="${esc(r.id)}" ${r.id === this._fnRoom ? "selected" : ""}>${esc(r.name)} (${r.n})</option>`).join("")}</select>
+        <button data-act="fn-room" data-to="${esc(rooms[Math.min(rooms.length - 1, i + 1)].id)}" class="secondary small" ${i === rooms.length - 1 ? "disabled" : ""}>›</button>
+        <span class="muted">${esc(t.wiz.fnRoom(i + 1, rooms.length))}</span></div>
+      ${this._statusLegend()}
+      ${here.length ? `<div class="card">${this._fnAiBar(here)}${here.map((x) => this._deviceRow(x, { open: true })).join("")}</div>` : `<p class="muted">${esc(t.wiz.fnEmpty)}</p>`}`;
   }
 
   _wizCheck() {
@@ -2690,11 +2947,14 @@ class HauskartePanel extends HTMLElement {
     const t = this._t;
     const cur = e.current;
     const pro = e.proposed;
-    const changed = pro.remove || pro.exposed !== cur.exposed || pro.aliases.join("|") !== cur.aliases.join("|");
+    const status = proposedStatus(e);
+    const changed = pro.remove || status !== cur.status || pro.aliases.join("|") !== cur.aliases.join("|");
     const reasons = e.reasons.map((r) => this._reason(r)).join(" · ");
     return `<div class="entity ${changed ? "changed" : ""}" data-entity="${esc(e.entity_id)}">
-      <label class="check"><input type="checkbox" data-f="exposed" ${pro.exposed ? "checked" : ""}> ${esc(t.exposed)}</label>
-      <div class="ename"><b>${e.what ? kindIcon(e.what) + " " : ""}${esc(e.title)}</b><span class="muted">${esc(e.entity_id)}</span>
+      <select class="stsel" data-f="status">${this._statusOptions(status)}</select>
+      <div class="ename"><b>${e.what ? kindIcon(e.what) + " " : ""}${esc(e.title)}</b>
+        <span class="muted small">${this._fnWhat({ ...e, role: roleOf(e.domain, e.category), kind: e.what })}</span>
+        <span class="muted">${esc(e.entity_id)}</span>
         ${reasons ? `<span class="reason">${esc(reasons)}</span>` : ""}</div>
       <input data-f="aliases" placeholder="${esc(t.aliases)}" value="${esc(pro.aliases.join(", "))}">
       ${pro.remove || e.reasons.some((r) => r.code === "orphaned")
@@ -2702,6 +2962,7 @@ class HauskartePanel extends HTMLElement {
         : ""}
     </div>`;
   }
+
 
   _changesHtml(p) {
     const t = this._t;
@@ -2712,14 +2973,15 @@ class HauskartePanel extends HTMLElement {
     if (p.proposed.name !== p.current.name) lines.push(["✏️", t.changeName(p.current.name || p.title, p.proposed.name || p.title)]);
     else if (p.flags.includes("name_technical")) lines.push(["✏️", t.needName, "need"]);
     if (p.flags.includes("speaker")) lines.push(["🎙️", t.speakerNoRoom, "need"]);
-    const list = (rows) => {
-      const names = rows.map((e) => e.title);
-      return names.slice(0, 3).join(", ") + (names.length > 3 ? ` (+${names.length - 3})` : "");
-    };
-    const hide = p.entities.filter((e) => e.current.exposed && !e.proposed.exposed);
-    const show = p.entities.filter((e) => !e.current.exposed && e.proposed.exposed);
-    if (hide.length) lines.push(["🙈", t.hideFor(list(hide))]);
-    if (show.length) lines.push(["🗣️", t.showFor(list(show))]);
+    for (const e of p.entities) {
+      const to = proposedStatus(e);
+      if (to === e.current.status) continue;
+      const why = e.reasons.map((r) => this._reason(r)).join(" · ");
+      lines.push([
+        `${STATUS_ICON[e.current.status]}→${STATUS_ICON[to]}`,
+        t.st.change(e.title, t.st[e.current.status], t.st[to]) + (why ? ` – ${t.st.because(why)}` : ""),
+      ]);
+    }
     for (const e of p.entities) {
       if (e.proposed.aliases.join("|") !== e.current.aliases.join("|") && e.proposed.aliases.length) {
         lines.push(["🏷️", t.aliasesSet(e.proposed.aliases.join(", "))]);
@@ -2734,7 +2996,7 @@ class HauskartePanel extends HTMLElement {
     const meta = [t.kinds[p.what], p.manufacturer, p.model, p.integration].filter(Boolean).join(" · ");
     const notes = p.reasons.filter((r) => r.code === "llm_note").map((r) => this._reason(r));
     const changedRows = p.entities.filter(
-      (e) => e.proposed.remove || e.proposed.exposed !== e.current.exposed || e.proposed.aliases.join("|") !== e.current.aliases.join("|") || e.entity_id === p.main_entity,
+      (e) => e.proposed.remove || proposedStatus(e) !== e.current.status || e.proposed.aliases.join("|") !== e.current.aliases.join("|") || e.entity_id === p.main_entity,
     );
     const otherRows = p.entities.filter((e) => !changedRows.includes(e));
     const needInput =
@@ -2747,6 +3009,7 @@ class HauskartePanel extends HTMLElement {
       <div class="head"><span class="kicon">${kindIcon(p.what)}</span>
         <div class="htxt"><h2>${esc(p.title)}</h2><div class="muted">${esc(meta)}</div></div>
         <span class="grow"></span>${badges}</div>
+      ${this._cardFunctions(p)}
       ${this._changesHtml(p)}
       ${notes.length ? `<div class="muted small">${esc(notes.join(" · "))}</div>` : ""}
       <details class="edit" ${needInput ? "open" : ""}><summary>${esc(t.adjust)}</summary>
@@ -2755,14 +3018,13 @@ class HauskartePanel extends HTMLElement {
           <label>${esc(t.name)}<input data-f="name" value="${esc(p.proposed.name ?? "")}" placeholder="${esc(p.title)}"></label>
         </div>
         <label class="check maptoggle"><input type="checkbox" data-f="on_map" ${p.on_map ? "checked" : ""}> 🗺️ ${esc(t.onMap)}</label>
+        ${this._statusLegend()}
         <div class="entities">${changedRows.map((e) => this._entityRow(e)).join("")}
           ${otherRows.length ? `<details><summary>${otherRows.length} ${esc(t.more)}</summary>${otherRows.map((e) => this._entityRow(e)).join("")}</details>` : ""}
         </div>
       </details>
       <div class="actions">
         <button data-act="accept">${esc(t.accept)}</button>
-        <button data-act="not-for-assistant" class="secondary">${esc(t.notForAssistant)}</button>
-        ${p.id.startsWith("device:") ? `<button data-act="dev-irrelevant" data-device="${esc(p.id.slice(7))}" data-on="1" class="flat" title="${esc(t.irrelevantTip)}">🚫 ${esc(t.irrelevant)}</button>` : ""}
         <span class="grow"></span>
         ${p.status === "open" ? `<button data-act="later" class="flat">${esc(t.postpone)}</button>` : ""}
         <button data-act="ignore" class="flat">${esc(t.ignore)}</button>
@@ -2770,7 +3032,7 @@ class HauskartePanel extends HTMLElement {
     </div>`;
   }
 
-  _values(card, notForAssistant) {
+  _values(card) {
     const entities = {};
     card.querySelectorAll("[data-entity]").forEach((row) => {
       const aliases = row
@@ -2779,12 +3041,11 @@ class HauskartePanel extends HTMLElement {
         .map((a) => a.trim())
         .filter(Boolean);
       entities[row.dataset.entity] = {
-        exposed: notForAssistant ? false : row.querySelector('[data-f="exposed"]').checked,
+        status: row.querySelector('[data-f="status"]').value,
         aliases,
         remove: !!row.querySelector('[data-f="remove"]')?.checked,
       };
     });
-    if (notForAssistant) return { entities, on_map: false };
     return {
       area_id: card.querySelector('[data-f="area"]').value || null,
       name: card.querySelector('[data-f="name"]').value.trim() || null,
@@ -2856,6 +3117,7 @@ class HauskartePanel extends HTMLElement {
     }
     if (el.dataset.step) {
       this._step = el.dataset.step;
+      if (el.dataset.step === "telemetry") this._telemetry = null;
       this._search = "";
       this._shown = PAGE;
       this._render();
@@ -2916,24 +3178,51 @@ class HauskartePanel extends HTMLElement {
         const r = await this._ws("apply_safe");
         this._toast(t.applied(r.changes));
       } else if (act === "assist-move") {
-        await this._setExposed([el.dataset.eid], el.dataset.to === "1");
+        await this._setStatus([el.dataset.eid], el.dataset.to);
         return;
       } else if (act === "assist-all") {
-        const on = el.dataset.to === "1";
+        const on = el.dataset.to === "assistant";
         const ids = this._assistIds(!on);
         if (!confirm(t.assist.confirmAll(ids.length, on))) return;
-        await this._setExposed(ids, on);
+        await this._setStatus(ids, el.dataset.to);
         return;
       } else if (act === "assist-more") {
         this._assistShown = (this._assistShown || 150) + 150;
         this._renderList();
         return;
-      } else if (act === "dev-irrelevant") {
-        await this._ws("device_irrelevant", { device_id: el.dataset.device, irrelevant: el.dataset.on === "1" });
-        this._toast(t.saved);
-      } else if (act === "dev-toggle") {
-        const row = el.closest("[data-device]");
-        await this._ws("device_disabled", { device_id: row.dataset.device, disabled: row.dataset.disabled !== "1" });
+      } else if (act === "ai-fn") {
+        await this._ws("ai_functions", { device_ids: el.dataset.devices.split(",") });
+        await this._load();
+        return;
+      } else if (act === "ai-fn-take") {
+        const res = await this._ws("ai_functions_take", { device_ids: el.dataset.devices.split(",") });
+        this._toast(t.assist.changed(res.changes));
+        this._telemetry = null;
+        await this._load();
+        return;
+      } else if (act === "fn-room") {
+        this._fnRoom = el.dataset.to;
+        this._render();
+        window.scrollTo({ top: 0 });
+        return;
+      } else if (act === "tel-apply" || act === "tel-ai") {
+        const boxes = [...this.shadowRoot.querySelectorAll("[data-tel]:checked")];
+        if (!boxes.length) return this._toast(t.tele.none);
+        if (act === "tel-ai") {
+          const devices = [...new Set(boxes.map((b) => this._telemetry.entities.find((x) => x.entity_id === b.dataset.tel)?.device_id).filter(Boolean))];
+          await this._ws("ai_functions", { device_ids: devices });
+          this._telemetry = null;
+          await this._load();
+          return;
+        }
+        const status = this.shadowRoot.querySelector("#tel-status").value;
+        const used = boxes.filter((b) => Number(b.dataset.used)).length;
+        if (status === "disabled" && used && !confirm(t.tele.confirmUsed(used))) return;
+        await this._setStatus(boxes.map((b) => b.dataset.tel), status);
+        return;
+      } else if (act === "fn-ai-take") {
+        await this._setStatus([el.dataset.eid], el.dataset.status);
+        return;
       } else if (act === "dev-delete") {
         const row = el.closest("[data-device]");
         if (!confirm(t.confirmDelete(row.dataset.name))) return;
@@ -3065,8 +3354,8 @@ class HauskartePanel extends HTMLElement {
       } else if (act === "undo") {
         const r = await this._ws("undo");
         this._toast(r.title ? t.undone(r) : t.nothingToUndo);
-      } else if (act === "accept" || act === "not-for-assistant") {
-        const values = this._values(card, act === "not-for-assistant");
+      } else if (act === "accept") {
+        const values = this._values(card);
         if (Object.values(values.entities).some((e) => e.remove) && !confirm(t.confirmRemove)) return;
         const r = await this._ws("apply", { proposal_id: id, values });
         card.remove();
@@ -3344,7 +3633,18 @@ const STYLE = `
   details.aliases[open] { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
   .aliasrow { display: flex; flex-direction: column; gap: 2px; }
   .fnrow { border-top: 1px solid var(--divider-color); padding: 6px 0; display: flex; flex-direction: column; gap: 4px; }
-  .fnrow.off .fnfields { opacity: .55; }
+  .fnrow.st-hidden .fnfields, .fnrow.st-disabled .fnfields { opacity: .55; }
+  .fnrow.st-disabled .fnwhat { text-decoration: line-through; opacity: .7; }
+  .stsel { width: auto; max-width: 170px; }
+  .fnwhat { font-size: 13px; }
+  .aibar { gap: 6px; margin: 4px 0; }
+  .fnroomnav select { flex: 1; min-width: 160px; }
+  .telrow.st-disabled .ename { opacity: .6; }
+  .fnlist { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; margin: 4px 0; }
+  .fnlist span { white-space: nowrap; }
+  details.legend summary { cursor: pointer; font-size: 12px; color: var(--primary-color); }
+  table.legendtab { border-collapse: collapse; font-size: 12px; margin: 6px 0; }
+  table.legendtab th, table.legendtab td { padding: 2px 10px 2px 0; text-align: left; }
   .fnhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .fnfields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .fnfields input.alias { grid-column: 1 / -1; max-width: none; }

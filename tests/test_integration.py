@@ -276,20 +276,35 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     await ws(type="hauskarte/undo")
     assert dr.async_get(hass).async_get(lamp.id).disabled_by is None
 
-    # not relevant: off the lists, not for the assistant, hidden on the map – and back with undo
+    # device status is a ceiling: "hidden" hides every function in HA and takes it from the assistant
+    reg = er.async_get(hass)
     assert async_should_expose(hass, "conversation", "light.lamp")
-    await ws(type="hauskarte/device_irrelevant", device_id=lamp.id, irrelevant=True)
+    await ws(type="hauskarte/device_status", device_id=lamp.id, status="hidden")
     state = await ws(type="hauskarte/state")
     devices = {d["device_id"]: d for g in state["devices"] for d in g["devices"]}
-    assert devices[lamp.id]["irrelevant"] is True
+    assert devices[lamp.id]["status"] == "hidden"
+    assert reg.async_get("light.lamp").hidden_by is er.RegistryEntryHider.USER
+    assert reg.async_get("sensor.lamp_rssi").hidden_by is er.RegistryEntryHider.USER
     assert not async_should_expose(hass, "conversation", "light.lamp")
     assert f"device:{lamp.id}" not in {p["id"] for p in state["proposals"]}
     await ws(type="hauskarte/scan", use_llm=False)
     assert f"device:{lamp.id}" not in {p["id"] for p in (await ws(type="hauskarte/state"))["proposals"]}
-    await ws(type="hauskarte/undo")
-    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
-    assert devices[lamp.id]["irrelevant"] is False
+    # back up to "assistant": the device's own function comes back, the diagnostic value does not
+    await ws(type="hauskarte/device_status", device_id=lamp.id, status="assistant")
+    assert reg.async_get("light.lamp").hidden_by is None
     assert async_should_expose(hass, "conversation", "light.lamp")
+    assert reg.async_get("sensor.lamp_rssi").hidden_by is er.RegistryEntryHider.USER
+    await ws(type="hauskarte/undo")
+    await ws(type="hauskarte/undo")
+    assert (
+        reg.async_get("light.lamp").hidden_by is None and reg.async_get("sensor.lamp_rssi").hidden_by is None
+    )
+    assert async_should_expose(hass, "conversation", "light.lamp")
+    # "disabled" switches the device off, as HA's own "disable device"
+    await ws(type="hauskarte/device_status", device_id=lamp.id, status="disabled")
+    assert dr.async_get(hass).async_get(lamp.id).disabled_by is dr.DeviceEntryDisabler.USER
+    await ws(type="hauskarte/undo")
+    assert dr.async_get(hass).async_get(lamp.id).disabled_by is None
 
     # own name in place, back to the integration's name when emptied or set to it, undoable
     original = dr.async_get(hass).async_get(lamp.id).name
@@ -306,10 +321,19 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     items = {x["entity_id"]: x for x in (await ws(type="hauskarte/exposure"))["entities"]}
     assert items["light.lamp"]["exposed"] is True and items["light.lamp"]["kind"] == "light"
     assert "switch.plug" not in items  # removed above
-    result = await ws(type="hauskarte/set_exposed", entity_ids=["light.lamp", "light.unknown"], exposed=False)
+    assert items["light.lamp"]["status"] == "assistant" and items["light.lamp"]["role"] == "control"
+    result = await ws(type="hauskarte/set_status", entity_ids=["light.lamp", "light.unknown"], status="ha")
     assert result["changes"] == 1 and not async_should_expose(hass, "conversation", "light.lamp")
-    assert (await ws(type="hauskarte/set_exposed", entity_ids=["light.lamp"], exposed=False))["changes"] == 0
+    assert (await ws(type="hauskarte/set_status", entity_ids=["light.lamp"], status="ha"))["changes"] == 0
     await ws(type="hauskarte/undo")
+    # "disabled": no state, no data; back with undo
+    await ws(type="hauskarte/set_status", entity_ids=["sensor.lamp_rssi"], status="disabled")
+    assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is er.RegistryEntryDisabler.USER
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    rssi = {e["entity_id"]: e for e in devices[lamp.id]["functions"]}["sensor.lamp_rssi"]
+    assert rssi["status"] == "disabled" and rssi["role"] == "technical"
+    await ws(type="hauskarte/undo")
+    assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is None
     assert async_should_expose(hass, "conversation", "light.lamp")
 
     # aliases per entity, also offered on the device row; cleaned and undoable
@@ -333,13 +357,13 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
 
     # one function: "for assistant" means exposure only, the same as everywhere; name and kind in one step
     reg = er.async_get(hass)
-    await ws(type="hauskarte/entity_update", entity_id="light.lamp", changes={"use": False})
+    await ws(type="hauskarte/entity_update", entity_id="light.lamp", changes={"status": "ha"})
     assert not async_should_expose(hass, "conversation", "light.lamp")
     assert reg.async_get("light.lamp").hidden_by is None  # nothing hidden in HA
     await ws(
         type="hauskarte/entity_update",
         entity_id="light.lamp",
-        changes={"use": True, "name": "Licht Flur", "kind": "socket"},
+        changes={"status": "assistant", "name": "Licht Flur", "kind": "socket"},
     )
     assert reg.async_get("light.lamp").name == "Licht Flur"
     devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
@@ -562,3 +586,80 @@ async def test_room_names_are_unique(ha_base, hass_ws_client):
     reply = await client.receive_json()
     assert not reply["success"] and "already in use" in reply["error"]["message"]
     assert ar.async_get(hass).async_get_area(first.id).name == "Bad"
+
+
+async def test_old_not_relevant_marks_become_hidden(ha_base, hass_storage):
+    hass = ha_base
+    _kitchen, lamp, _plug = await _house(hass)
+    hass_storage["hauskarte.data"] = {
+        "version": 1,
+        "key": "hauskarte.data",
+        "data": {"irrelevant": {lamp.id: True}},
+    }
+    await _setup(hass)
+    reg = er.async_get(hass)
+    assert reg.async_get("light.lamp").hidden_by is er.RegistryEntryHider.USER
+    assert not async_should_expose(hass, "conversation", "light.lamp")
+    manager = hass.data[DOMAIN]
+    assert manager.data["irrelevant"] == {}
+    assert manager.data["undo"][-1]["title"] == "Unwichtig → Ausgeblendet"
+
+
+async def test_functions_review_and_telemetry(ha_base, hass_ws_client):
+    hass = ha_base
+    hass.config.language = "de"
+    _kitchen, lamp, _plug = await _house(hass)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        options={"llm_mode": "openai", "api_url": "http://llm.invalid/v1", "model": "m", "batch_size": 8},
+        unique_id=DOMAIN,
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    client = await hass_ws_client(hass)
+
+    async def ws(**msg):
+        await client.send_json_auto_id(msg)
+        reply = await client.receive_json()
+        assert reply["success"], reply
+        return reply["result"]
+
+    # telemetry: the diagnostic value is listed even without a recorder
+    tele = await ws(type="hauskarte/telemetry")
+    assert [x["entity_id"] for x in tele["entities"]] == ["sensor.lamp_rssi"]
+    assert tele["entities"][0]["role"] == "technical" and tele["counted"] is False
+
+    asked = []
+
+    async def fake_ask(hass_, options, system, user):
+        asked.append(user)
+        return {
+            "devices": [
+                {
+                    "device_id": lamp.id,
+                    "what": "Deckenlampe in der Küche, schaltbar.",
+                    "functions": [
+                        {"entity_id": "light.lamp", "status": "assistant", "reason": "Licht"},
+                        {"entity_id": "sensor.lamp_rssi", "status": "disabled", "reason": "nur Funkstärke"},
+                        {"entity_id": "light.other", "status": "disabled", "reason": "gibt es nicht"},
+                    ],
+                }
+            ]
+        }
+
+    manager = hass.data[DOMAIN]
+    with patch("custom_components.hauskarte.llm.ask_json", side_effect=fake_ask):
+        assert (await ws(type="hauskarte/ai_functions", device_ids=[lamp.id]))["started"]
+        await manager._scan_task
+    assert asked and asked[0].startswith("Task: what is each device") and "sensor.lamp_rssi" in asked[0]
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    assert devices[lamp.id]["what"] == "Deckenlampe in der Küche, schaltbar."
+    fns = {f["entity_id"]: f for f in devices[lamp.id]["functions"]}
+    assert fns["sensor.lamp_rssi"]["ai"] == {"status": "disabled", "reason": "nur Funkstärke"}
+
+    # taking the suggestions: one undo step
+    assert (await ws(type="hauskarte/ai_functions_take", device_ids=[lamp.id]))["changes"] >= 1
+    assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is er.RegistryEntryDisabler.USER
+    await ws(type="hauskarte/undo")
+    assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is None
