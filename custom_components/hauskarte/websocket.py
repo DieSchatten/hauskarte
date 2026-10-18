@@ -43,6 +43,7 @@ def async_register(hass: HomeAssistant) -> None:
         ws_device_name,
         ws_exposure,
         ws_entity_aliases,
+        ws_entity_update,
         ws_set_exposed,
         ws_merge,
         ws_unmerge,
@@ -335,6 +336,24 @@ def ws_remove_orphans(hass, connection, msg) -> None:
 @callback
 def ws_entity_aliases(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.set_entity_aliases(msg["entity_id"], msg["aliases"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "hauskarte/entity_update",
+        vol.Required("entity_id"): str,
+        vol.Required("changes"): {
+            vol.Optional("use"): bool,
+            vol.Optional("name"): vol.Any(str, None),
+            vol.Optional("aliases"): [str],
+            vol.Optional("kind"): vol.Any(str, None),
+        },
+    }
+)
+@callback
+def ws_entity_update(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.update_entity(msg["entity_id"], msg["changes"]))
 
 
 @websocket_api.require_admin

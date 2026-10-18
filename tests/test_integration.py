@@ -314,7 +314,8 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
 
     # aliases per entity, also offered on the device row; cleaned and undoable
     devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
-    assert "light.lamp" in {e["entity_id"] for e in devices[lamp.id]["callable"]}
+    functions = {e["entity_id"]: e for e in devices[lamp.id]["functions"]}
+    assert functions["light.lamp"]["kind"] == "light" and functions["light.lamp"]["technical"] is False
     stored = await ws(
         type="hauskarte/entity_aliases",
         entity_id="light.lamp",
@@ -329,6 +330,29 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     assert set(items["light.lamp"]["aliases"]) == {"Licht oben", "Deckenlicht"}
     await ws(type="hauskarte/undo")
     assert alias_strings(er.async_get(hass).async_get("light.lamp").aliases) == []
+
+    # one function of a device: not used = not for the assistant and hidden in HA; name and kind in one step
+    reg = er.async_get(hass)
+    await ws(type="hauskarte/entity_update", entity_id="light.lamp", changes={"use": False})
+    assert not async_should_expose(hass, "conversation", "light.lamp")
+    assert reg.async_get("light.lamp").hidden_by is er.RegistryEntryHider.USER
+    await ws(
+        type="hauskarte/entity_update",
+        entity_id="light.lamp",
+        changes={"use": True, "name": "Licht Flur", "kind": "socket"},
+    )
+    assert reg.async_get("light.lamp").hidden_by is None and reg.async_get("light.lamp").name == "Licht Flur"
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    fn = {e["entity_id"]: e for e in devices[lamp.id]["functions"]}["light.lamp"]
+    assert fn["kind"] == "socket" and fn["kind_override"] == "socket" and fn["exposed"]
+    await ws(type="hauskarte/undo")
+    # back to "not used" – the step before
+    assert reg.async_get("light.lamp").name is None
+    assert reg.async_get("light.lamp").hidden_by is er.RegistryEntryHider.USER
+    await ws(type="hauskarte/undo")
+    assert reg.async_get("light.lamp").hidden_by is None and async_should_expose(
+        hass, "conversation", "light.lamp"
+    )
 
     # HA warns about deprecated registry access in the log; there must be none from us
     assert "hauskarte" not in "".join(

@@ -1622,20 +1622,8 @@ class HauskarteManager:
                         for e in entities
                         if not e.entity_category and not e.disabled_by
                     ][:4],
-                    # what can be called by voice, with its extra names (aliases)
-                    "callable": [
-                        {
-                            "entity_id": e.entity_id,
-                            "name": (
-                                self.hass.states.get(e.entity_id).name
-                                if self.hass.states.get(e.entity_id)
-                                else e.entity_id
-                            ),
-                            "aliases": alias_strings(e.aliases),
-                        }
-                        for e in entities
-                        if not e.entity_category and not e.disabled_by and not e.hidden_by
-                    ],
+                    # the functions of the device: which are used, how they are called, what they are
+                    "functions": [self._function(inv, e, inv_dev) for e in entities if not e.disabled_by],
                     "silent": silent and not dev.disabled_by,
                     "irrelevant": dev.id in self.data.get("irrelevant", {}),
                     "disabled": dev.disabled_by is not None,
@@ -1714,32 +1702,80 @@ class HauskarteManager:
         items.sort(key=lambda x: ((x["area"] or "~").lower(), x["name"].lower()))
         return {"entities": items}
 
-    def set_entity_aliases(self, entity_id: str, aliases: list[str]) -> list[str]:
-        """Extra names the assistant understands for one entity. Undoable. Returns what was stored."""
+    def _function(self, inv: dict | None, ent: er.RegistryEntry, dev: dict | None) -> dict:
+        state = self.hass.states.get(ent.entity_id)
+        inv_ent = (inv or {}).get("entities", {}).get(ent.entity_id)
+        return {
+            "entity_id": ent.entity_id,
+            "name": state.name if state else (ent.name or ent.original_name or ent.entity_id),
+            "own_name": ent.name,
+            "aliases": alias_strings(ent.aliases),
+            "kind": kinds.entity_kind(inv_ent, dev["name"] if dev else None) if inv_ent else "other",
+            "kind_override": self.data["kind_override"].get(ent.entity_id),
+            "exposed": async_should_expose(self.hass, ASSISTANT, ent.entity_id),
+            "hidden": ent.hidden_by is not None,
+            "technical": ent.entity_category is not None,
+        }
+
+    def update_entity(self, entity_id: str, changes: dict) -> dict:
+        """One function of a device: used or not, own name, kind, aliases – in one undo step.
+
+        Not used = the assistant does not see it and HA hides it (automations keep working).
+        """
         ent_reg = er.async_get(self.hass)
         ent = ent_reg.async_get(entity_id)
         if ent is None:
-            raise HomeAssistantError("Only entities with a registry entry can have aliases")
-        clean: list[str] = []
-        for alias in aliases:
-            if isinstance(alias, str) and (alias := alias.strip()[:60]) and alias not in clean:
-                clean.append(alias)
-        if clean != alias_strings(ent.aliases):
-            self._push_undo(
-                None,
-                entity_id,
-                [
+            raise HomeAssistantError("Only entities with a registry entry can be changed here")
+        records: list[dict] = []
+        if "use" in changes:
+            use = bool(changes["use"])
+            old = async_should_expose(self.hass, ASSISTANT, entity_id)
+            if old != use:
+                records.append({"type": "entity_exposed", "target": entity_id, "old": old, "new": use})
+                async_expose_entity(self.hass, ASSISTANT, entity_id, use)
+            if not use and ent.hidden_by is None:
+                records.append({"type": "entity_hidden", "target": entity_id, "old": None, "new": "user"})
+                ent_reg.async_update_entity(entity_id, hidden_by=er.RegistryEntryHider.USER)
+            elif use and ent.hidden_by is er.RegistryEntryHider.USER:
+                records.append({"type": "entity_hidden", "target": entity_id, "old": "user", "new": None})
+                ent_reg.async_update_entity(entity_id, hidden_by=None)
+        if "name" in changes:
+            name = (changes["name"] or "").strip()[:100] or None
+            if name != ent.name:
+                records.append({"type": "entity_name", "target": entity_id, "old": ent.name, "new": name})
+                ent_reg.async_update_entity(entity_id, name=name)
+        if isinstance(changes.get("aliases"), list):
+            clean: list[str] = []
+            for alias in changes["aliases"]:
+                if isinstance(alias, str) and (alias := alias.strip()[:60]) and alias not in clean:
+                    clean.append(alias)
+            if clean != alias_strings(ent.aliases):
+                records.append(
                     {
                         "type": "entity_aliases",
                         "target": entity_id,
                         "old": serialize_aliases(ent.aliases),
                         "new": clean,
                     }
-                ],
-            )
-            ent_reg.async_update_entity(entity_id, aliases=build_aliases(ent.aliases, clean))
+                )
+                ent_reg.async_update_entity(entity_id, aliases=build_aliases(ent.aliases, clean))
+        if "kind" in changes:
+            kind = changes["kind"] or None
+            old_kind = self.data["kind_override"].get(entity_id)
+            if kind != old_kind:
+                records.append({"type": "kind_override", "target": entity_id, "old": old_kind, "new": kind})
+                if kind:
+                    self.data["kind_override"][entity_id] = kind
+                else:
+                    self.data["kind_override"].pop(entity_id, None)
+        if records:
+            self._push_undo(None, changes.get("name") or ent.name or ent.original_name or entity_id, records)
             self._changed()
-        return clean
+        ent = ent_reg.async_get(entity_id)
+        return {"changes": len(records), "aliases": alias_strings(ent.aliases)}
+
+    def set_entity_aliases(self, entity_id: str, aliases: list[str]) -> list[str]:
+        return self.update_entity(entity_id, {"aliases": aliases})["aliases"]
 
     def set_exposed(self, entity_ids: list[str], exposed: bool) -> dict:
         """Show entities to the voice assistant or take them away, in one undo step."""

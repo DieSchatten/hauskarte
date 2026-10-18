@@ -242,6 +242,16 @@ const TEXT = {
     aliasAdd: "🏷️ Alias vergeben",
     aliasCount: (n) => `🏷️ Aliase (${n})`,
     aliasInfo: "Zusätzliche Namen, unter denen der Sprachassistent die Entität versteht. Speichern mit Enter oder beim Verlassen des Felds; rückgängig machbar.",
+    fn: {
+      title: "⚙️ Funktionen",
+      none: "⚙️ Funktionen festlegen",
+      off: (n) => `${n} ausgeblendet`,
+      info: "Was dieses Gerät kann. Nur angehakte Funktionen nutzt der Assistent; die anderen werden in Home Assistant ausgeblendet (Automationen laufen weiter). Name = so heißt die Funktion überall, Art = wofür sie steht (z. B. ein Schalter, der ein Licht schaltet), Aliase = weitere Rufnamen. Alles wird sofort gespeichert und ist rückgängig machbar.",
+      use: "nutzen",
+      kindAuto: (k) => `Art: automatisch (${k})`,
+      namePh: (n) => `Name – jetzt: ${n}`,
+      technical: (n) => `Technische Werte (${n})`,
+    },
     devNameTip: "Eigener Name für das Gerät in Home Assistant (leer = Name der Integration). Entitäten, die nach dem Gerät heißen, übernehmen ihn – so versteht ihn auch der Assistent. Rückgängig machbar.",
     originalName: (n) => `Original: ${n}`,
     irrelevantTip: "Unwichtig fürs Zuhause: verschwindet aus den Raum-Listen, der Assistent sieht es nicht mehr, auf der Karte ausgeblendet. Rückgängig machbar.",
@@ -556,6 +566,16 @@ const TEXT = {
     aliasAdd: "🏷️ Add alias",
     aliasCount: (n) => `🏷️ Aliases (${n})`,
     aliasInfo: "Extra names the voice assistant understands for this entity. Saved on Enter or when leaving the field; can be undone.",
+    fn: {
+      title: "⚙️ Functions",
+      none: "⚙️ Choose functions",
+      off: (n) => `${n} hidden`,
+      info: "What this device can do. The assistant only uses the ticked functions; the others are hidden in Home Assistant (automations keep working). Name = what the function is called everywhere, kind = what it stands for (e.g. a switch that drives a light), aliases = more names to call it. Everything is saved at once and can be undone.",
+      use: "use",
+      kindAuto: (k) => `Kind: automatic (${k})`,
+      namePh: (n) => `Name – now: ${n}`,
+      technical: (n) => `Technical values (${n})`,
+    },
     devNameTip: "Own name for the device in Home Assistant (empty = the integration's name). Entities named after the device follow – so the assistant understands it too. Can be undone.",
     originalName: (n) => `Original: ${n}`,
     irrelevantTip: "Not relevant for the home: leaves the room lists, the assistant no longer sees it, hidden on the map. Can be undone.",
@@ -633,7 +653,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.12.1";
+const PANEL_VERSION = "0.13.0";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -895,6 +915,9 @@ class HauskartePanel extends HTMLElement {
         return this._save("area_update", { area_id: tg.dataset.areaFloor, floor_id: tg.value || null });
       if (tg.dataset.devArea !== undefined) return this._save("device_area", { device_id: tg.dataset.devArea, area_id: tg.value || null });
       if (tg.dataset.devName !== undefined) return this._save("device_name", { device_id: tg.dataset.devName, name: tg.value });
+      if (tg.dataset.fnUse !== undefined) return this._save("entity_update", { entity_id: tg.dataset.fnUse, changes: { use: tg.checked } });
+      if (tg.dataset.fnName !== undefined) return this._save("entity_update", { entity_id: tg.dataset.fnName, changes: { name: tg.value } });
+      if (tg.dataset.fnKind !== undefined) return this._save("entity_update", { entity_id: tg.dataset.fnKind, changes: { kind: tg.value || null } });
       if (tg.dataset.alias !== undefined) {
         const aliases = [...new Set(tg.value.split(",").map((a) => a.trim()).filter(Boolean))];
         const listed = this._exposure?.entities.find((e) => e.entity_id === tg.dataset.alias);
@@ -1502,17 +1525,35 @@ class HauskartePanel extends HTMLElement {
     return `<input class="alias" data-alias="${esc(entityId)}" value="${esc(aliases.join(", "))}" placeholder="${esc(this._t.aliasPh)}">`;
   }
 
-  // Aliases for the entities of a device that can be called by voice; folded away until needed.
-  _aliasBlock(x) {
+  // The functions of a device: which ones the assistant uses, their names, kinds and aliases.
+  _functionsBlock(x) {
     const t = this._t;
-    const ents = x.callable || [];
-    if (!ents.length) return "";
-    const n = ents.reduce((sum, e) => sum + e.aliases.length, 0);
-    return `<details class="aliases" ${keepOpen(`alias:${x.device_id}`, false)}><summary>${esc(n ? t.aliasCount(n) : t.aliasAdd)}</summary>
-      <span class="muted small">${esc(t.aliasInfo)}</span>
-      ${ents
-        .map((e) => `<label class="aliasrow"><span class="small">${esc(e.name)}</span>${this._aliasInput(e.entity_id, e.aliases)}</label>`)
-        .join("")}</details>`;
+    const fns = x.functions || [];
+    if (!fns.length) return "";
+    const used = fns.filter((e) => e.exposed && !e.hidden && !e.technical);
+    const off = fns.filter((e) => !e.technical && !(e.exposed && !e.hidden)).length;
+    const summary = used.length
+      ? `${t.fn.title}: ${used.map((e) => `${kindIcon(e.kind)} ${e.name}${e.aliases.length ? ` (🏷️ ${e.aliases.join(", ")})` : ""}`).join(" · ")}${off ? ` · ${t.fn.off(off)}` : ""}`
+      : t.fn.none;
+    const kindChoices = Object.keys(t.kinds).sort((a, b) => t.kinds[a].localeCompare(t.kinds[b]));
+    const row = (e) => {
+      const on = e.exposed && !e.hidden;
+      return `<div class="fnrow ${on ? "" : "off"}">
+        <div class="fnhead"><label class="check"><input type="checkbox" data-fn-use="${esc(e.entity_id)}" ${on ? "checked" : ""}> ${esc(t.fn.use)}</label>
+          <span class="muted small">${esc(e.entity_id)}</span></div>
+        <div class="fnfields">
+          <input data-fn-name="${esc(e.entity_id)}" value="${esc(e.own_name || "")}" placeholder="${esc(t.fn.namePh(e.name))}">
+          <select data-fn-kind="${esc(e.entity_id)}"><option value="">${esc(t.fn.kindAuto(t.kinds[e.kind] || e.kind))}</option>
+            ${kindChoices.map((k) => `<option value="${k}" ${e.kind_override === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k])}</option>`).join("")}</select>
+          ${this._aliasInput(e.entity_id, e.aliases)}</div></div>`;
+    };
+    const main = fns.filter((e) => !e.technical);
+    const tech = fns.filter((e) => e.technical);
+    return `<details class="aliases fns" ${keepOpen(`fn:${x.device_id}`, false)}><summary>${esc(summary)}</summary>
+      <span class="muted small">${esc(t.fn.info)}</span>
+      ${main.map(row).join("")}
+      ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map(row).join("")}</details>` : ""}
+    </details>`;
   }
 
   _deviceRow(x) {
@@ -1528,7 +1569,7 @@ class HauskartePanel extends HTMLElement {
                   ${x.ai ? `<span class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</span>` : ""}
                   ${x.ai_kind ? `<span class="ailine">🤖 ${esc(t.aiKind(t.kinds[x.ai_kind.kind] || x.ai_kind.kind))} · ${esc(x.ai_kind.reason)}
                     <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
-                  ${this._aliasBlock(x)}</div>
+                  ${this._functionsBlock(x)}</div>
                 <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id)}</select>
                 <div class="devbtns">
                   <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="${x.irrelevant ? 0 : 1}" class="flat"
@@ -1894,10 +1935,10 @@ class HauskartePanel extends HTMLElement {
               ({ x, area: a, why }) => `<div class="devrow"><span class="kicon">${kindIcon(x.kind)}</span>
                 <div class="ename">${this._devNameField(x)}
                   <span class="muted">${esc([t.kinds[x.kind], x.model, x.integration].filter(Boolean).join(" · "))}</span>
-                  ${x.entity_names?.length ? `<span class="muted small">${esc(t.wiz.entities(x.entity_names.join(", ")))}</span>` : ""}
+                  ${!x.functions?.length && x.entity_names?.length ? `<span class="muted small">${esc(t.wiz.entities(x.entity_names.join(", ")))}</span>` : ""}
                   ${why ? `<span class="ailine">${esc(why)}
                     <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(a)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
-                  ${this._aliasBlock(x)}</div>
+                  ${this._functionsBlock(x)}</div>
                 <div class="devbtns"><select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions("")}</select>
                   <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="1" class="flat" title="${esc(t.irrelevantTip)}">🚫 ${esc(t.irrelevant)}</button></div></div>`,
             )
@@ -3295,6 +3336,14 @@ const STYLE = `
   details.aliases summary::-webkit-details-marker { display: none; }
   details.aliases[open] { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
   .aliasrow { display: flex; flex-direction: column; gap: 2px; }
+  .fnrow { border-top: 1px solid var(--divider-color); padding: 6px 0; display: flex; flex-direction: column; gap: 4px; }
+  .fnrow.off .fnfields { opacity: .55; }
+  .fnhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .fnfields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .fnfields input.alias { grid-column: 1 / -1; max-width: none; }
+  .fnfields > * { min-width: 0; box-sizing: border-box; }
+  details.fns summary { white-space: normal; }
+  @media (max-width: 600px) { .fnfields { grid-template-columns: 1fr; } }
   input.alias { width: 100%; max-width: 480px; box-sizing: border-box; }
   .acols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
   .acol h2 { font-size: 16px; }
