@@ -159,6 +159,7 @@ const TEXT = {
     tapHint: "Tippen schaltet Licht und Schalter, langes Drücken öffnet die Bedienung.",
     sensorsTitle: "Werte",
     iconFor: (name) => `Symbol für „${name}“`,
+    iconTip: (name) => `Eigenes Symbol für „${name}“ wählen – HA-Icon oder Bild`,
     iconMdi: "HA-Icon, z. B. mdi:ceiling-light",
     iconSearch: "Icons suchen",
     iconUpload: "Bild hochladen",
@@ -512,6 +513,7 @@ const TEXT = {
     tapHint: "Tap switches lights and switches, a long press opens the controls.",
     sensorsTitle: "Readings",
     iconFor: (name) => `Symbol for “${name}”`,
+    iconTip: (name) => `Choose an own symbol for “${name}” – HA icon or image`,
     iconMdi: "HA icon, e.g. mdi:ceiling-light",
     iconSearch: "Find icons",
     iconUpload: "Upload picture",
@@ -711,7 +713,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.14.3";
+const PANEL_VERSION = "0.14.4";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -2390,7 +2392,7 @@ class HauskartePanel extends HTMLElement {
       <span class="ico" ${d.icon ? "" : "data-hydrate"}>${inner}${twin}</span><span class="lbl">${esc(d.name)}</span>
       ${this._edit && !extraClass
         ? `<span class="hide" data-hide="${esc(d.id)}" title="${esc(this._t.hide)}">×</span>
-           <span class="iconedit" data-iconedit="${esc(d.id)}" data-name="${esc(d.name)}" title="${esc(this._t.iconFor(d.name))}">🎨</span>`
+           <span class="iconedit" data-iconedit="${esc(d.id)}" data-name="${esc(d.name)}" title="${esc(this._t.iconTip(d.name))}">🎨</span>`
         : ""}</button>`;
   }
 
@@ -2666,7 +2668,8 @@ class HauskartePanel extends HTMLElement {
     if (!["map", "wizard"].includes(this._tab) || ev.button > 0) return;
     const pin = ev.target.closest?.(".pin");
     if (pin && this._editMode !== "devices") return; // rooms mode: devices are not handled
-    if (pin && !ev.target.closest("[data-hide]")) {
+    // the small buttons on a pin (× hide, 🎨 symbol) are clicks, not the start of a drag
+    if (pin && !ev.target.closest("[data-hide], [data-iconedit]")) {
       pin.setPointerCapture(ev.pointerId);
       this._pinDrag = { el: pin, sx: ev.clientX, sy: ev.clientY, moved: false, ghost: null };
       ev.preventDefault();
@@ -3087,7 +3090,9 @@ class HauskartePanel extends HTMLElement {
       const item = this._data.map.rooms.flatMap((r) => r.devices).find((d) => d.id === iconEdit.dataset.iconedit);
       this._iconFor = { id: iconEdit.dataset.iconedit, name: iconEdit.dataset.name, mdi: item?.icon?.mdi };
       this._renderList();
-      this.shadowRoot.querySelector("#icon-mdi")?.focus();
+      // the form sits below the floor plan: bring it into view
+      this.shadowRoot.querySelector(".iconform")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      this.shadowRoot.querySelector("#icon-mdi")?.focus({ preventScroll: true });
       return;
     }
     const sensor = ev.target.closest?.("[data-more-info]");
