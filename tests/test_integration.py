@@ -26,6 +26,7 @@ from homeassistant.helpers import (
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hauskarte.const import DOMAIN
+from custom_components.hauskarte.inventory import alias_strings
 
 
 async def _house(hass: HomeAssistant):
@@ -310,6 +311,24 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     assert (await ws(type="hauskarte/set_exposed", entity_ids=["light.lamp"], exposed=False))["changes"] == 0
     await ws(type="hauskarte/undo")
     assert async_should_expose(hass, "conversation", "light.lamp")
+
+    # aliases per entity, also offered on the device row; cleaned and undoable
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    assert "light.lamp" in {e["entity_id"] for e in devices[lamp.id]["callable"]}
+    stored = await ws(
+        type="hauskarte/entity_aliases",
+        entity_id="light.lamp",
+        aliases=[" Licht oben", "", "Licht oben", "Deckenlicht"],
+    )
+    assert stored == ["Licht oben", "Deckenlicht"]
+    assert set(alias_strings(er.async_get(hass).async_get("light.lamp").aliases)) == {
+        "Licht oben",
+        "Deckenlicht",
+    }
+    items = {x["entity_id"]: x for x in (await ws(type="hauskarte/exposure"))["entities"]}
+    assert set(items["light.lamp"]["aliases"]) == {"Licht oben", "Deckenlicht"}
+    await ws(type="hauskarte/undo")
+    assert alias_strings(er.async_get(hass).async_get("light.lamp").aliases) == []
 
     # HA warns about deprecated registry access in the log; there must be none from us
     assert "hauskarte" not in "".join(

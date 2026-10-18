@@ -1622,6 +1622,20 @@ class HauskarteManager:
                         for e in entities
                         if not e.entity_category and not e.disabled_by
                     ][:4],
+                    # what can be called by voice, with its extra names (aliases)
+                    "callable": [
+                        {
+                            "entity_id": e.entity_id,
+                            "name": (
+                                self.hass.states.get(e.entity_id).name
+                                if self.hass.states.get(e.entity_id)
+                                else e.entity_id
+                            ),
+                            "aliases": alias_strings(e.aliases),
+                        }
+                        for e in entities
+                        if not e.entity_category and not e.disabled_by and not e.hidden_by
+                    ],
                     "silent": silent and not dev.disabled_by,
                     "irrelevant": dev.id in self.data.get("irrelevant", {}),
                     "disabled": dev.disabled_by is not None,
@@ -1699,6 +1713,33 @@ class HauskarteManager:
             )
         items.sort(key=lambda x: ((x["area"] or "~").lower(), x["name"].lower()))
         return {"entities": items}
+
+    def set_entity_aliases(self, entity_id: str, aliases: list[str]) -> list[str]:
+        """Extra names the assistant understands for one entity. Undoable. Returns what was stored."""
+        ent_reg = er.async_get(self.hass)
+        ent = ent_reg.async_get(entity_id)
+        if ent is None:
+            raise HomeAssistantError("Only entities with a registry entry can have aliases")
+        clean: list[str] = []
+        for alias in aliases:
+            if isinstance(alias, str) and (alias := alias.strip()[:60]) and alias not in clean:
+                clean.append(alias)
+        if clean != alias_strings(ent.aliases):
+            self._push_undo(
+                None,
+                entity_id,
+                [
+                    {
+                        "type": "entity_aliases",
+                        "target": entity_id,
+                        "old": serialize_aliases(ent.aliases),
+                        "new": clean,
+                    }
+                ],
+            )
+            ent_reg.async_update_entity(entity_id, aliases=build_aliases(ent.aliases, clean))
+            self._changed()
+        return clean
 
     def set_exposed(self, entity_ids: list[str], exposed: bool) -> dict:
         """Show entities to the voice assistant or take them away, in one undo step."""

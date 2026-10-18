@@ -238,6 +238,10 @@ const TEXT = {
     disable: "Deaktivieren",
     irrelevant: "Unwichtig",
     devNamePh: "Name in Home Assistant, z. B. Licht Flur",
+    aliasPh: "weitere Namen, mit Komma getrennt – z. B. Licht oben, Deckenlicht",
+    aliasAdd: "🏷️ Alias vergeben",
+    aliasCount: (n) => `🏷️ Aliase (${n})`,
+    aliasInfo: "Zusätzliche Namen, unter denen der Sprachassistent die Entität versteht. Speichern mit Enter oder beim Verlassen des Felds; rückgängig machbar.",
     devNameTip: "Eigener Name für das Gerät in Home Assistant (leer = Name der Integration). Entitäten, die nach dem Gerät heißen, übernehmen ihn – so versteht ihn auch der Assistent. Rückgängig machbar.",
     originalName: (n) => `Original: ${n}`,
     irrelevantTip: "Unwichtig fürs Zuhause: verschwindet aus den Raum-Listen, der Assistent sieht es nicht mehr, auf der Karte ausgeblendet. Rückgängig machbar.",
@@ -548,6 +552,10 @@ const TEXT = {
     disable: "Disable",
     irrelevant: "Not relevant",
     devNamePh: "Name in Home Assistant, e.g. Hall light",
+    aliasPh: "more names, separated by commas – e.g. ceiling light, top light",
+    aliasAdd: "🏷️ Add alias",
+    aliasCount: (n) => `🏷️ Aliases (${n})`,
+    aliasInfo: "Extra names the voice assistant understands for this entity. Saved on Enter or when leaving the field; can be undone.",
     devNameTip: "Own name for the device in Home Assistant (empty = the integration's name). Entities named after the device follow – so the assistant understands it too. Can be undone.",
     originalName: (n) => `Original: ${n}`,
     irrelevantTip: "Not relevant for the home: leaves the room lists, the assistant no longer sees it, hidden on the map. Can be undone.",
@@ -625,7 +633,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.12.0";
+const PANEL_VERSION = "0.12.1";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -887,6 +895,12 @@ class HauskartePanel extends HTMLElement {
         return this._save("area_update", { area_id: tg.dataset.areaFloor, floor_id: tg.value || null });
       if (tg.dataset.devArea !== undefined) return this._save("device_area", { device_id: tg.dataset.devArea, area_id: tg.value || null });
       if (tg.dataset.devName !== undefined) return this._save("device_name", { device_id: tg.dataset.devName, name: tg.value });
+      if (tg.dataset.alias !== undefined) {
+        const aliases = [...new Set(tg.value.split(",").map((a) => a.trim()).filter(Boolean))];
+        const listed = this._exposure?.entities.find((e) => e.entity_id === tg.dataset.alias);
+        if (listed) listed.aliases = aliases;
+        return this._save("entity_aliases", { entity_id: tg.dataset.alias, aliases });
+      }
       if (tg.id === "dev-kind" || tg.id === "dev-room") {
         if (tg.id === "dev-kind") this._devKind = tg.value;
         else this._devRoom = tg.value;
@@ -1484,6 +1498,23 @@ class HauskartePanel extends HTMLElement {
       ${own ? `<span class="muted small">${esc(t.originalName(x.original_name))}</span>` : ""}`;
   }
 
+  _aliasInput(entityId, aliases) {
+    return `<input class="alias" data-alias="${esc(entityId)}" value="${esc(aliases.join(", "))}" placeholder="${esc(this._t.aliasPh)}">`;
+  }
+
+  // Aliases for the entities of a device that can be called by voice; folded away until needed.
+  _aliasBlock(x) {
+    const t = this._t;
+    const ents = x.callable || [];
+    if (!ents.length) return "";
+    const n = ents.reduce((sum, e) => sum + e.aliases.length, 0);
+    return `<details class="aliases" ${keepOpen(`alias:${x.device_id}`, false)}><summary>${esc(n ? t.aliasCount(n) : t.aliasAdd)}</summary>
+      <span class="muted small">${esc(t.aliasInfo)}</span>
+      ${ents
+        .map((e) => `<label class="aliasrow"><span class="small">${esc(e.name)}</span>${this._aliasInput(e.entity_id, e.aliases)}</label>`)
+        .join("")}</details>`;
+  }
+
   _deviceRow(x) {
     const t = this._t;
     return `<div class="devrow" data-device="${esc(x.device_id)}" data-entry="${esc(x.config_entry_id || "")}"
@@ -1496,7 +1527,8 @@ class HauskartePanel extends HTMLElement {
                   ${x.irrelevant ? `<span class="reason">🚫 ${esc(t.irrelevantLbl)}</span>` : ""}
                   ${x.ai ? `<span class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</span>` : ""}
                   ${x.ai_kind ? `<span class="ailine">🤖 ${esc(t.aiKind(t.kinds[x.ai_kind.kind] || x.ai_kind.kind))} · ${esc(x.ai_kind.reason)}
-                    <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}</div>
+                    <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
+                  ${this._aliasBlock(x)}</div>
                 <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id)}</select>
                 <div class="devbtns">
                   <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="${x.irrelevant ? 0 : 1}" class="flat"
@@ -1548,7 +1580,6 @@ class HauskartePanel extends HTMLElement {
           const head = x.area !== room ? `<h3 class="wizsec">${esc(x.area ? (x.floor ? `${x.area} · ${x.floor}` : x.area) : a.noRoom)}</h3>` : "";
           room = x.area;
           const tags = [
-            x.aliases.length ? `🏷️ ${x.aliases.join(", ")}` : "",
             x.twin ? `⧉ ${a.twinLbl}` : "",
             x.irrelevant ? `🚫 ${t.irrelevantLbl}` : "",
             x.technical ? a.techLbl : "",
@@ -1556,7 +1587,9 @@ class HauskartePanel extends HTMLElement {
           return `${head}<div class="devrow arow"><span class="kicon">${kindIcon(x.kind)}</span>
             <div class="ename"><b>${esc(x.name)}</b>
               <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
-              ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}</div>
+              ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}
+              <details class="aliases" ${keepOpen(`alias:${x.entity_id}`, false)}><summary>${esc(x.aliases.length ? `🏷️ ${x.aliases.join(", ")}` : t.aliasAdd)}</summary>
+                ${this._aliasInput(x.entity_id, x.aliases)}</details></div>
             <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? 0 : 1}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
         })
         .join("");
@@ -1863,7 +1896,8 @@ class HauskartePanel extends HTMLElement {
                   <span class="muted">${esc([t.kinds[x.kind], x.model, x.integration].filter(Boolean).join(" · "))}</span>
                   ${x.entity_names?.length ? `<span class="muted small">${esc(t.wiz.entities(x.entity_names.join(", ")))}</span>` : ""}
                   ${why ? `<span class="ailine">${esc(why)}
-                    <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(a)}" class="flat inline">${esc(t.take)}</button></span>` : ""}</div>
+                    <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(a)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
+                  ${this._aliasBlock(x)}</div>
                 <div class="devbtns"><select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions("")}</select>
                   <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="1" class="flat" title="${esc(t.irrelevantTip)}">🚫 ${esc(t.irrelevant)}</button></div></div>`,
             )
@@ -3256,6 +3290,12 @@ const STYLE = `
     padding: 6px 0; border-top: 1px solid var(--divider-color); }
   .counts { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; }
   .cnt { white-space: nowrap; }
+  details.aliases { margin-top: 2px; }
+  details.aliases summary { cursor: pointer; font-size: 12px; color: var(--primary-color); list-style: none; }
+  details.aliases summary::-webkit-details-marker { display: none; }
+  details.aliases[open] { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
+  .aliasrow { display: flex; flex-direction: column; gap: 2px; }
+  input.alias { width: 100%; max-width: 480px; box-sizing: border-box; }
   .acols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
   .acol h2 { font-size: 16px; }
   .arow .ename { min-width: 0; }
