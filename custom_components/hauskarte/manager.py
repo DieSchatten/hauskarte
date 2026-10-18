@@ -1668,6 +1668,58 @@ class HauskarteManager:
         )
         self._changed()
 
+    def exposure_overview(self) -> dict:
+        """Every entity and whether the voice assistant sees it, to go through and switch."""
+        inv = self._inventory()
+        floors = {f["floor_id"]: f["name"] for f in inv["floors"].values()}
+        merged_away = {o for m in self.data["merged"].values() for o in m["others"]}
+        irrelevant = self.data.get("irrelevant", {})
+        items = []
+        for ent in inv["entities"].values():
+            if ent["restored"]:
+                continue  # not provided any more: the orphans step deals with those
+            dev = inv["devices"].get(ent["device_id"] or "")
+            area = inv["areas"].get(duplicates.effective_area(inv, ent) or "")
+            items.append(
+                {
+                    "entity_id": ent["entity_id"],
+                    "name": ent["title"],
+                    "kind": kinds.entity_kind(ent, dev["name"] if dev else None),
+                    "area_id": area["area_id"] if area else None,
+                    "area": area["name"] if area else None,
+                    "floor": floors.get(area["floor_id"]) if area else None,
+                    "device": dev["name"] if dev else None,
+                    "aliases": ent["aliases"],
+                    "exposed": ent["exposed"],
+                    # usually not meant for the assistant; shown on request
+                    "technical": bool(ent["entity_category"] or ent["hidden"]),
+                    "twin": ent["entity_id"] in merged_away,
+                    "irrelevant": bool(dev and dev["device_id"] in irrelevant),
+                }
+            )
+        items.sort(key=lambda x: ((x["area"] or "~").lower(), x["name"].lower()))
+        return {"entities": items}
+
+    def set_exposed(self, entity_ids: list[str], exposed: bool) -> dict:
+        """Show entities to the voice assistant or take them away, in one undo step."""
+        records = []
+        for entity_id in entity_ids:
+            if (
+                self.hass.states.get(entity_id) is None
+                and er.async_get(self.hass).async_get(entity_id) is None
+            ):
+                continue
+            old = async_should_expose(self.hass, ASSISTANT, entity_id)
+            if old == exposed:
+                continue
+            records.append({"type": "entity_exposed", "target": entity_id, "old": old, "new": exposed})
+            async_expose_entity(self.hass, ASSISTANT, entity_id, exposed)
+        if records:
+            title = records[0]["target"] if len(records) == 1 else f"{len(records)} Entitäten"
+            self._push_undo(None, title, records)
+            self._changed()
+        return {"changes": len(records)}
+
     def set_irrelevant(self, device_id: str, irrelevant: bool) -> dict:
         """Not relevant for the home: off the room lists, not for the assistant, not on the map. Undoable.
 

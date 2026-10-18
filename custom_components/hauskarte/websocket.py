@@ -41,6 +41,8 @@ def async_register(hass: HomeAssistant) -> None:
         ws_device_disabled,
         ws_device_irrelevant,
         ws_device_name,
+        ws_exposure,
+        ws_set_exposed,
         ws_merge,
         ws_unmerge,
         ws_not_duplicate,
@@ -319,6 +321,26 @@ def ws_item_visible(hass, connection, msg) -> None:
 @callback
 def ws_remove_orphans(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.remove_orphans(msg["entity_ids"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): "hauskarte/exposure"})
+@callback
+def ws_exposure(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.exposure_overview())
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "hauskarte/set_exposed",
+        vol.Required("entity_ids"): [str],
+        vol.Required("exposed"): bool,
+    }
+)
+@callback
+def ws_set_exposed(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.set_exposed(msg["entity_ids"], msg["exposed"]))
 
 
 @websocket_api.require_admin

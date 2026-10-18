@@ -301,6 +301,16 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     await ws(type="hauskarte/undo")
     assert dr.async_get(hass).async_get(lamp.id).name_by_user == "Licht Flur"
 
+    # what the assistant sees: listed with the room, switched in one undo step
+    items = {x["entity_id"]: x for x in (await ws(type="hauskarte/exposure"))["entities"]}
+    assert items["light.lamp"]["exposed"] is True and items["light.lamp"]["kind"] == "light"
+    assert "switch.plug" not in items  # removed above
+    result = await ws(type="hauskarte/set_exposed", entity_ids=["light.lamp", "light.unknown"], exposed=False)
+    assert result["changes"] == 1 and not async_should_expose(hass, "conversation", "light.lamp")
+    assert (await ws(type="hauskarte/set_exposed", entity_ids=["light.lamp"], exposed=False))["changes"] == 0
+    await ws(type="hauskarte/undo")
+    assert async_should_expose(hass, "conversation", "light.lamp")
+
     # HA warns about deprecated registry access in the log; there must be none from us
     assert "hauskarte" not in "".join(
         r.getMessage() for r in caplog.records if "deprecated" in r.getMessage()

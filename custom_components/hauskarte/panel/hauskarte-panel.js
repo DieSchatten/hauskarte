@@ -158,7 +158,25 @@ const TEXT = {
     iconUpload: "Bild hochladen",
     iconReset: "Standard",
     iconApply: "Übernehmen",
-    sections: { clean: "Aufräumen", map: "Karte", rooms: "Räume", devices: "Geräte" },
+    sections: { clean: "Aufräumen", map: "Karte", rooms: "Räume", devices: "Geräte", assist: "Assistent" },
+    assist: {
+      info: "Was der Sprachassistent sehen und steuern kann – und was nicht. Ein Klick schiebt einen Eintrag auf die andere Seite; wirkt sofort und lässt sich rückgängig machen. Filter oben engen beide Seiten ein, z. B. auf einen Raum.",
+      summary: (seen, all) => `Der Assistent sieht ${seen} von ${all} Entitäten.`,
+      sees: "👁 Sieht",
+      notSees: "🚫 Sieht nicht",
+      hide: "Verbergen",
+      show: "Freigeben",
+      hideAll: (n) => `Alle ${n} verbergen`,
+      showAll: (n) => `Alle ${n} freigeben`,
+      confirmAll: (n, on) => `${n} Entitäten ${on ? "für den Assistenten freigeben" : "vor dem Assistenten verbergen"}?`,
+      technical: "Technische zeigen (Diagnose, ausgeblendete)",
+      techLbl: "technisch",
+      twinLbl: "Zweitweg einer zusammengeführten Doublette",
+      loading: "Lade Entitäten …",
+      none: "Nichts – mit diesen Filtern.",
+      noRoom: "Ohne Raum",
+      changed: (n) => `${n} geändert`,
+    },
     steps: { rooms: "Etagen", duplicates: "Doppelte", open: "Vorschläge", silent: "Ohne Lebenszeichen", orphans: "Verwaist", history: "Verlauf" },
     stepInfo: {
       rooms: "Jeder Raum sollte zu einer Etage gehören – sonst weiß der Assistent nicht, was „oben“ oder „unten“ ist.",
@@ -450,7 +468,25 @@ const TEXT = {
     iconUpload: "Upload picture",
     iconReset: "Default",
     iconApply: "Apply",
-    sections: { clean: "Clean up", map: "Map", rooms: "Rooms", devices: "Devices" },
+    sections: { clean: "Clean up", map: "Map", rooms: "Rooms", devices: "Devices", assist: "Assistant" },
+    assist: {
+      info: "What the voice assistant can see and control – and what not. One click moves an entry to the other side; it takes effect at once and can be undone. The filters above narrow both sides, e.g. to one room.",
+      summary: (seen, all) => `The assistant sees ${seen} of ${all} entities.`,
+      sees: "👁 Sees",
+      notSees: "🚫 Does not see",
+      hide: "Hide",
+      show: "Expose",
+      hideAll: (n) => `Hide all ${n}`,
+      showAll: (n) => `Expose all ${n}`,
+      confirmAll: (n, on) => `${on ? "Expose" : "Hide"} ${n} entities ${on ? "to" : "from"} the assistant?`,
+      technical: "Show technical ones (diagnostic, hidden)",
+      techLbl: "technical",
+      twinLbl: "second path of a merged duplicate",
+      loading: "Loading entities …",
+      none: "Nothing – with these filters.",
+      noRoom: "Without room",
+      changed: (n) => `${n} changed`,
+    },
     steps: { rooms: "Floors", duplicates: "Duplicates", open: "Proposals", silent: "Silent", orphans: "Orphaned", history: "History" },
     stepInfo: {
       rooms: "Every room should belong to a floor – otherwise the assistant cannot tell what “upstairs” means.",
@@ -589,7 +625,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.11.5";
+const PANEL_VERSION = "0.12.0";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -640,7 +676,7 @@ const keepOpen = (key, open) => `data-keep="${esc(key)}" data-def="${open ? 1 : 
 const TOGGLE_DOMAINS = new Set(["light", "switch", "fan", "input_boolean", "siren", "humidifier"]);
 const ACTIVE_STATES = new Set(["on", "open", "opening", "closing", "playing", "heat", "cool", "heat_cool", "auto", "dry", "fan_only", "unlocked", "unlocking"]);
 
-const SECTION_ICON = { start: "🧭", clean: "🧹", map: "🗺️", rooms: "🏠", devices: "📦" };
+const SECTION_ICON = { start: "🧭", clean: "🧹", map: "🗺️", rooms: "🏠", devices: "📦", assist: "🗣️" };
 const STEPS = ["rooms", "duplicates", "open", "silent", "orphans", "history"];
 
 const esc = (value) =>
@@ -857,6 +893,11 @@ class HauskartePanel extends HTMLElement {
         this._renderList();
         return;
       }
+      if (ev.target.id === "assist-tech") {
+        this._assistTech = ev.target.checked;
+        this._renderList();
+        return;
+      }
       if (ev.target.id === "only-silent") {
         this._onlySilent = ev.target.checked;
         this._renderList();
@@ -999,7 +1040,7 @@ class HauskartePanel extends HTMLElement {
       ? `<button data-act="reload" class="reloadbtn">${esc(t.reloadNew(d.version))}</button>`
       : esc(d.version);
 
-    this.shadowRoot.querySelector("#sections").innerHTML = [...(wz.finished ? [] : ["start"]), "clean", "map", "rooms", "devices"]
+    this.shadowRoot.querySelector("#sections").innerHTML = [...(wz.finished ? [] : ["start"]), "clean", "map", "rooms", "devices", "assist"]
       .map((sec) => {
         const badge = sec === "clean" ? c.total : sec === "rooms" ? c.rooms : 0;
         return `<button data-section="${sec}" class="${this._section === sec ? "active" : ""}">
@@ -1059,6 +1100,18 @@ class HauskartePanel extends HTMLElement {
         <span class="grow"></span>
         <button data-act="apply-safe" class="secondary" ${!pc.safe || p.running ? "disabled" : ""}>${esc(t.applySafe)} (${pc.safe})</button>`;
       tools.querySelector("#search").value = this._search;
+    } else if (view === "assist") {
+      const kindsPresent = [...new Set((this._exposure?.entities || []).map((x) => x.kind))].sort((a, b) =>
+        (t.kinds[a] || a).localeCompare(t.kinds[b] || b),
+      );
+      tools.innerHTML = `<input id="search" type="search" placeholder="${esc(t.search)}">
+        <select id="dev-kind"><option value="">${esc(t.allKinds)}</option>${kindsPresent
+          .map((k) => `<option value="${k}" ${this._devKind === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k] || k)}</option>`)
+          .join("")}</select>
+        <select id="dev-room"><option value="">${esc(t.allRoomsFilter)}</option><option value="-" ${this._devRoom === "-" ? "selected" : ""}>${esc(t.withoutRoom)}</option>
+          ${d.areas.map((a) => `<option value="${esc(a.area_id)}" ${this._devRoom === a.area_id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select>
+        <label class="check"><input id="assist-tech" type="checkbox" ${this._assistTech ? "checked" : ""}> ${esc(t.assist.technical)}</label>`;
+      tools.querySelector("#search").value = this._search;
     } else if (view === "devices" || view === "silent") {
       const kindsPresent = [...new Set(d.devices.flatMap((g) => g.devices.map((x) => x.kind)))].sort((a, b) =>
         (t.kinds[a] || a).localeCompare(t.kinds[b] || b),
@@ -1104,6 +1157,10 @@ class HauskartePanel extends HTMLElement {
     const t = this._t;
     const d = this._data;
     const list = this.shadowRoot.querySelector("#list");
+    if (this._tab === "assist") {
+      this._renderAssist(list);
+      return;
+    }
     const info = t.stepInfo[this._tab] ? `<div class="info">${esc(t.stepInfo[this._tab])}</div>` : "";
     if (this._tab === "map") {
       this._renderMap(list);
@@ -1448,6 +1505,80 @@ class HauskartePanel extends HTMLElement {
                   <button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>
                 </div>
               </div>`;
+  }
+
+  // What the voice assistant sees and what not, side by side; loaded on entering the section.
+  _renderAssist(list) {
+    const t = this._t;
+    const a = t.assist;
+    if (!this._exposure) {
+      list.innerHTML = `<div class="info">${esc(a.info)}</div><p class="muted running">${esc(a.loading)}</p>`;
+      if (!this._exposureLoading) {
+        this._exposureLoading = true;
+        this._ws("exposure").then(
+          (res) => {
+            this._exposure = res;
+            this._exposureLoading = false;
+            if (this._tab === "assist") this._render(); // the kind filter needs the list too
+          },
+          (err) => {
+            this._exposureLoading = false;
+            this._toast(err.message || String(err));
+          },
+        );
+      }
+      return;
+    }
+    const s = this._search;
+    const all = this._exposure.entities;
+    const shown = all.filter(
+      (x) =>
+        (this._assistTech || !x.technical) &&
+        (!this._devKind || x.kind === this._devKind) &&
+        (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
+        (!s || [x.name, x.entity_id, x.area, x.floor, x.device, t.kinds[x.kind], ...x.aliases].join(" ").toLowerCase().includes(s)),
+    );
+    const limit = this._assistShown || 150;
+    const column = (exposed) => {
+      const items = shown.filter((x) => x.exposed === exposed);
+      let room;
+      const rows = items
+        .slice(0, limit)
+        .map((x) => {
+          const head = x.area !== room ? `<h3 class="wizsec">${esc(x.area ? (x.floor ? `${x.area} · ${x.floor}` : x.area) : a.noRoom)}</h3>` : "";
+          room = x.area;
+          const tags = [
+            x.aliases.length ? `🏷️ ${x.aliases.join(", ")}` : "",
+            x.twin ? `⧉ ${a.twinLbl}` : "",
+            x.irrelevant ? `🚫 ${t.irrelevantLbl}` : "",
+            x.technical ? a.techLbl : "",
+          ].filter(Boolean);
+          return `${head}<div class="devrow arow"><span class="kicon">${kindIcon(x.kind)}</span>
+            <div class="ename"><b>${esc(x.name)}</b>
+              <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
+              ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}</div>
+            <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? 0 : 1}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
+        })
+        .join("");
+      const bulk = items.length > 1 && (s || this._devKind || this._devRoom)
+        ? `<button data-act="assist-all" data-to="${exposed ? 0 : 1}" class="flat">${esc(exposed ? a.hideAll(items.length) : a.showAll(items.length))}</button>`
+        : "";
+      return `<div class="card acol"><div class="floorhead"><h2>${esc(exposed ? a.sees : a.notSees)} (${items.length})</h2><span class="grow"></span>${bulk}</div>
+        ${rows || `<p class="muted">${esc(a.none)}</p>`}
+        ${items.length > limit ? `<button data-act="assist-more" class="secondary wide">${esc(t.showMore)} (${items.length - limit})</button>` : ""}</div>`;
+    };
+    const seen = all.filter((x) => x.exposed).length;
+    list.innerHTML = `<div class="info">${esc(a.info)}</div><p class="muted">${esc(a.summary(seen, all.length))}</p>
+      <div class="acols">${column(true)}${column(false)}</div>`;
+    this._assistIds = (exposed) => shown.filter((x) => x.exposed === exposed).map((x) => x.entity_id);
+  }
+
+  async _setExposed(ids, exposed) {
+    const res = await this._ws("set_exposed", { entity_ids: ids, exposed });
+    // switch locally at once; the next visit reloads everything
+    for (const x of this._exposure.entities) if (ids.includes(x.entity_id)) x.exposed = exposed;
+    this._toast(this._t.assist.changed(res.changes));
+    this._renderList();
   }
 
   _devicesHtml(silentOnly) {
@@ -2616,6 +2747,7 @@ class HauskartePanel extends HTMLElement {
     const nav = el.dataset.section || el.dataset.sectionGo;
     if (nav) {
       this._section = nav;
+      if (nav === "assist") this._exposure = null;
       this._search = "";
       this._edit = false;
       this._shown = PAGE;
@@ -2701,6 +2833,19 @@ class HauskartePanel extends HTMLElement {
         if (!confirm(t.confirmSafe(n))) return;
         const r = await this._ws("apply_safe");
         this._toast(t.applied(r.changes));
+      } else if (act === "assist-move") {
+        await this._setExposed([el.dataset.eid], el.dataset.to === "1");
+        return;
+      } else if (act === "assist-all") {
+        const on = el.dataset.to === "1";
+        const ids = this._assistIds(!on);
+        if (!confirm(t.assist.confirmAll(ids.length, on))) return;
+        await this._setExposed(ids, on);
+        return;
+      } else if (act === "assist-more") {
+        this._assistShown = (this._assistShown || 150) + 150;
+        this._renderList();
+        return;
       } else if (act === "dev-irrelevant") {
         await this._ws("device_irrelevant", { device_id: el.dataset.device, irrelevant: el.dataset.on === "1" });
         this._toast(t.saved);
@@ -3111,6 +3256,10 @@ const STYLE = `
     padding: 6px 0; border-top: 1px solid var(--divider-color); }
   .counts { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; }
   .cnt { white-space: nowrap; }
+  .acols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .acol h2 { font-size: 16px; }
+  .arow .ename { min-width: 0; }
+  @media (max-width: 800px) { .acols { grid-template-columns: 1fr; } }
   .dname { font: inherit; font-weight: 600; color: var(--primary-text-color); background: transparent; border: 0;
     border-bottom: 1px dashed var(--divider-color); border-radius: 0; padding: 2px 0; min-width: 0; width: 100%; max-width: 420px; }
   .dname:hover, .dname:focus { border-bottom-color: var(--primary-color); outline: none; }
