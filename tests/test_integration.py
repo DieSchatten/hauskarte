@@ -331,28 +331,28 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     await ws(type="hauskarte/undo")
     assert alias_strings(er.async_get(hass).async_get("light.lamp").aliases) == []
 
-    # one function of a device: not used = not for the assistant and hidden in HA; name and kind in one step
+    # one function: "for assistant" means exposure only, the same as everywhere; name and kind in one step
     reg = er.async_get(hass)
     await ws(type="hauskarte/entity_update", entity_id="light.lamp", changes={"use": False})
     assert not async_should_expose(hass, "conversation", "light.lamp")
-    assert reg.async_get("light.lamp").hidden_by is er.RegistryEntryHider.USER
+    assert reg.async_get("light.lamp").hidden_by is None  # nothing hidden in HA
     await ws(
         type="hauskarte/entity_update",
         entity_id="light.lamp",
         changes={"use": True, "name": "Licht Flur", "kind": "socket"},
     )
-    assert reg.async_get("light.lamp").hidden_by is None and reg.async_get("light.lamp").name == "Licht Flur"
+    assert reg.async_get("light.lamp").name == "Licht Flur"
     devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
     fn = {e["entity_id"]: e for e in devices[lamp.id]["functions"]}["light.lamp"]
     assert fn["kind"] == "socket" and fn["kind_override"] == "socket" and fn["exposed"]
+    listed = {x["entity_id"]: x for x in (await ws(type="hauskarte/exposure"))["entities"]}["light.lamp"]
+    assert listed["own_name"] == "Licht Flur" and listed["kind_override"] == "socket"
+    assert listed["device_id"] == lamp.id
     await ws(type="hauskarte/undo")
-    # back to "not used" – the step before
     assert reg.async_get("light.lamp").name is None
-    assert reg.async_get("light.lamp").hidden_by is er.RegistryEntryHider.USER
+    assert not async_should_expose(hass, "conversation", "light.lamp")  # back to the step before
     await ws(type="hauskarte/undo")
-    assert reg.async_get("light.lamp").hidden_by is None and async_should_expose(
-        hass, "conversation", "light.lamp"
-    )
+    assert async_should_expose(hass, "conversation", "light.lamp")
 
     # HA warns about deprecated registry access in the log; there must be none from us
     assert "hauskarte" not in "".join(

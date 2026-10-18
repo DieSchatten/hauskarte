@@ -93,7 +93,6 @@ const TEXT = {
       suggestedFor: (room, n) => `Vorschlag: ${room} (${n})`,
       noSuggestion: (n) => `Ohne Vorschlag (${n})`,
       byName: (word) => `aus dem Namen („${word}“)`,
-      entities: (list) => `Entitäten: ${list}`,
       noneLeft: "Alle Geräte (außer Doppelten) haben einen Raum. 👍",
       withRoom: (n) => `${n} Geräte haben schon einen Raum – siehe Kontrolle.`,
       irrelevantList: (n) => `Als unwichtig ausgeblendet (${n})`,
@@ -239,15 +238,12 @@ const TEXT = {
     irrelevant: "Unwichtig",
     devNamePh: "Name in Home Assistant, z. B. Licht Flur",
     aliasPh: "weitere Namen, mit Komma getrennt – z. B. Licht oben, Deckenlicht",
-    aliasAdd: "🏷️ Alias vergeben",
-    aliasCount: (n) => `🏷️ Aliase (${n})`,
-    aliasInfo: "Zusätzliche Namen, unter denen der Sprachassistent die Entität versteht. Speichern mit Enter oder beim Verlassen des Felds; rückgängig machbar.",
     fn: {
       title: "⚙️ Funktionen",
       none: "⚙️ Funktionen festlegen",
-      off: (n) => `${n} ausgeblendet`,
-      info: "Was dieses Gerät kann. Nur angehakte Funktionen nutzt der Assistent; die anderen werden in Home Assistant ausgeblendet (Automationen laufen weiter). Name = so heißt die Funktion überall, Art = wofür sie steht (z. B. ein Schalter, der ein Licht schaltet), Aliase = weitere Rufnamen. Alles wird sofort gespeichert und ist rückgängig machbar.",
-      use: "nutzen",
+      off: (n) => `${n} nicht für Assistent`,
+      info: "Was dieses Gerät kann. „für Assistent“ = der Sprachassistent sieht und steuert diese Funktion (dasselbe wie im Reiter Assistent). Name = so heißt sie überall, Art = wofür sie steht (z. B. ein Schalter, der ein Licht schaltet), Aliase = weitere Rufnamen. Alles wird sofort gespeichert und ist rückgängig machbar.",
+      hiddenInHa: "in HA ausgeblendet",
       kindAuto: (k) => `Art: automatisch (${k})`,
       namePh: (n) => `Name – jetzt: ${n}`,
       technical: (n) => `Technische Werte (${n})`,
@@ -417,7 +413,6 @@ const TEXT = {
       suggestedFor: (room, n) => `Suggested: ${room} (${n})`,
       noSuggestion: (n) => `No suggestion (${n})`,
       byName: (word) => `from the name (“${word}”)`,
-      entities: (list) => `Entities: ${list}`,
       noneLeft: "Every device (except duplicates) has a room. 👍",
       withRoom: (n) => `${n} devices already have a room – see Check.`,
       irrelevantList: (n) => `Hidden as not relevant (${n})`,
@@ -563,15 +558,12 @@ const TEXT = {
     irrelevant: "Not relevant",
     devNamePh: "Name in Home Assistant, e.g. Hall light",
     aliasPh: "more names, separated by commas – e.g. ceiling light, top light",
-    aliasAdd: "🏷️ Add alias",
-    aliasCount: (n) => `🏷️ Aliases (${n})`,
-    aliasInfo: "Extra names the voice assistant understands for this entity. Saved on Enter or when leaving the field; can be undone.",
     fn: {
       title: "⚙️ Functions",
       none: "⚙️ Choose functions",
-      off: (n) => `${n} hidden`,
-      info: "What this device can do. The assistant only uses the ticked functions; the others are hidden in Home Assistant (automations keep working). Name = what the function is called everywhere, kind = what it stands for (e.g. a switch that drives a light), aliases = more names to call it. Everything is saved at once and can be undone.",
-      use: "use",
+      off: (n) => `${n} not for the assistant`,
+      info: "What this device can do. “for assistant” = the voice assistant sees and controls this function (the same as in the Assistant tab). Name = what it is called everywhere, kind = what it stands for (e.g. a switch that drives a light), aliases = more names to call it. Everything is saved at once and can be undone.",
+      hiddenInHa: "hidden in HA",
       kindAuto: (k) => `Kind: automatic (${k})`,
       namePh: (n) => `Name – now: ${n}`,
       technical: (n) => `Technical values (${n})`,
@@ -653,7 +645,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.13.0";
+const PANEL_VERSION = "0.13.1";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -915,13 +907,26 @@ class HauskartePanel extends HTMLElement {
         return this._save("area_update", { area_id: tg.dataset.areaFloor, floor_id: tg.value || null });
       if (tg.dataset.devArea !== undefined) return this._save("device_area", { device_id: tg.dataset.devArea, area_id: tg.value || null });
       if (tg.dataset.devName !== undefined) return this._save("device_name", { device_id: tg.dataset.devName, name: tg.value });
-      if (tg.dataset.fnUse !== undefined) return this._save("entity_update", { entity_id: tg.dataset.fnUse, changes: { use: tg.checked } });
-      if (tg.dataset.fnName !== undefined) return this._save("entity_update", { entity_id: tg.dataset.fnName, changes: { name: tg.value } });
-      if (tg.dataset.fnKind !== undefined) return this._save("entity_update", { entity_id: tg.dataset.fnKind, changes: { kind: tg.value || null } });
+      const listed = (id) => this._exposure?.entities.find((e) => e.entity_id === id) || {};
+      if (tg.dataset.fnUse !== undefined) {
+        listed(tg.dataset.fnUse).exposed = tg.checked;
+        return this._save("entity_update", { entity_id: tg.dataset.fnUse, changes: { use: tg.checked } });
+      }
+      if (tg.dataset.fnName !== undefined) {
+        const e = listed(tg.dataset.fnName);
+        e.own_name = tg.value.trim() || null;
+        if (e.own_name) e.name = e.own_name;
+        return this._save("entity_update", { entity_id: tg.dataset.fnName, changes: { name: tg.value } });
+      }
+      if (tg.dataset.fnKind !== undefined) {
+        const e = listed(tg.dataset.fnKind);
+        e.kind_override = tg.value || null;
+        if (tg.value) e.kind = tg.value;
+        return this._save("entity_update", { entity_id: tg.dataset.fnKind, changes: { kind: tg.value || null } });
+      }
       if (tg.dataset.alias !== undefined) {
         const aliases = [...new Set(tg.value.split(",").map((a) => a.trim()).filter(Boolean))];
-        const listed = this._exposure?.entities.find((e) => e.entity_id === tg.dataset.alias);
-        if (listed) listed.aliases = aliases;
+        listed(tg.dataset.alias).aliases = aliases;
         return this._save("entity_aliases", { entity_id: tg.dataset.alias, aliases });
       }
       if (tg.id === "dev-kind" || tg.id === "dev-room") {
@@ -1525,44 +1530,52 @@ class HauskartePanel extends HTMLElement {
     return `<input class="alias" data-alias="${esc(entityId)}" value="${esc(aliases.join(", "))}" placeholder="${esc(this._t.aliasPh)}">`;
   }
 
-  // The functions of a device: which ones the assistant uses, their names, kinds and aliases.
-  _functionsBlock(x) {
+  // One function (entity): for the assistant or not, name, kind, aliases. The same block wherever an entity is edited.
+  _fnRow(e, withUse = true) {
     const t = this._t;
-    const fns = x.functions || [];
-    if (!fns.length) return "";
-    const used = fns.filter((e) => e.exposed && !e.hidden && !e.technical);
-    const off = fns.filter((e) => !e.technical && !(e.exposed && !e.hidden)).length;
-    const summary = used.length
-      ? `${t.fn.title}: ${used.map((e) => `${kindIcon(e.kind)} ${e.name}${e.aliases.length ? ` (🏷️ ${e.aliases.join(", ")})` : ""}`).join(" · ")}${off ? ` · ${t.fn.off(off)}` : ""}`
-      : t.fn.none;
     const kindChoices = Object.keys(t.kinds).sort((a, b) => t.kinds[a].localeCompare(t.kinds[b]));
-    const row = (e) => {
-      const on = e.exposed && !e.hidden;
-      return `<div class="fnrow ${on ? "" : "off"}">
-        <div class="fnhead"><label class="check"><input type="checkbox" data-fn-use="${esc(e.entity_id)}" ${on ? "checked" : ""}> ${esc(t.fn.use)}</label>
-          <span class="muted small">${esc(e.entity_id)}</span></div>
+    return `<div class="fnrow ${e.exposed ? "" : "off"}">
+        ${withUse
+          ? `<div class="fnhead"><label class="check"><input type="checkbox" data-fn-use="${esc(e.entity_id)}" ${e.exposed ? "checked" : ""}> ${esc(t.exposed)}</label>
+          <span class="muted small">${esc(e.entity_id)}${e.hidden ? ` · ${esc(t.fn.hiddenInHa)}` : ""}</span></div>`
+          : e.hidden ? `<span class="muted small">${esc(t.fn.hiddenInHa)}</span>` : ""}
         <div class="fnfields">
           <input data-fn-name="${esc(e.entity_id)}" value="${esc(e.own_name || "")}" placeholder="${esc(t.fn.namePh(e.name))}">
           <select data-fn-kind="${esc(e.entity_id)}"><option value="">${esc(t.fn.kindAuto(t.kinds[e.kind] || e.kind))}</option>
             ${kindChoices.map((k) => `<option value="${k}" ${e.kind_override === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k])}</option>`).join("")}</select>
           ${this._aliasInput(e.entity_id, e.aliases)}</div></div>`;
-    };
+  }
+
+  // The functions of a device, folded; the summary shows what the assistant gets.
+  _functionsBlock(x) {
+    const t = this._t;
+    const fns = x.functions || [];
+    if (!fns.length) return "";
     const main = fns.filter((e) => !e.technical);
     const tech = fns.filter((e) => e.technical);
+    const used = main.filter((e) => e.exposed);
+    const off = main.length - used.length;
+    const summary = used.length
+      ? `${t.fn.title}: ${used.map((e) => `${kindIcon(e.kind)} ${e.name}${e.aliases.length ? ` (🏷️ ${e.aliases.join(", ")})` : ""}`).join(" · ")}${off ? ` · ${t.fn.off(off)}` : ""}`
+      : t.fn.none;
     return `<details class="aliases fns" ${keepOpen(`fn:${x.device_id}`, false)}><summary>${esc(summary)}</summary>
       <span class="muted small">${esc(t.fn.info)}</span>
-      ${main.map(row).join("")}
-      ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map(row).join("")}</details>` : ""}
+      ${main.map((e) => this._fnRow(e)).join("")}
+      ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map((e) => this._fnRow(e)).join("")}</details>` : ""}
     </details>`;
   }
 
-  _deviceRow(x) {
+  // One device row, used in the Devices tab and in the setup step (wiz = {area, why}: suggested room there).
+  _deviceRow(x, wiz = null) {
     const t = this._t;
+    const where = wiz || this._devGroup === "room" ? x.integration : x.area;
     return `<div class="devrow" data-device="${esc(x.device_id)}" data-entry="${esc(x.config_entry_id || "")}"
                 data-name="${esc(x.name)}" data-disabled="${x.disabled ? 1 : 0}">
                 <span class="kicon">${kindIcon(x.kind)}</span>
                 <div class="ename">${this._devNameField(x)}
-                  <span class="muted">${esc([t.kinds[x.kind], x.model, this._devGroup === "room" ? x.integration : x.area].filter(Boolean).join(" · "))}</span>
+                  <span class="muted">${esc([t.kinds[x.kind], x.model, where].filter(Boolean).join(" · "))}</span>
+                  ${wiz?.why ? `<span class="ailine">${esc(wiz.why)}
+                    <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(wiz.area)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
                   ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
                   ${x.disabled ? `<span class="reason">${esc(t.disabledLbl)}</span>` : ""}
                   ${x.irrelevant ? `<span class="reason">🚫 ${esc(t.irrelevantLbl)}</span>` : ""}
@@ -1570,12 +1583,14 @@ class HauskartePanel extends HTMLElement {
                   ${x.ai_kind ? `<span class="ailine">🤖 ${esc(t.aiKind(t.kinds[x.ai_kind.kind] || x.ai_kind.kind))} · ${esc(x.ai_kind.reason)}
                     <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
                   ${this._functionsBlock(x)}</div>
-                <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id)}</select>
                 <div class="devbtns">
+                  <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id || "")}</select>
                   <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="${x.irrelevant ? 0 : 1}" class="flat"
                     ${x.irrelevant ? "" : `title="${esc(t.irrelevantTip)}"`}>${esc(x.irrelevant ? t.showAgain : `🚫 ${t.irrelevant}`)}</button>
-                  <button data-act="dev-toggle" class="secondary">${esc(x.disabled ? t.enable : t.disable)}</button>
-                  <button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>
+                  ${wiz
+                    ? ""
+                    : `<button data-act="dev-toggle" class="secondary">${esc(x.disabled ? t.enable : t.disable)}</button>
+                  <button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>`}
                 </div>
               </div>`;
   }
@@ -1629,8 +1644,8 @@ class HauskartePanel extends HTMLElement {
             <div class="ename"><b>${esc(x.name)}</b>
               <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
               ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}
-              <details class="aliases" ${keepOpen(`alias:${x.entity_id}`, false)}><summary>${esc(x.aliases.length ? `🏷️ ${x.aliases.join(", ")}` : t.aliasAdd)}</summary>
-                ${this._aliasInput(x.entity_id, x.aliases)}</details></div>
+              <details class="aliases" ${keepOpen(`edit:${x.entity_id}`, false)}><summary>✏️ ${esc(t.adjust)}${x.aliases.length ? ` · 🏷️ ${esc(x.aliases.join(", "))}` : ""}</summary>
+                ${this._fnRow(x, false)}</details></div>
             <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? 0 : 1}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
         })
         .join("");
@@ -1932,15 +1947,7 @@ class HauskartePanel extends HTMLElement {
         ([area, items]) => `<div class="card"><h3 class="wizsec">${esc(area ? t.wiz.suggestedFor(this._areaName(area), items.length) : t.wiz.noSuggestion(items.length))}</h3>
           ${items
             .map(
-              ({ x, area: a, why }) => `<div class="devrow"><span class="kicon">${kindIcon(x.kind)}</span>
-                <div class="ename">${this._devNameField(x)}
-                  <span class="muted">${esc([t.kinds[x.kind], x.model, x.integration].filter(Boolean).join(" · "))}</span>
-                  ${!x.functions?.length && x.entity_names?.length ? `<span class="muted small">${esc(t.wiz.entities(x.entity_names.join(", ")))}</span>` : ""}
-                  ${why ? `<span class="ailine">${esc(why)}
-                    <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(a)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
-                  ${this._functionsBlock(x)}</div>
-                <div class="devbtns"><select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions("")}</select>
-                  <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="1" class="flat" title="${esc(t.irrelevantTip)}">🚫 ${esc(t.irrelevant)}</button></div></div>`,
+              ({ x, area: a, why }) => this._deviceRow(x, { area: a, why }),
             )
             .join("")}</div>`,
       )

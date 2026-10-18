@@ -1686,7 +1686,11 @@ class HauskarteManager:
                 {
                     "entity_id": ent["entity_id"],
                     "name": ent["title"],
+                    "own_name": ent["name"],
                     "kind": kinds.entity_kind(ent, dev["name"] if dev else None),
+                    "kind_override": self.data["kind_override"].get(ent["entity_id"]),
+                    "hidden": ent["hidden"],
+                    "device_id": dev["device_id"] if dev else None,
                     "area_id": area["area_id"] if area else None,
                     "area": area["name"] if area else None,
                     "floor": floors.get(area["floor_id"]) if area else None,
@@ -1718,9 +1722,9 @@ class HauskarteManager:
         }
 
     def update_entity(self, entity_id: str, changes: dict) -> dict:
-        """One function of a device: used or not, own name, kind, aliases – in one undo step.
+        """One function (entity): for the assistant or not, own name, kind, aliases – in one undo step.
 
-        Not used = the assistant does not see it and HA hides it (automations keep working).
+        "use" means exactly what it means everywhere else: exposed to the assistant. Nothing is hidden in HA.
         """
         ent_reg = er.async_get(self.hass)
         ent = ent_reg.async_get(entity_id)
@@ -1733,12 +1737,6 @@ class HauskarteManager:
             if old != use:
                 records.append({"type": "entity_exposed", "target": entity_id, "old": old, "new": use})
                 async_expose_entity(self.hass, ASSISTANT, entity_id, use)
-            if not use and ent.hidden_by is None:
-                records.append({"type": "entity_hidden", "target": entity_id, "old": None, "new": "user"})
-                ent_reg.async_update_entity(entity_id, hidden_by=er.RegistryEntryHider.USER)
-            elif use and ent.hidden_by is er.RegistryEntryHider.USER:
-                records.append({"type": "entity_hidden", "target": entity_id, "old": "user", "new": None})
-                ent_reg.async_update_entity(entity_id, hidden_by=None)
         if "name" in changes:
             name = (changes["name"] or "").strip()[:100] or None
             if name != ent.name:
