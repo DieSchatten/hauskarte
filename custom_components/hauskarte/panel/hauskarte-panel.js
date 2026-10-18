@@ -219,6 +219,9 @@ const TEXT = {
     disabledLbl: "deaktiviert",
     disable: "Deaktivieren",
     irrelevant: "Unwichtig",
+    devNamePh: "Name in Home Assistant, z. B. Licht Flur",
+    devNameTip: "Eigener Name für das Gerät in Home Assistant (leer = Name der Integration). Entitäten, die nach dem Gerät heißen, übernehmen ihn – so versteht ihn auch der Assistent. Rückgängig machbar.",
+    originalName: (n) => `Original: ${n}`,
     irrelevantTip: "Unwichtig fürs Zuhause: verschwindet aus den Raum-Listen, der Assistent sieht es nicht mehr, auf der Karte ausgeblendet. Rückgängig machbar.",
     irrelevantLbl: "unwichtig",
     enable: "Aktivieren",
@@ -508,6 +511,9 @@ const TEXT = {
     disabledLbl: "disabled",
     disable: "Disable",
     irrelevant: "Not relevant",
+    devNamePh: "Name in Home Assistant, e.g. Hall light",
+    devNameTip: "Own name for the device in Home Assistant (empty = the integration's name). Entities named after the device follow – so the assistant understands it too. Can be undone.",
+    originalName: (n) => `Original: ${n}`,
     irrelevantTip: "Not relevant for the home: leaves the room lists, the assistant no longer sees it, hidden on the map. Can be undone.",
     irrelevantLbl: "not relevant",
     enable: "Enable",
@@ -583,7 +589,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.11.4";
+const PANEL_VERSION = "0.11.5";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -844,6 +850,7 @@ class HauskartePanel extends HTMLElement {
       if (tg.dataset.areaFloor !== undefined)
         return this._save("area_update", { area_id: tg.dataset.areaFloor, floor_id: tg.value || null });
       if (tg.dataset.devArea !== undefined) return this._save("device_area", { device_id: tg.dataset.devArea, area_id: tg.value || null });
+      if (tg.dataset.devName !== undefined) return this._save("device_name", { device_id: tg.dataset.devName, name: tg.value });
       if (tg.id === "dev-kind" || tg.id === "dev-room") {
         if (tg.id === "dev-kind") this._devKind = tg.value;
         else this._devRoom = tg.value;
@@ -1412,12 +1419,20 @@ class HauskartePanel extends HTMLElement {
     return html;
   }
 
+  // Device name, editable in place; saved on Enter or when leaving the field.
+  _devNameField(x) {
+    const t = this._t;
+    const own = x.original_name && x.name !== x.original_name;
+    return `<input class="dname" data-dev-name="${esc(x.device_id)}" value="${esc(x.name)}" placeholder="${esc(t.devNamePh)}" title="${esc(t.devNameTip)}">
+      ${own ? `<span class="muted small">${esc(t.originalName(x.original_name))}</span>` : ""}`;
+  }
+
   _deviceRow(x) {
     const t = this._t;
     return `<div class="devrow" data-device="${esc(x.device_id)}" data-entry="${esc(x.config_entry_id || "")}"
                 data-name="${esc(x.name)}" data-disabled="${x.disabled ? 1 : 0}">
                 <span class="kicon">${kindIcon(x.kind)}</span>
-                <div class="ename"><b>${esc(x.name)}</b>
+                <div class="ename">${this._devNameField(x)}
                   <span class="muted">${esc([t.kinds[x.kind], x.model, this._devGroup === "room" ? x.integration : x.area].filter(Boolean).join(" · "))}</span>
                   ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
                   ${x.disabled ? `<span class="reason">${esc(t.disabledLbl)}</span>` : ""}
@@ -1713,7 +1728,7 @@ class HauskartePanel extends HTMLElement {
           ${items
             .map(
               ({ x, area: a, why }) => `<div class="devrow"><span class="kicon">${kindIcon(x.kind)}</span>
-                <div class="ename"><b>${esc(x.name)}</b>
+                <div class="ename">${this._devNameField(x)}
                   <span class="muted">${esc([t.kinds[x.kind], x.model, x.integration].filter(Boolean).join(" · "))}</span>
                   ${x.entity_names?.length ? `<span class="muted small">${esc(t.wiz.entities(x.entity_names.join(", ")))}</span>` : ""}
                   ${why ? `<span class="ailine">${esc(why)}
@@ -2534,6 +2549,7 @@ class HauskartePanel extends HTMLElement {
       <div class="actions">
         <button data-act="accept">${esc(t.accept)}</button>
         <button data-act="not-for-assistant" class="secondary">${esc(t.notForAssistant)}</button>
+        ${p.id.startsWith("device:") ? `<button data-act="dev-irrelevant" data-device="${esc(p.id.slice(7))}" data-on="1" class="flat" title="${esc(t.irrelevantTip)}">🚫 ${esc(t.irrelevant)}</button>` : ""}
         <span class="grow"></span>
         ${p.status === "open" ? `<button data-act="later" class="flat">${esc(t.postpone)}</button>` : ""}
         <button data-act="ignore" class="flat">${esc(t.ignore)}</button>
@@ -3095,6 +3111,9 @@ const STYLE = `
     padding: 6px 0; border-top: 1px solid var(--divider-color); }
   .counts { display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; }
   .cnt { white-space: nowrap; }
+  .dname { font: inherit; font-weight: 600; color: var(--primary-text-color); background: transparent; border: 0;
+    border-bottom: 1px dashed var(--divider-color); border-radius: 0; padding: 2px 0; min-width: 0; width: 100%; max-width: 420px; }
+  .dname:hover, .dname:focus { border-bottom-color: var(--primary-color); outline: none; }
   .fname { font-size: 17px; font-weight: 500; flex: 1; min-width: 140px; }
   .warnline { border-left: 4px solid var(--warning-color, #ff9800); }
   .addrow { margin-top: 8px; }

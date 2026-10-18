@@ -290,6 +290,17 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     assert devices[lamp.id]["irrelevant"] is False
     assert async_should_expose(hass, "conversation", "light.lamp")
 
+    # own name in place, back to the integration's name when emptied or set to it, undoable
+    original = dr.async_get(hass).async_get(lamp.id).name
+    await ws(type="hauskarte/device_name", device_id=lamp.id, name="  Licht Flur ")
+    assert dr.async_get(hass).async_get(lamp.id).name_by_user == "Licht Flur"
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    assert devices[lamp.id]["name"] == "Licht Flur" and devices[lamp.id]["original_name"] == original
+    await ws(type="hauskarte/device_name", device_id=lamp.id, name=original)
+    assert dr.async_get(hass).async_get(lamp.id).name_by_user is None
+    await ws(type="hauskarte/undo")
+    assert dr.async_get(hass).async_get(lamp.id).name_by_user == "Licht Flur"
+
     # HA warns about deprecated registry access in the log; there must be none from us
     assert "hauskarte" not in "".join(
         r.getMessage() for r in caplog.records if "deprecated" in r.getMessage()

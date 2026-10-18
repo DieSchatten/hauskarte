@@ -1346,6 +1346,23 @@ class HauskarteManager:
         self._refresh_unit(f"device:{device_id}")
         self._changed()
 
+    def set_device_name(self, device_id: str, name: str | None) -> None:
+        """Own name for a device (empty = back to the integration's name). Entities named after it follow."""
+        dev_reg = dr.async_get(self.hass)
+        dev = dev_reg.async_get(device_id)
+        if dev is None:
+            raise HomeAssistantError("Device no longer exists")
+        name = (name or "").strip()[:100] or None
+        if name == dev.name:
+            name = None  # the same as the integration's name: no own name needed
+        if dev.name_by_user == name:
+            return
+        records = [{"type": "device_name", "target": device_id, "old": dev.name_by_user, "new": name}]
+        dev_reg.async_update_device(device_id, name_by_user=name)
+        self._push_undo(None, name or dev.name or device_id, records)
+        self._refresh_unit(f"device:{device_id}")
+        self._changed()
+
     # --- map ------------------------------------------------------------
 
     @staticmethod
@@ -1592,6 +1609,7 @@ class HauskarteManager:
                     "device_id": dev.id,
                     "config_entry_id": entry_id,
                     "name": dev.name_by_user or dev.name or dev.model or dev.id,
+                    "original_name": dev.name or dev.model or dev.id,
                     "model": " ".join(x for x in (dev.manufacturer, dev.model) if x),
                     "area": area.name if area else None,
                     "entities": len(entities),
