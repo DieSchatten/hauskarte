@@ -1,0 +1,15 @@
+{
+  "domain": "hauskarte",
+  "name": "Hauskarte",
+  "after_dependencies": ["ai_task"],
+  "codeowners": ["@DieSchatten"],
+  "config_flow": true,
+  "dependencies": ["frontend", "http", "panel_custom", "websocket_api"],
+  "documentation": "https://github.com/DieSchatten/hauskarte",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/DieSchatten/hauskarte/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.11.1"
+}

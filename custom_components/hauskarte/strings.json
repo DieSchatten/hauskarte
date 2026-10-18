@@ -1,0 +1,99 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hauskarte",
+        "data": {
+          "llm_mode": "Where do proposals for open questions come from?",
+          "ai_task_entity": "AI Task entity",
+          "api_url": "URL of an OpenAI compatible server (…/v1)",
+          "model": "Model name",
+          "api_key": "API key (optional)",
+          "batch_size": "Devices per request",
+          "watch_new_devices": "Check new devices automatically"
+        },
+        "data_description": {
+          "llm_mode": "The fixed rules always run. A language model only fills the gaps: area, name and aliases of devices the rules cannot place.",
+          "batch_size": "Smaller values put less load on a shared model server.",
+          "watch_new_devices": "Two minutes after a device is added the rules run (without language model); new proposals show up in Repairs."
+        }
+      }
+    },
+    "error": {
+      "required": "Required for this choice"
+    },
+    "abort": {
+      "already_configured": "Hauskarte is already set up.",
+      "single_instance_allowed": "Hauskarte is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hauskarte",
+        "data": {
+          "llm_mode": "Where do proposals for open questions come from?",
+          "ai_task_entity": "AI Task entity",
+          "api_url": "URL of an OpenAI compatible server (…/v1)",
+          "model": "Model name",
+          "api_key": "API key (optional)",
+          "batch_size": "Devices per request",
+          "watch_new_devices": "Check new devices automatically"
+        },
+        "data_description": {
+          "llm_mode": "The fixed rules always run. A language model only fills the gaps: area, name and aliases of devices the rules cannot place.",
+          "batch_size": "Smaller values put less load on a shared model server.",
+          "watch_new_devices": "Two minutes after a device is added the rules run (without language model); new proposals show up in Repairs."
+        }
+      }
+    },
+    "error": {
+      "required": "Required for this choice"
+    }
+  },
+  "selector": {
+    "llm_mode": {
+      "options": {
+        "none": "No language model, rules only",
+        "ai_task": "AI Task entity from Home Assistant",
+        "openai": "OpenAI compatible server (e.g. llama.cpp, Ollama, LM Studio)"
+      }
+    }
+  },
+  "services": {
+    "scan": {
+      "name": "Scan",
+      "description": "Reads devices and entities and creates proposals for the Hauskarte panel.",
+      "fields": {
+        "use_llm": {
+          "name": "Ask language model",
+          "description": "Hand open questions to the configured language model."
+        }
+      }
+    }
+  },
+  "issues": {
+    "new_proposals": {
+      "title": "Hauskarte: new proposals",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "New proposals",
+            "description": "There are {count} new proposals for areas, names or voice assistant exposure, {safe} of them safe. The **Hauskarte** panel in the sidebar shows the details.",
+            "menu_options": {
+              "apply_safe": "Apply safe proposals",
+              "seen": "Seen, I will review on the Hauskarte panel"
+            }
+          }
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "house_description": {
+        "name": "House description"
+      }
+    }
+  }
+}

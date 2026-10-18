@@ -1,0 +1,99 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hauskarte",
+        "data": {
+          "llm_mode": "Woher kommen Vorschläge für offene Fragen?",
+          "ai_task_entity": "AI-Task-Entität",
+          "api_url": "Adresse eines OpenAI-kompatiblen Servers (…/v1)",
+          "model": "Modellname",
+          "api_key": "API-Schlüssel (optional)",
+          "batch_size": "Geräte pro Anfrage",
+          "watch_new_devices": "Neue Geräte automatisch prüfen"
+        },
+        "data_description": {
+          "llm_mode": "Die festen Regeln laufen immer. Ein Sprachmodell füllt nur die Lücken: Raum, Name und Aliase von Geräten, die die Regeln nicht zuordnen können.",
+          "batch_size": "Kleinere Werte belasten einen gemeinsam genutzten Modellserver weniger.",
+          "watch_new_devices": "Zwei Minuten nach dem Anlernen eines Geräts laufen die Regeln (ohne Sprachmodell); neue Vorschläge erscheinen unter Reparaturen."
+        }
+      }
+    },
+    "error": {
+      "required": "Für diese Auswahl erforderlich"
+    },
+    "abort": {
+      "already_configured": "Hauskarte ist bereits eingerichtet.",
+      "single_instance_allowed": "Hauskarte ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hauskarte",
+        "data": {
+          "llm_mode": "Woher kommen Vorschläge für offene Fragen?",
+          "ai_task_entity": "AI-Task-Entität",
+          "api_url": "Adresse eines OpenAI-kompatiblen Servers (…/v1)",
+          "model": "Modellname",
+          "api_key": "API-Schlüssel (optional)",
+          "batch_size": "Geräte pro Anfrage",
+          "watch_new_devices": "Neue Geräte automatisch prüfen"
+        },
+        "data_description": {
+          "llm_mode": "Die festen Regeln laufen immer. Ein Sprachmodell füllt nur die Lücken: Raum, Name und Aliase von Geräten, die die Regeln nicht zuordnen können.",
+          "batch_size": "Kleinere Werte belasten einen gemeinsam genutzten Modellserver weniger.",
+          "watch_new_devices": "Zwei Minuten nach dem Anlernen eines Geräts laufen die Regeln (ohne Sprachmodell); neue Vorschläge erscheinen unter Reparaturen."
+        }
+      }
+    },
+    "error": {
+      "required": "Für diese Auswahl erforderlich"
+    }
+  },
+  "selector": {
+    "llm_mode": {
+      "options": {
+        "none": "Kein Sprachmodell, nur Regeln",
+        "ai_task": "AI-Task-Entität aus Home Assistant",
+        "openai": "OpenAI-kompatibler Server (z. B. llama.cpp, Ollama, LM Studio)"
+      }
+    }
+  },
+  "services": {
+    "scan": {
+      "name": "Bestand prüfen",
+      "description": "Liest Geräte und Entitäten neu ein und erzeugt Vorschläge für die Hauskarte-Seite.",
+      "fields": {
+        "use_llm": {
+          "name": "Sprachmodell fragen",
+          "description": "Offene Fragen an das eingestellte Sprachmodell geben."
+        }
+      }
+    }
+  },
+  "issues": {
+    "new_proposals": {
+      "title": "Hauskarte: neue Vorschläge",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Neue Vorschläge",
+            "description": "Es gibt {count} neue Vorschläge für Räume, Namen oder die Freigabe für Sprachassistenten, davon {safe} sichere. Alles im Einzelnen zeigt die Seite **Hauskarte** in der Seitenleiste.",
+            "menu_options": {
+              "apply_safe": "Sichere Vorschläge übernehmen",
+              "seen": "Gesehen, ich prüfe auf der Hauskarte-Seite"
+            }
+          }
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "house_description": {
+        "name": "Hausbeschreibung"
+      }
+    }
+  }
+}

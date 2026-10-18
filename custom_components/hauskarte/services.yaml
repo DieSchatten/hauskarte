@@ -1,0 +1,6 @@
+scan:
+  fields:
+    use_llm:
+      default: true
+      selector:
+        boolean:
