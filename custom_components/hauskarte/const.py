@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 DOMAIN = "hauskarte"
-VERSION = "0.14.1"
+VERSION = "0.14.2"
 
 PANEL_URL = "hauskarte"
 STATIC_URL = "/hauskarte_static"

@@ -9,7 +9,7 @@ const TEXT = {
     undo: "Letzte Änderung zurücknehmen",
     open: "Offen",
     later: "Später",
-    ignored: "Ignoriert",
+    ignored: "Abgelehnt",
     history: "Verlauf",
     search: "Suchen …",
     neverScanned: "Noch nicht geprüft. Starte mit „Bestand prüfen“.",
@@ -28,7 +28,9 @@ const TEXT = {
     more: "weitere Entitäten",
     accept: "Übernehmen",
     postpone: "Später",
-    ignore: "Ignorieren",
+    ignore: "Ablehnen",
+    ignoreTip: "Diesen Vorschlag nicht mehr zeigen. Er kommt erst wieder, wenn sich am Gerät etwas ändert; unter „Abgelehnt“ lässt er sich zurückholen.",
+    ignoredInfo: "Vorschläge, die du abgelehnt hast. Sie kommen erst wieder, wenn sich am Gerät etwas ändert. „Wieder anzeigen“ holt einen sofort zurück.",
     showAgain: "Wieder anzeigen",
     safe: "sicher",
     ai: "KI-Vorschlag",
@@ -164,7 +166,8 @@ const TEXT = {
     iconApply: "Übernehmen",
     sections: { clean: "Aufräumen", map: "Karte", rooms: "Räume", devices: "Geräte", assist: "Assistent" },
     assist: {
-      info: "Was der Sprachassistent sehen und steuern kann – und was nicht. Ein Klick schiebt einen Eintrag auf die andere Seite; wirkt sofort und lässt sich rückgängig machen. Filter oben engen beide Seiten ein, z. B. auf einen Raum.",
+      info: "Jede Entität mit ihrem Status: was der Sprachassistent sieht – und alles andere, auch Ausgeblendetes und Deaktiviertes. Ein Klick schiebt einen Eintrag auf die andere Seite; der Filter „Stufe“ zeigt z. B. nur, was du ausgeblendet oder deaktiviert hast. Alles wirkt sofort; was du wann geändert hast, steht unter Aufräumen → Verlauf.",
+      allStatuses: "Alle Stufen",
       summary: (seen, all) => `Der Assistent sieht ${seen} von ${all} Entitäten.`,
       sees: "👁 Sieht",
       notSees: "🚫 Sieht nicht",
@@ -192,7 +195,7 @@ const TEXT = {
     allDone: "Hier ist alles erledigt.",
     noFloorRooms: (n) => `${n} Räume ohne Etage`,
     allRooms: "Alle Räume und Etagen",
-    propFilter: { open: "Offen", safe: "Sicher", later: "Später", ignored: "Ignoriert" },
+    propFilter: { open: "Offen", safe: "Sicher", later: "Später", ignored: "Abgelehnt" },
     kinds: {
       light: "Licht", shading: "Beschattung", window: "Fenster", door: "Tür/Tor", socket: "Steckdose", switch: "Schalter",
       heating: "Heizung/Klima", fan: "Lüftung", water: "Wasser", lock: "Schloss", media: "Medien", voice: "Sprachgerät",
@@ -359,7 +362,7 @@ const TEXT = {
     undo: "Undo last change",
     open: "Open",
     later: "Later",
-    ignored: "Ignored",
+    ignored: "Rejected",
     history: "History",
     search: "Search …",
     neverScanned: "Not scanned yet. Start with “Scan”.",
@@ -378,7 +381,9 @@ const TEXT = {
     more: "more entities",
     accept: "Apply",
     postpone: "Later",
-    ignore: "Ignore",
+    ignore: "Reject",
+    ignoreTip: "Stop showing this proposal. It only comes back when something about the device changes; “Rejected” brings it back.",
+    ignoredInfo: "Proposals you rejected. They only come back when something about the device changes. “Show again” brings one back at once.",
     showAgain: "Show again",
     safe: "safe",
     ai: "AI proposal",
@@ -514,7 +519,8 @@ const TEXT = {
     iconApply: "Apply",
     sections: { clean: "Clean up", map: "Map", rooms: "Rooms", devices: "Devices", assist: "Assistant" },
     assist: {
-      info: "What the voice assistant can see and control – and what not. One click moves an entry to the other side; it takes effect at once and can be undone. The filters above narrow both sides, e.g. to one room.",
+      info: "Every entity with its status: what the voice assistant sees – and everything else, hidden and disabled ones too. One click moves an entry to the other side; the “level” filter shows e.g. only what you hid or disabled. Everything takes effect at once; what you changed when is under Clean up → History.",
+      allStatuses: "All levels",
       summary: (seen, all) => `The assistant sees ${seen} of ${all} entities.`,
       sees: "👁 Sees",
       notSees: "🚫 Does not see",
@@ -542,7 +548,7 @@ const TEXT = {
     allDone: "All done here.",
     noFloorRooms: (n) => `${n} rooms without floor`,
     allRooms: "All rooms and floors",
-    propFilter: { open: "Open", safe: "Safe", later: "Later", ignored: "Ignored" },
+    propFilter: { open: "Open", safe: "Safe", later: "Later", ignored: "Rejected" },
     kinds: {
       light: "Light", shading: "Shading", window: "Window", door: "Door/gate", socket: "Socket", switch: "Switch",
       heating: "Heating/climate", fan: "Ventilation", water: "Water", lock: "Lock", media: "Media", voice: "Voice device",
@@ -705,7 +711,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.14.1";
+const PANEL_VERSION = "0.14.2";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -1025,6 +1031,11 @@ class HauskartePanel extends HTMLElement {
         this._renderList();
         return;
       }
+      if (ev.target.id === "assist-status") {
+        this._assistStatus = ev.target.value;
+        this._renderList();
+        return;
+      }
       if (ev.target.id === "assist-tech") {
         this._assistTech = ev.target.checked;
         this._renderList();
@@ -1249,6 +1260,8 @@ class HauskartePanel extends HTMLElement {
           .join("")}</select>
         <select id="dev-room"><option value="">${esc(t.allRoomsFilter)}</option><option value="-" ${this._devRoom === "-" ? "selected" : ""}>${esc(t.withoutRoom)}</option>
           ${d.areas.map((a) => `<option value="${esc(a.area_id)}" ${this._devRoom === a.area_id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select>
+        <select id="assist-status"><option value="">${esc(t.assist.allStatuses)}</option>
+          ${STATUSES.map((st) => `<option value="${st}" ${this._assistStatus === st ? "selected" : ""}>${STATUS_ICON[st]} ${esc(t.st[st])}</option>`).join("")}</select>
         <label class="check"><input id="assist-tech" type="checkbox" ${this._assistTech ? "checked" : ""}> ${esc(t.assist.technical)}</label>`;
       tools.querySelector("#search").value = this._search;
     } else if (view === "devices" || view === "silent") {
@@ -1351,14 +1364,16 @@ class HauskartePanel extends HTMLElement {
       return;
     }
     if (this._tab === "open" && this._propFilter === "ignored") {
-      list.innerHTML = d.ignored.length
-        ? d.ignored
-            .map(
-              (i) => `<div class="card row" data-id="${esc(i.id)}"><b>${esc(i.title)}</b><span class="grow"></span>
+      list.innerHTML =
+        `<div class="info">${esc(t.ignoredInfo)}</div>` +
+        (d.ignored.length
+          ? d.ignored
+              .map(
+                (i) => `<div class="card row" data-id="${esc(i.id)}"><b>${esc(i.title)}</b><span class="grow"></span>
                 <button data-act="show-again" class="secondary">${esc(t.showAgain)}</button></div>`,
-            )
-            .join("")
-        : `<p class="muted">${esc(t.empty)}</p>`;
+              )
+              .join("")
+          : `<p class="muted">${esc(t.empty)}</p>`);
       return;
     }
     if (this._tab === "history") {
@@ -1792,6 +1807,7 @@ class HauskartePanel extends HTMLElement {
     const shown = all.filter(
       (x) =>
         (this._assistTech || !x.quiet) &&
+        (!this._assistStatus || x.status === this._assistStatus) &&
         (!this._devKind || x.kind === this._devKind) &&
         (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
         (!s || [x.name, x.entity_id, x.area, x.floor, x.device, t.kinds[x.kind], ...x.aliases].join(" ").toLowerCase().includes(s)),
@@ -1816,16 +1832,19 @@ class HauskartePanel extends HTMLElement {
             <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? "ha" : "assistant"}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
         })
         .join("");
-      const bulk = items.length > 1 && (s || this._devKind || this._devRoom)
+      const bulk = items.length > 1 && (s || this._devKind || this._devRoom || this._assistStatus)
         ? `<button data-act="assist-all" data-to="${exposed ? "ha" : "assistant"}" class="flat">${esc(exposed ? a.hideAll(items.length) : a.showAll(items.length))}</button>`
         : "";
-      return `<div class="card acol"><div class="floorhead"><h2>${esc(exposed ? a.sees : a.notSees)} (${items.length})</h2><span class="grow"></span>${bulk}</div>
+      const title = this._assistStatus ? `${STATUS_ICON[this._assistStatus]} ${t.st[this._assistStatus]}` : exposed ? a.sees : a.notSees;
+      return `<div class="card acol"><div class="floorhead"><h2>${esc(title)} (${items.length})</h2><span class="grow"></span>${bulk}</div>
         ${rows || `<p class="muted">${esc(a.none)}</p>`}
         ${items.length > limit ? `<button data-act="assist-more" class="secondary wide">${esc(t.showMore)} (${items.length - limit})</button>` : ""}</div>`;
     };
     const seen = all.filter((x) => x.status === "assistant").length;
     list.innerHTML = `<div class="info">${esc(a.info)}</div>${this._statusLegend()}<p class="muted">${esc(a.summary(seen, all.length))}</p>
-      <div class="acols">${column(true)}${column(false)}</div>`;
+      ${this._assistStatus
+        ? `<div class="acols one">${column(this._assistStatus === "assistant")}</div>`
+        : `<div class="acols">${column(true)}${column(false)}</div>`}`;
     this._assistIds = (exposed) => shown.filter((x) => (x.status === "assistant") === exposed).map((x) => x.entity_id);
   }
 
@@ -3027,7 +3046,7 @@ class HauskartePanel extends HTMLElement {
         <button data-act="accept">${esc(t.accept)}</button>
         <span class="grow"></span>
         ${p.status === "open" ? `<button data-act="later" class="flat">${esc(t.postpone)}</button>` : ""}
-        <button data-act="ignore" class="flat">${esc(t.ignore)}</button>
+        <button data-act="ignore" class="flat" title="${esc(t.ignoreTip)}">${esc(t.ignore)}</button>
       </div>
     </div>`;
   }
@@ -3655,6 +3674,7 @@ const STYLE = `
   .acols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
   .acol h2 { font-size: 16px; }
   .arow .ename { min-width: 0; }
+  .acols.one { grid-template-columns: 1fr; }
   @media (max-width: 800px) { .acols { grid-template-columns: 1fr; } }
   .dname { font: inherit; font-weight: 600; color: var(--primary-text-color); background: transparent; border: 0;
     border-bottom: 1px dashed var(--divider-color); border-radius: 0; padding: 2px 0; min-width: 0; width: 100%; max-width: 420px; }

@@ -308,6 +308,10 @@ def parse_functions(data: dict, devices: list[dict]) -> dict[str, dict]:
                 continue
             if wanted == "disabled" and known[f["entity_id"]].get("used_in"):
                 wanted = "hidden"  # something uses it: never switch it off
-            functions[f["entity_id"]] = {"status": wanted, "reason": _reason(f.get("reason"))}
+            functions[f["entity_id"]] = {
+                "status": wanted,
+                "reason": _reason(f.get("reason")),
+                "from": known[f["entity_id"]].get("status"),  # holds only while it is still there
+            }
         out[d["device_id"]] = {"what": str(d.get("what") or "").strip()[:300], "functions": functions}
     return out

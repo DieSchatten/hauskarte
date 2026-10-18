@@ -326,6 +326,22 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     assert result["changes"] == 1 and not async_should_expose(hass, "conversation", "light.lamp")
     assert (await ws(type="hauskarte/set_status", entity_ids=["light.lamp"], status="ha"))["changes"] == 0
     await ws(type="hauskarte/undo")
+    # deciding by hand ends what a proposal said about it
+    await ws(type="hauskarte/scan", use_llm=False)
+
+    def rssi_row(state):
+        return next(
+            (r for p in state["proposals"] for r in p["entities"] if r["entity_id"] == "sensor.lamp_rssi"),
+            None,
+        )
+
+    row = rssi_row(await ws(type="hauskarte/state"))
+    assert row and row["current"]["status"] == "assistant" and row["proposed"]["exposed"] is False
+    await ws(type="hauskarte/set_status", entity_ids=["sensor.lamp_rssi"], status="hidden")
+    row = rssi_row(await ws(type="hauskarte/state"))
+    assert row is None or row["proposed"]["exposed"] == row["current"]["exposed"]  # nothing left to suggest
+    await ws(type="hauskarte/undo")
+
     # "disabled": no state, no data; back with undo
     await ws(type="hauskarte/set_status", entity_ids=["sensor.lamp_rssi"], status="disabled")
     assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is er.RegistryEntryDisabler.USER
@@ -569,6 +585,12 @@ async def test_ai_review(ha_base, hass_ws_client):
     assert fr.async_get(hass).async_get_floor(floor.floor_id).name == "Upper Floor"
     assert ar.async_get(hass).async_get_area(bath.id).floor_id is None
 
+    # suggestion back (bath without floor again) – deciding otherwise by hand ends it too
+    assert (await ws(type="hauskarte/state"))["ai"]["rooms"][0]["area_id"] == bath.id
+    ground = next(f for f in fr.async_get(hass).async_list_floors() if f.floor_id != floor.floor_id)
+    ar.async_get(hass).async_update(bath.id, floor_id=ground.floor_id)
+    assert (await ws(type="hauskarte/state"))["ai"]["rooms"] == []
+
 
 async def test_room_names_are_unique(ha_base, hass_ws_client):
     hass = ha_base
@@ -656,7 +678,19 @@ async def test_functions_review_and_telemetry(ha_base, hass_ws_client):
     devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
     assert devices[lamp.id]["what"] == "Deckenlampe in der Küche, schaltbar."
     fns = {f["entity_id"]: f for f in devices[lamp.id]["functions"]}
-    assert fns["sensor.lamp_rssi"]["ai"] == {"status": "disabled", "reason": "nur Funkstärke"}
+    assert fns["sensor.lamp_rssi"]["ai"] == {
+        "status": "disabled",
+        "reason": "nur Funkstärke",
+        "from": "assistant",
+    }
+
+    # deciding otherwise by hand: the suggestion is gone, taking suggestions leaves it alone
+    await ws(type="hauskarte/set_status", entity_ids=["sensor.lamp_rssi"], status="hidden")
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    assert {f["entity_id"]: f for f in devices[lamp.id]["functions"]}["sensor.lamp_rssi"]["ai"] is None
+    await ws(type="hauskarte/ai_functions_take", device_ids=[lamp.id])
+    assert er.async_get(hass).async_get("sensor.lamp_rssi").disabled_by is None
+    await ws(type="hauskarte/undo")
 
     # taking the suggestions: one undo step
     assert (await ws(type="hauskarte/ai_functions_take", device_ids=[lamp.id]))["changes"] >= 1

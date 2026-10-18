@@ -981,10 +981,20 @@ class HauskarteManager:
         if not ai:
             return {}
         floors_now = inv["floors"]
+
+        # a suggestion holds only while the thing is as it was when the AI looked: whatever was changed since
+        # (by taking the suggestion or deciding otherwise) is decided
+        def untouched(f: dict) -> bool:
+            now = floors_now[f["floor_id"]]
+            return now["name"] == f.get("old_name", now["name"]) and now.get("level") == f.get(
+                "old_level", now.get("level")
+            )
+
         floors = [
             f
             for f in (ai.get("floors") or {}).get("floors", [])
             if f["floor_id"] in floors_now
+            and untouched(f)
             and (
                 floors_now[f["floor_id"]]["name"] != f["name"]
                 or floors_now[f["floor_id"]].get("level") != f["level"]
@@ -995,7 +1005,8 @@ class HauskarteManager:
             for r in (ai.get("floors") or {}).get("rooms", [])
             if r["area_id"] in inv["areas"]
             and r["floor_id"] in floors_now
-            and inv["areas"][r["area_id"]].get("floor_id") != r["floor_id"]
+            and inv["areas"][r["area_id"]].get("floor_id") == r.get("current_floor_id")
+            and r.get("current_floor_id") != r["floor_id"]
         ]
         return {"at": ai.get("at"), "errors": ai.get("errors", {}), "floors": floors, "rooms": rooms}
 
@@ -1722,9 +1733,34 @@ class HauskarteManager:
                     "area_id": area["area_id"] if area else None,
                     "area": area["name"] if area else None,
                     "floor": floors.get(area["floor_id"]) if area else None,
-                    # usually not meant for the assistant: diagnostic values and what HA hides; shown on request
-                    "quiet": bool(ent["entity_category"] or ent["hidden"]),
+                    # not your doing: diagnostic values and what an integration hides; shown on request
+                    "quiet": bool(ent["entity_category"])
+                    or entry.hidden_by is er.RegistryEntryHider.INTEGRATION,
                     "twin": ent["entity_id"] in merged_away,
+                }
+            )
+        # disabled ones are not in the inventory; listed so what was switched off can be found and brought back
+        dev_reg = dr.async_get(self.hass)
+        for entry in ent_reg.entities.values():
+            if entry.disabled_by is None or entry.platform == DOMAIN:
+                continue
+            dev = dev_reg.async_get(entry.device_id) if entry.device_id else None
+            area = inv["areas"].get(entry.area_id or (dev.area_id if dev else None) or "")
+            by_you = entry.disabled_by is er.RegistryEntryDisabler.USER or (
+                entry.disabled_by is er.RegistryEntryDisabler.DEVICE
+                and dev is not None
+                and dev.disabled_by is dr.DeviceEntryDisabler.USER
+            )
+            items.append(
+                {
+                    **self._function(inv, entry, None),
+                    "device_id": entry.device_id,
+                    "device": (dev.name_by_user or dev.name) if dev else None,
+                    "area_id": area["area_id"] if area else None,
+                    "area": area["name"] if area else None,
+                    "floor": floors.get(area["floor_id"]) if area else None,
+                    "quiet": not by_you,  # switched off by the integration itself: shown on request
+                    "twin": entry.entity_id in merged_away,
                 }
             )
         items.sort(key=lambda x: ((x["area"] or "~").lower(), x["name"].lower()))
@@ -1766,6 +1802,9 @@ class HauskarteManager:
             .get("functions", {})
             .get(ent.entity_id)
         )
+        current = self._entity_status(ent)
+        if ai and (ai.get("from", current) != current or ai["status"] == current):
+            ai = None  # decided since the AI looked (taken or chosen otherwise)
         return {
             "entity_id": ent.entity_id,
             "name": name,
@@ -1779,7 +1818,7 @@ class HauskarteManager:
             "kind_override": self.data["kind_override"].get(ent.entity_id),
             "role": fn_status.role(ent.domain, category),
             "technical": category is not None,
-            "status": self._entity_status(ent),
+            "status": current,
             "exposed": async_should_expose(self.hass, ASSISTANT, ent.entity_id),
             "hidden": ent.hidden_by is not None,
             "writes": (self._writes_cache or {}).get(ent.entity_id)
@@ -1825,6 +1864,36 @@ class HauskarteManager:
             )
             ent_reg.async_update_entity(entity_id, disabled_by=None)
 
+    def _decided_by_hand(self, records: list[dict]) -> None:
+        """A status set by hand is a decision: proposals stop suggesting otherwise for these entities.
+
+        The entity rows take over what is now true; a proposal left with nothing to change is done.
+        """
+        touched = {r["target"] for r in records if r["type"].startswith("entity_")}
+        if not touched:
+            return
+        inv = self._inventory()
+        for pid, prop in list(self.data["proposals"].items()):
+            rows = [r for r in prop["entities"] if r["entity_id"] in touched]
+            if not rows:
+                continue
+            for row in rows:
+                exposed = async_should_expose(self.hass, ASSISTANT, row["entity_id"])
+                row["current"]["exposed"] = row["proposed"]["exposed"] = exposed
+            still = (
+                any(rules.entity_changed(r) for r in prop["entities"])
+                or prop["proposed"]["area_id"] != prop["current"]["area_id"]
+                or prop["proposed"]["name"] != prop["current"]["name"]
+            )
+            if not still:
+                self.data["decisions"][pid] = {
+                    "status": STATUS_DONE,
+                    "fingerprint": rules.fingerprint(inv, pid),
+                    "title": prop["title"],
+                    "at": dt_util.utcnow().isoformat(),
+                }
+                del self.data["proposals"][pid]
+
     def set_status(self, entity_ids: list[str], wanted: str) -> dict:
         """Several functions on one status, in one undo step."""
         records: list[dict] = []
@@ -1835,6 +1904,7 @@ class HauskarteManager:
             ):
                 continue
             self._apply_status(entity_id, wanted, records)
+        self._decided_by_hand(records)
         if records:
             title = entity_ids[0] if len(entity_ids) == 1 else f"{len(entity_ids)} Funktionen"
             self._push_undo(None, title, records)
@@ -1876,6 +1946,7 @@ class HauskarteManager:
         """All functions of a device up to this status (the device status is a ceiling). Undoable."""
         records: list[dict] = []
         self._device_status_records(device_id, wanted, records)
+        self._decided_by_hand(records)
         dev = dr.async_get(self.hass).async_get(device_id)
         if records:
             self._push_undo(None, dev.name_by_user or dev.name or device_id, records)
@@ -2084,13 +2155,13 @@ class HauskarteManager:
         for device_id in device_ids:
             for entity_id, suggestion in (store.get(device_id) or {}).get("functions", {}).items():
                 ent = ent_reg.async_get(entity_id)
-                if (
-                    ent is None
-                    or ent.device_id != device_id
-                    or self._entity_status(ent) == suggestion["status"]
-                ):
+                if ent is None or ent.device_id != device_id:
                     continue
+                current = self._entity_status(ent)
+                if current == suggestion["status"] or suggestion.get("from", current) != current:
+                    continue  # already there, or decided otherwise since
                 self._apply_status(entity_id, suggestion["status"], records)
+        self._decided_by_hand(records)
         if records:
             self._push_undo(None, f"KI-Vorschläge ({len(device_ids)} Geräte)", records)
             self._changed()
@@ -2105,6 +2176,7 @@ class HauskarteManager:
         records: list[dict] = []
         if "status" in changes:
             self._apply_status(entity_id, changes["status"], records)
+            self._decided_by_hand(records)
         if "name" in changes:
             name = (changes["name"] or "").strip()[:100] or None
             if name != ent.name:
@@ -2180,12 +2252,22 @@ class HauskarteManager:
             dev_name = None
             ent = inv["entities"].get(key)
             prop["what"] = kinds.entity_kind(ent) if ent else "other"
-        prop["entities"] = [
-            {**r, "what": kinds.entity_kind(inv["entities"][r["entity_id"]], dev_name)}
-            if r["entity_id"] in inv["entities"]
-            else r
-            for r in prop["entities"]
-        ]
+        ent_reg = er.async_get(self.hass)
+        rows = []
+        for r in prop["entities"]:
+            entry = ent_reg.async_get(r["entity_id"])
+            # read fresh: proposals stored before 0.14 do not know the status yet
+            current = {
+                **r["current"],
+                "status": self._entity_status(entry)
+                if entry
+                else fn_status.entity_status(r["current"]["exposed"], False, False),
+            }
+            row = {**r, "current": current}
+            if r["entity_id"] in inv["entities"]:
+                row["what"] = kinds.entity_kind(inv["entities"][r["entity_id"]], dev_name)
+            rows.append(row)
+        prop["entities"] = rows
         return prop
 
     def _with_map_choice(self, prop: dict) -> dict:
