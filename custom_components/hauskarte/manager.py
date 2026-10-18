@@ -104,6 +104,7 @@ class HauskarteManager:
             "wizard": {"pos": None, "done": [], "finished": False, "dismissed": False},
             "icons": {},
             "groups": [],
+            "irrelevant": {},
         }
         self.progress: dict[str, Any] = {
             "running": False,
@@ -246,7 +247,10 @@ class HauskarteManager:
 
     def _merge_with_decisions(self, fresh: dict[str, dict]) -> dict[str, dict]:
         result = {}
+        irrelevant = self.data.get("irrelevant", {})
         for pid, prop in fresh.items():
+            if pid.startswith("device:") and pid[7:] in irrelevant:
+                continue  # marked as not relevant: nothing to tidy up there
             decision = self.data["decisions"].get(pid)
             same = decision is not None and decision["fingerprint"] == prop["fingerprint"]
             if same and decision["status"] in (STATUS_DONE, STATUS_IGNORED):
@@ -442,8 +446,17 @@ class HauskarteManager:
         for rec in reversed(records):
             target, old = rec["target"], rec["old"]
             kind = rec["type"]
-            if kind in ("layout", "pin", "map_visible", "dup_decision", "kind_override", "icon"):
+            if kind in (
+                "layout",
+                "pin",
+                "map_visible",
+                "dup_decision",
+                "kind_override",
+                "icon",
+                "irrelevant",
+            ):
                 store = {
+                    "irrelevant": "irrelevant",
                     "layout": "layout",
                     "pin": "pins",
                     "map_visible": "shown",
@@ -1592,6 +1605,7 @@ class HauskarteManager:
                         if not e.entity_category and not e.disabled_by
                     ][:4],
                     "silent": silent and not dev.disabled_by,
+                    "irrelevant": dev.id in self.data.get("irrelevant", {}),
                     "disabled": dev.disabled_by is not None,
                     "deletable": bool(entry and entry.supports_remove_device),
                 }
@@ -1635,6 +1649,49 @@ class HauskarteManager:
             [{"type": "device_disabled", "target": device_id, "old": old, "new": new.value if new else None}],
         )
         self._changed()
+
+    def set_irrelevant(self, device_id: str, irrelevant: bool) -> dict:
+        """Not relevant for the home: off the room lists, not for the assistant, not on the map. Undoable.
+
+        Showing it again only lifts the mark; exposure and map come back with "undo".
+        """
+        dev = dr.async_get(self.hass).async_get(device_id)
+        if dev is None:
+            raise HomeAssistantError("Device no longer exists")
+        marks = self.data.setdefault("irrelevant", {})
+        old = marks.get(device_id)
+        if bool(old) == irrelevant:
+            return {"changes": 0}
+        records = [
+            {"type": "irrelevant", "target": device_id, "old": old, "new": True if irrelevant else None}
+        ]
+        if irrelevant:
+            marks[device_id] = True
+            for ent in er.async_entries_for_device(er.async_get(self.hass), device_id):
+                if async_should_expose(self.hass, ASSISTANT, ent.entity_id):
+                    records.append(
+                        {"type": "entity_exposed", "target": ent.entity_id, "old": True, "new": False}
+                    )
+                    async_expose_entity(self.hass, ASSISTANT, ent.entity_id, False)
+            if self.data["shown"].get(device_id) is not False:
+                records.append(
+                    {
+                        "type": "map_visible",
+                        "target": device_id,
+                        "old": self.data["shown"].get(device_id),
+                        "new": False,
+                    }
+                )
+                self.data["shown"][device_id] = False
+            self.data["proposals"].pop(f"device:{device_id}", None)
+        else:
+            marks.pop(device_id, None)
+            pid = f"device:{device_id}"
+            if (fresh := rules.build_proposals(self._inventory()).get(pid)) is not None:
+                self.data["proposals"].update(self._merge_with_decisions({pid: fresh}))
+        self._push_undo(None, dev.name_by_user or dev.name or device_id, records)
+        self._changed()
+        return {"changes": len(records)}
 
     def remove_orphans(self, entity_ids: list[str]) -> dict:
         """Remove the chosen registry entries, but only those still not provided by anyone."""

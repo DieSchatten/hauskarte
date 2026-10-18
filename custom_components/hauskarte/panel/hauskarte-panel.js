@@ -88,7 +88,7 @@ const TEXT = {
       nameTaken: "Diesen Raumnamen gibt es schon. Home Assistant erlaubt jeden Namen nur einmal – z. B. „Bad oben“ und „Bad unten“.",
       planInfo: "Optional: je Etage ein Grundriss-Bild hochladen und von der KI erkennen lassen, oder Räume einzeichnen. Lässt sich auch später unter Karte machen.",
       devicesInfo:
-        "Geräte ohne Raum – außer Doppelten, die kommen im nächsten Schritt. Raum auswählen = sofort gespeichert. Vorschläge stehen mit Begründung daneben; was nicht ins Haus gehört, einfach lassen.",
+        "Geräte ohne Raum – außer Doppelten, die kommen im nächsten Schritt. Raum auswählen = sofort gespeichert. Vorschläge stehen mit Begründung daneben; was nicht ins Haus gehört (NAS-Laufwerke, Browser-Player …), mit „🚫 Unwichtig“ ausblenden.",
       aiDevices: "🤖 KI nach Räumen fragen",
       suggestedFor: (room, n) => `Vorschlag: ${room} (${n})`,
       noSuggestion: (n) => `Ohne Vorschlag (${n})`,
@@ -96,6 +96,7 @@ const TEXT = {
       entities: (list) => `Entitäten: ${list}`,
       noneLeft: "Alle Geräte (außer Doppelten) haben einen Raum. 👍",
       withRoom: (n) => `${n} Geräte haben schon einen Raum – siehe Kontrolle.`,
+      irrelevantList: (n) => `Als unwichtig ausgeblendet (${n})`,
       dupsInfo: "Dasselbe Gerät über zwei Systeme. Wähle, welche Entität der Assistent nutzt, und gib ihr den Raum. Die anderen werden ausgeblendet, laufen aber weiter.",
       dupRoom: "Raum für die Hauptentität",
       dupsNone: "Keine Doppelten mehr. 👍",
@@ -217,6 +218,9 @@ const TEXT = {
     silent: "meldet nichts",
     disabledLbl: "deaktiviert",
     disable: "Deaktivieren",
+    irrelevant: "Unwichtig",
+    irrelevantTip: "Unwichtig fürs Zuhause: verschwindet aus den Raum-Listen, der Assistent sieht es nicht mehr, auf der Karte ausgeblendet. Rückgängig machbar.",
+    irrelevantLbl: "unwichtig",
     enable: "Aktivieren",
     del: "Löschen",
     noDelete: "Diese Integration erlaubt kein Löschen einzelner Geräte – deaktivieren oder in der Integration entfernen.",
@@ -373,7 +377,7 @@ const TEXT = {
       nameTaken: "This room name exists already. Home Assistant allows every name only once – e.g. “Upstairs bath” and “Downstairs bath”.",
       planInfo: "Optional: per floor upload a floor plan image and let the AI detect rooms, or draw them. Can also be done later under Map.",
       devicesInfo:
-        "Devices without area – except duplicates, they come next. Choosing a room saves right away. Suggestions with reasons are shown next to it; leave what does not belong to the home.",
+        "Devices without area – except duplicates, they come next. Choosing a room saves right away. Suggestions with reasons are shown next to it; hide what does not belong to the home (NAS drives, browser players …) with “🚫 Not relevant”.",
       aiDevices: "🤖 Ask the AI for rooms",
       suggestedFor: (room, n) => `Suggested: ${room} (${n})`,
       noSuggestion: (n) => `No suggestion (${n})`,
@@ -381,6 +385,7 @@ const TEXT = {
       entities: (list) => `Entities: ${list}`,
       noneLeft: "Every device (except duplicates) has a room. 👍",
       withRoom: (n) => `${n} devices already have a room – see Check.`,
+      irrelevantList: (n) => `Hidden as not relevant (${n})`,
       dupsInfo: "The same device through two systems. Choose which entity the assistant uses and give it its room. The others are hidden but keep running.",
       dupRoom: "Room for the main entity",
       dupsNone: "No duplicates left. 👍",
@@ -502,6 +507,9 @@ const TEXT = {
     silent: "reports nothing",
     disabledLbl: "disabled",
     disable: "Disable",
+    irrelevant: "Not relevant",
+    irrelevantTip: "Not relevant for the home: leaves the room lists, the assistant no longer sees it, hidden on the map. Can be undone.",
+    irrelevantLbl: "not relevant",
     enable: "Enable",
     del: "Delete",
     noDelete: "This integration does not allow deleting single devices – disable it or remove it in the integration.",
@@ -575,7 +583,7 @@ const TEXT = {
 
 const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.11.3";
+const PANEL_VERSION = "0.11.4";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -1413,11 +1421,14 @@ class HauskartePanel extends HTMLElement {
                   <span class="muted">${esc([t.kinds[x.kind], x.model, this._devGroup === "room" ? x.integration : x.area].filter(Boolean).join(" · "))}</span>
                   ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
                   ${x.disabled ? `<span class="reason">${esc(t.disabledLbl)}</span>` : ""}
+                  ${x.irrelevant ? `<span class="reason">🚫 ${esc(t.irrelevantLbl)}</span>` : ""}
                   ${x.ai ? `<span class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</span>` : ""}
                   ${x.ai_kind ? `<span class="ailine">🤖 ${esc(t.aiKind(t.kinds[x.ai_kind.kind] || x.ai_kind.kind))} · ${esc(x.ai_kind.reason)}
                     <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}</div>
                 <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id)}</select>
                 <div class="devbtns">
+                  <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="${x.irrelevant ? 0 : 1}" class="flat"
+                    ${x.irrelevant ? "" : `title="${esc(t.irrelevantTip)}"`}>${esc(x.irrelevant ? t.showAgain : `🚫 ${t.irrelevant}`)}</button>
                   <button data-act="dev-toggle" class="secondary">${esc(x.disabled ? t.enable : t.disable)}</button>
                   <button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>
                 </div>
@@ -1652,7 +1663,18 @@ class HauskartePanel extends HTMLElement {
     const d = this._data;
     const dupDevices = new Set(d.duplicates.flatMap((g) => g.members.map((m) => m.device_id)).filter(Boolean));
     const all = d.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration })));
-    const todo = all.filter((x) => !x.area_id && !x.disabled && !dupDevices.has(x.device_id));
+    const todo = all.filter((x) => !x.area_id && !x.disabled && !x.irrelevant && !dupDevices.has(x.device_id));
+    const skipped = all.filter((x) => x.irrelevant && !x.area_id);
+    const skippedHtml = skipped.length
+      ? `<details class="card" ${keepOpen("wiz-irrelevant", false)}><summary>${esc(t.wiz.irrelevantList(skipped.length))}</summary>
+          ${skipped
+            .map(
+              (x) => `<div class="devrow"><span class="kicon">${kindIcon(x.kind)}</span>
+                <div class="ename"><b>${esc(x.name)}</b><span class="muted">${esc([x.model, x.integration].filter(Boolean).join(" · "))}</span></div>
+                <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="0" class="secondary">${esc(t.showAgain)}</button></div>`,
+            )
+            .join("")}</details>`
+      : "";
     const placed = all.filter((x) => x.area_id).length;
     const aiBtn = d.llm
       ? `<div class="card aicard row">
@@ -1661,7 +1683,7 @@ class HauskartePanel extends HTMLElement {
       : "";
     if (!todo.length) {
       return `<div class="info">${esc(t.wiz.devicesInfo)}</div><p class="muted">${esc(t.wiz.noneLeft)}</p>
-        <p class="muted">${esc(t.wiz.withRoom(placed))}</p>`;
+        <p class="muted">${esc(t.wiz.withRoom(placed))}</p>${skippedHtml}`;
     }
     const rows = todo.map((x) => {
       const prop = d.proposals.find((p) => p.id === `device:${x.device_id}`);
@@ -1696,7 +1718,8 @@ class HauskartePanel extends HTMLElement {
                   ${x.entity_names?.length ? `<span class="muted small">${esc(t.wiz.entities(x.entity_names.join(", ")))}</span>` : ""}
                   ${why ? `<span class="ailine">${esc(why)}
                     <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(a)}" class="flat inline">${esc(t.take)}</button></span>` : ""}</div>
-                <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions("")}</select></div>`,
+                <div class="devbtns"><select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions("")}</select>
+                  <button data-act="dev-irrelevant" data-device="${esc(x.device_id)}" data-on="1" class="flat" title="${esc(t.irrelevantTip)}">🚫 ${esc(t.irrelevant)}</button></div></div>`,
             )
             .join("")}</div>`,
       )
@@ -1706,7 +1729,7 @@ class HauskartePanel extends HTMLElement {
       ? `<div class="actions"><button data-act="ai-devs-all" class="wide">${esc(t.wiz.takeAll(withSuggestion))}</button></div>`
       : "";
     return `<div class="info">${esc(t.wiz.devicesInfo)}</div>${aiBtn}${takeAll}${html}
-      <p class="muted">${esc(t.wiz.withRoom(placed))}</p>`;
+      <p class="muted">${esc(t.wiz.withRoom(placed))}</p>${skippedHtml}`;
   }
 
   _wizDups() {
@@ -2662,6 +2685,9 @@ class HauskartePanel extends HTMLElement {
         if (!confirm(t.confirmSafe(n))) return;
         const r = await this._ws("apply_safe");
         this._toast(t.applied(r.changes));
+      } else if (act === "dev-irrelevant") {
+        await this._ws("device_irrelevant", { device_id: el.dataset.device, irrelevant: el.dataset.on === "1" });
+        this._toast(t.saved);
       } else if (act === "dev-toggle") {
         const row = el.closest("[data-device]");
         await this._ws("device_disabled", { device_id: row.dataset.device, disabled: row.dataset.disabled !== "1" });

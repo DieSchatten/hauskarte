@@ -39,6 +39,7 @@ def async_register(hass: HomeAssistant) -> None:
         ws_item_visible,
         ws_remove_orphans,
         ws_device_disabled,
+        ws_device_irrelevant,
         ws_merge,
         ws_unmerge,
         ws_not_duplicate,
@@ -317,6 +318,19 @@ def ws_item_visible(hass, connection, msg) -> None:
 @callback
 def ws_remove_orphans(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.remove_orphans(msg["entity_ids"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "hauskarte/device_irrelevant",
+        vol.Required("device_id"): str,
+        vol.Required("irrelevant"): bool,
+    }
+)
+@callback
+def ws_device_irrelevant(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.set_irrelevant(msg["device_id"], msg["irrelevant"]))
 
 
 @websocket_api.require_admin

@@ -275,6 +275,21 @@ async def test_orphans_devices_and_no_deprecations(ha_base, hass_ws_client, capl
     await ws(type="hauskarte/undo")
     assert dr.async_get(hass).async_get(lamp.id).disabled_by is None
 
+    # not relevant: off the lists, not for the assistant, hidden on the map – and back with undo
+    assert async_should_expose(hass, "conversation", "light.lamp")
+    await ws(type="hauskarte/device_irrelevant", device_id=lamp.id, irrelevant=True)
+    state = await ws(type="hauskarte/state")
+    devices = {d["device_id"]: d for g in state["devices"] for d in g["devices"]}
+    assert devices[lamp.id]["irrelevant"] is True
+    assert not async_should_expose(hass, "conversation", "light.lamp")
+    assert f"device:{lamp.id}" not in {p["id"] for p in state["proposals"]}
+    await ws(type="hauskarte/scan", use_llm=False)
+    assert f"device:{lamp.id}" not in {p["id"] for p in (await ws(type="hauskarte/state"))["proposals"]}
+    await ws(type="hauskarte/undo")
+    devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
+    assert devices[lamp.id]["irrelevant"] is False
+    assert async_should_expose(hass, "conversation", "light.lamp")
+
     # HA warns about deprecated registry access in the log; there must be none from us
     assert "hauskarte" not in "".join(
         r.getMessage() for r in caplog.records if "deprecated" in r.getMessage()
