@@ -44,6 +44,9 @@ def async_register(hass: HomeAssistant) -> None:
         ws_device_disabled,
         ws_device_status,
         ws_telemetry,
+        ws_review,
+        ws_review_reset,
+        ws_convert,
         ws_archive,
         ws_unarchive,
         ws_ai_functions,
@@ -77,6 +80,19 @@ def async_register(hass: HomeAssistant) -> None:
         websocket_api.async_register_command(hass, command)
 
 
+async def _run_async(connection, msg, manager: HauskarteManager | None, func) -> None:
+    """Like _run, for manager methods that have to wait (other integrations, the recorder)."""
+    if manager is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauskarte is not set up")
+        return
+    try:
+        result: Any = await func(manager)
+    except (HomeAssistantError, ValueError) as err:  # ValueError: HA's registries refuse a change
+        connection.send_error(msg["id"], "failed", str(err))
+        return
+    connection.send_result(msg["id"], result)
+
+
 def _run(hass: HomeAssistant, connection, msg, func) -> None:
     manager = _manager(hass)
     if manager is None:
@@ -84,7 +100,7 @@ def _run(hass: HomeAssistant, connection, msg, func) -> None:
         return
     try:
         result: Any = func(manager)
-    except HomeAssistantError as err:
+    except (HomeAssistantError, ValueError) as err:  # ValueError: HA's registries refuse a change
         connection.send_error(msg["id"], "failed", str(err))
         return
     connection.send_result(msg["id"], result)
@@ -358,6 +374,7 @@ def ws_entity_aliases(hass, connection, msg) -> None:
             vol.Optional("name"): vol.Any(str, None),
             vol.Optional("aliases"): [str],
             vol.Optional("kind"): vol.Any(str, None),
+            vol.Optional("area"): vol.Any(str, None),
         },
     }
 )
@@ -418,6 +435,42 @@ def ws_archive(hass, connection, msg) -> None:
 @callback
 def ws_unarchive(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.unarchive(msg["key"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "hauskarte/review",
+        vol.Required("unit"): str,
+        vol.Optional("apply", default=[]): [str],
+        vol.Optional("done", default=False): bool,
+    }
+)
+@websocket_api.async_response
+async def ws_review(hass, connection, msg) -> None:
+    await _run_async(
+        connection, msg, _manager(hass), lambda m: m.review(msg["unit"], msg["apply"], msg["done"])
+    )
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): "hauskarte/review_reset", vol.Required("unit"): str})
+@callback
+def ws_review_reset(hass, connection, msg) -> None:
+    _run(hass, connection, msg, lambda m: m.review_reset(msg["unit"]))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "hauskarte/convert",
+        vol.Required("entity_id"): str,
+        vol.Required("domain"): vol.In(["light", "cover", "fan", "lock", "valve"]),
+    }
+)
+@websocket_api.async_response
+async def ws_convert(hass, connection, msg) -> None:
+    await _run_async(connection, msg, _manager(hass), lambda m: m.convert(msg["entity_id"], msg["domain"]))
 
 
 @websocket_api.require_admin
@@ -571,7 +624,7 @@ def ws_device_area(hass, connection, msg) -> None:
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "hauskarte/ai_review",
-        vol.Optional("only"): [vol.In(["floors", "duplicates", "orphans", "silent", "switches"])],
+        vol.Optional("only"): [vol.In(["floors", "duplicates", "orphans", "silent"])],
     }
 )
 @callback

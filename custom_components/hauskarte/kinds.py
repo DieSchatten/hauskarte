@@ -85,7 +85,8 @@ def _hint(*names: str | None) -> str | None:
         return None
     words = text.split()
     for kind, hints in NAME_HINTS:
-        if any(w.startswith(h) or h in w for w in words for h in hints):
+        # short hints only at the start of a word: "led" is in "enabled" too
+        if any(w.startswith(h) or (len(h) >= 4 and h in w) for w in words for h in hints):
             return kind
     return None
 

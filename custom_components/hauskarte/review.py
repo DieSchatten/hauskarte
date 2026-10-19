@@ -14,8 +14,6 @@ You get one task with data as JSON. Answer with JSON only, no other text.
 Write every "reason" in the language "{language}", short (at most 15 words), concrete, no greetings.
 If you are not sure, say so with a low confidence instead of guessing."""
 
-SWITCH_KINDS = ["light", "socket", "shading", "heating", "fan", "water", "switch"]
-
 
 def system(language: str) -> str:
     return SYSTEM.format(language=language)
@@ -239,38 +237,14 @@ def parse_silent(data: dict, devices: list[dict]) -> dict[str, dict]:
     return out
 
 
-# --- what a switch drives ---------------------------------------------------------
-
-
-def switches_task(switches: list[dict]) -> str:
-    return f"""Task: what does each switch drive?
-Each item is a switch entity whose kind is unclear. Decide what it most likely switches, from its name, device,
-model and room: one of {", ".join(SWITCH_KINDS)} ("switch" = something else or unclear).
-Answer: {{"switches": [{{"entity_id": "...", "kind": "light", "reason": "...", "confidence": 0.5}}]}}
-Data:
-{_dump(switches)}"""
-
-
-def parse_switches(data: dict, switches: list[dict]) -> dict[str, dict]:
-    known = {s["entity_id"] for s in switches}
-    out = {}
-    for s in data.get("switches") or []:
-        if not isinstance(s, dict) or s.get("entity_id") not in known:
-            continue
-        kind = s.get("kind") if s.get("kind") in SWITCH_KINDS else "switch"
-        if kind == "switch":
-            continue  # nothing to show
-        out[s["entity_id"]] = {
-            "kind": kind,
-            "reason": _reason(s.get("reason")),
-            "confidence": _conf(s.get("confidence")),
-        }
-    return out
-
-
 # --- functions: what is the device, which status for each function ---------------
 
 FUNCTION_STATUSES = ("assistant", "ha", "hidden", "disabled")
+FUNCTION_KINDS = (
+    "light", "socket", "shading", "heating", "fan", "water", "lock", "switch", "media", "door", "window",
+    "temperature", "humidity", "energy", "contact", "motion", "presence", "alarm", "battery", "sensor",
+    "camera", "vacuum", "garden", "scene", "script", "button", "setting", "update", "other",
+)  # fmt: skip
 
 
 def functions_task(devices: list[dict], language: str) -> str:
@@ -283,10 +257,12 @@ Statuses go in one direction; each includes the ones before:
 - "disabled": switched off, no data at all: pure telemetry nobody needs (signal strength, uptime, IP, firmware,
   fast counters). Never "disabled" when "used_in" > 0 (automations or scripts use it).
 "writes_per_day" = rows it adds to the database per day (high = costly). "technical" = diagnostic/config value.
-Be conservative: keep the current status when unsure. Reason: at most 12 words, concrete.
+"kind": what the function is for, one of {", ".join(FUNCTION_KINDS)} – look at name, device, model
+and room; a switch can drive a light ("light"), a socket with an appliance ("socket"), a pump ("water") …
+Be conservative: keep the current status and kind when unsure. Reason: at most 12 words, concrete.
 "what": one or two sentences in the language "{language}": what the device is and what it does, only from
 the data (manufacturer, model, integration, functions).
-Answer: {{"devices": [{{"device_id": "...", "what": "...", "functions": [{{"entity_id": "...", "status": "ha", "reason": "..."}}]}}]}}
+Answer: {{"devices": [{{"device_id": "...", "what": "...", "functions": [{{"entity_id": "...", "status": "ha", "kind": "light", "reason": "..."}}]}}]}}
 Data:
 {_dump(devices)}"""
 
@@ -303,13 +279,15 @@ def parse_functions(data: dict, devices: list[dict]) -> dict[str, dict]:
         for f in d.get("functions") or []:
             if not isinstance(f, dict) or f.get("entity_id") not in known:
                 continue
-            wanted = f.get("status")
-            if wanted not in FUNCTION_STATUSES:
-                continue
+            wanted = f.get("status") if f.get("status") in FUNCTION_STATUSES else None
             if wanted == "disabled" and known[f["entity_id"]].get("used_in"):
                 wanted = "hidden"  # something uses it: never switch it off
+            kind = f.get("kind") if f.get("kind") in FUNCTION_KINDS else None
+            if not wanted and not kind:
+                continue
             functions[f["entity_id"]] = {
                 "status": wanted,
+                "kind": kind,
                 "reason": _reason(f.get("reason")),
                 "from": known[f["entity_id"]].get("status"),  # holds only while it is still there
             }

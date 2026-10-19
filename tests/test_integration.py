@@ -529,17 +529,11 @@ async def test_ai_review(ha_base, hass_ws_client):
                 ],
                 "rooms": [{"area_id": bath.id, "floor_id": floor.floor_id, "reason": "y", "confidence": 0.7}],
             }
-        if user.startswith("Task: what does each switch drive"):
-            return {
-                "switches": [
-                    {"entity_id": "switch.plug", "kind": "water", "reason": "Pumpe", "confidence": 0.6}
-                ]
-            }
         return {}
 
     with patch("custom_components.hauskarte.llm.ask_json", side_effect=fake_ask):
         await manager.async_ai_review()
-    assert asked[0] == "Task: floors." and any(a.startswith("Task: what does") for a in asked)
+    assert asked[0] == "Task: floors." and not any("switch drive" in a for a in asked)
     client = await hass_ws_client(hass)
 
     async def ws(**msg):
@@ -551,8 +545,6 @@ async def test_ai_review(ha_base, hass_ws_client):
     state = await ws(type="hauskarte/state")
     assert state["ai"]["floors"] == []  # floors are set by hand, the AI only places rooms
     assert state["ai"]["rooms"][0]["area_id"] == bath.id
-    plug_row = next(d for g in state["devices"] for d in g["devices"] if d["device_id"] == plug.id)
-    assert plug_row["ai_kind"]["kind"] == "water"
 
     await ws(
         type="hauskarte/apply_floor_plan",
@@ -571,7 +563,7 @@ async def test_ai_review(ha_base, hass_ws_client):
         for d in g["devices"]
         if d["device_id"] == plug.id
     )
-    assert plug_row["kind"] == "water" and plug_row["ai_kind"] is None
+    assert plug_row["kind"] == "water"
 
     await ws(type="hauskarte/undo")  # kind
     plug_row = next(
@@ -678,11 +670,7 @@ async def test_functions_review_and_telemetry(ha_base, hass_ws_client):
     devices = {d["device_id"]: d for g in (await ws(type="hauskarte/state"))["devices"] for d in g["devices"]}
     assert devices[lamp.id]["what"] == "Deckenlampe in der Küche, schaltbar."
     fns = {f["entity_id"]: f for f in devices[lamp.id]["functions"]}
-    assert fns["sensor.lamp_rssi"]["ai"] == {
-        "status": "disabled",
-        "reason": "nur Funkstärke",
-        "from": "assistant",
-    }
+    assert fns["sensor.lamp_rssi"]["ai"] == {"status": "disabled", "kind": None, "reason": "nur Funkstärke"}
 
     # deciding otherwise by hand: the suggestion is gone, taking suggestions leaves it alone
     await ws(type="hauskarte/set_status", entity_ids=["sensor.lamp_rssi"], status="hidden")
@@ -746,3 +734,113 @@ async def test_archive_keeps_and_brings_back(ha_base, hass_ws_client):
     # undo brings the last archive step back
     await ws(type="hauskarte/undo")
     assert any(i["key"] == "entity:switch.plug" for i in (await ws(type="hauskarte/state"))["archive"])
+
+    # removing, then undo: the entry is back as well
+    await ws(type="hauskarte/unarchive", key="entity:switch.plug")
+    assert (await ws(type="hauskarte/remove_orphans", entity_ids=["switch.plug"]))["removed"] == 1
+    hass.states.async_remove("switch.plug")
+    await ws(type="hauskarte/undo")
+    assert reg.async_get("switch.plug") is not None and reg.async_get("switch.plug").unique_id == unique_id
+
+
+async def test_review_unit_and_show_switch_as_light(ha_base, hass_ws_client):
+    hass = ha_base
+    kitchen, lamp, plug = await _house(hass)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    async def ws(**msg):
+        await client.send_json_auto_id(msg)
+        reply = await client.receive_json()
+        assert reply["success"], reply
+        return reply["result"]
+
+    await ws(type="hauskarte/scan", use_llm=False)
+    state = await ws(type="hauskarte/state")
+    unit = f"device:{lamp.id}"
+    assert unit in state["queue"]
+    lamp_row = next(d for g in state["devices"] for d in g["devices"] if d["device_id"] == lamp.id)
+    ids = {s["id"] for s in lamp_row["suggestions"]}
+    assert "area" in ids  # "Küche Deckenlampe" → Küche
+
+    # apply the room, leave the rest: done – off the queue, comes back only with new functions
+    await ws(type="hauskarte/review", unit=unit, apply=["area"], done=True)
+    assert dr.async_get(hass).async_get(lamp.id).area_id == kitchen.id
+    state = await ws(type="hauskarte/state")
+    assert unit not in state["queue"]
+    assert next(d for g in state["devices"] for d in g["devices"] if d["device_id"] == lamp.id)["reviewed"]
+    await ws(type="hauskarte/undo")  # one step: room and "done" back
+    assert dr.async_get(hass).async_get(lamp.id).area_id is None
+    assert unit in (await ws(type="hauskarte/state"))["queue"]
+
+    # done without taking anything: the proposal is turned down; "check again" brings both back
+    await ws(type="hauskarte/review", unit=unit, apply=[], done=True)
+    state = await ws(type="hauskarte/state")
+    assert unit not in state["queue"]
+    assert not next(d for g in state["devices"] for d in g["devices"] if d["device_id"] == lamp.id)[
+        "suggestions"
+    ]
+    await ws(type="hauskarte/review_reset", unit=unit)
+    state = await ws(type="hauskarte/state")
+    assert unit in state["queue"]
+    lamp_row = next(d for g in state["devices"] for d in g["devices"] if d["device_id"] == lamp.id)
+    assert "area" in {s["id"] for s in lamp_row["suggestions"]}
+
+    # a function's own room (functions without a device are placed one by one); HA allows it only for
+    # entities with a name of their own – otherwise a clear error instead of a crash
+    await client.send_json_auto_id(
+        {"type": "hauskarte/entity_update", "entity_id": "light.lamp", "changes": {"area": kitchen.id}}
+    )
+    reply = await client.receive_json()
+    assert not reply["success"] and reply["error"]["code"] == "failed"
+    er.async_get(hass).async_update_entity("light.lamp", name="Lampe")
+    await ws(type="hauskarte/entity_update", entity_id="light.lamp", changes={"area": kitchen.id})
+    assert er.async_get(hass).async_get("light.lamp").area_id == kitchen.id
+    await ws(type="hauskarte/undo")
+    assert er.async_get(hass).async_get("light.lamp").area_id is None
+
+    # a switch that drives a light: HA shows it as a light; name, exposure and aliases go along
+    reg = er.async_get(hass)
+    reg.async_update_entity("switch.plug", aliases=["Deckenlicht"])
+    hass.states.async_set("switch.plug", "off", {"friendly_name": "Licht Flur"})
+    result = await ws(type="hauskarte/convert", entity_id="switch.plug", domain="light")
+    await hass.async_block_till_done()
+    light_id = result["entity_id"]
+    assert light_id and light_id.startswith("light.")
+    assert reg.async_get("switch.plug").hidden_by is er.RegistryEntryHider.INTEGRATION
+    assert "Deckenlicht" in alias_strings(reg.async_get(light_id).aliases)
+    fns = {
+        f["entity_id"]: f
+        for g in (await ws(type="hauskarte/state"))["devices"]
+        for d in g["devices"]
+        if d["device_id"] == plug.id
+        for f in d["functions"]
+    }
+    assert fns["switch.plug"]["wrapped_as"] == light_id and fns[light_id]["wraps"] == "switch.plug"
+    await ws(type="hauskarte/undo")
+    await hass.async_block_till_done()
+    assert reg.async_get(light_id) is None
+    assert reg.async_get("switch.plug").hidden_by is None
+
+    # status to the assistant and "show as light" in one step, then undo: the switch is as before (not exposed)
+    async_expose_entity(hass, "conversation", "switch.plug", False)
+    await ws(type="hauskarte/scan", use_llm=False)
+    reg.async_update_entity("switch.plug", name="Licht Flur")
+    state = await ws(type="hauskarte/state")
+    sugs = {
+        s["id"]
+        for d in state["devices"]
+        for g in [d]
+        for d in g["devices"]
+        if d["device_id"] == plug.id
+        for s in d["suggestions"]
+    }
+    assert "convert:switch.plug" in sugs
+    await ws(type="hauskarte/review", unit=f"device:{plug.id}", apply=["convert:switch.plug"], done=True)
+    await hass.async_block_till_done()
+    state = await ws(type="hauskarte/state")
+    assert f"device:{plug.id}" not in state["queue"]  # the new light does not bring it back
+    await ws(type="hauskarte/undo")
+    await hass.async_block_till_done()
+    assert reg.async_get("switch.plug").hidden_by is None
+    assert not async_should_expose(hass, "conversation", "switch.plug")

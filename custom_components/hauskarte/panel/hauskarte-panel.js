@@ -7,10 +7,6 @@ const TEXT = {
     scanRules: "Nur Regeln",
     applySafe: "Alle sicheren übernehmen",
     undo: "Letzte Änderung zurücknehmen",
-    open: "Offen",
-    later: "Später",
-    ignored: "Abgelehnt",
-    history: "Verlauf",
     search: "Suchen …",
     neverScanned: "Noch nicht geprüft. Starte mit „Bestand prüfen“.",
     lastScan: "Zuletzt geprüft",
@@ -21,111 +17,46 @@ const TEXT = {
     empty: "Hier ist nichts.",
     area: "Raum",
     noArea: "– kein Raum –",
-    name: "Name",
-    exposed: "für Assistent",
-    aliases: "Aliase, mit Komma getrennt",
-    remove: "entfernen",
-    more: "weitere Entitäten",
-    accept: "Übernehmen",
-    postpone: "Später",
-    ignore: "Ablehnen",
-    ignoreTip: "Diesen Vorschlag nicht mehr zeigen. Er kommt erst wieder, wenn sich am Gerät etwas ändert; unter „Abgelehnt“ lässt er sich zurückholen.",
-    ignoredInfo: "Vorschläge, die du abgelehnt hast. Sie kommen erst wieder, wenn sich am Gerät etwas ändert. „Wieder anzeigen“ holt einen sofort zurück.",
-    showAgain: "Wieder anzeigen",
-    safe: "sicher",
-    ai: "KI-Vorschlag",
     showMore: "Mehr anzeigen",
     changes: "Änderungen",
     confirmSafe: (n) => `${n} sichere Vorschläge ohne Einzelprüfung übernehmen?`,
-    confirmRemove: "Entitäten werden endgültig aus der Registry entfernt. Das lässt sich nicht zurücknehmen. Fortfahren?",
     undone: (r) => `${r.reverted} Änderungen an „${r.title}“ zurückgenommen` + (r.skipped ? `, ${r.skipped} nicht möglich` : ""),
     nothingToUndo: "Nichts zum Zurücknehmen.",
     applied: (n) => `${n} Änderungen gespeichert`,
-    map: "Karte",
     edit: "Grundriss bearbeiten",
     editDone: "Fertig",
     onMap: "Auf der Karte zeigen",
     wiz: {
-      nav: "Einrichtung",
-      open: "🧭 Einrichtung",
-      stepOf: (n, total) => `Schritt ${n} von ${total}`,
-      prev: "‹ Zurück",
-      next: "Weiter ›",
-      finish: "Einrichtung abschließen",
-      later: "Später weitermachen",
-      all: "Alle Schritte",
-      labels: { welcome: "Willkommen", floors: "Etagen", rooms: "Räume den Etagen zuordnen", plan: "Grundriss (optional)", devices: "Geräte zuordnen", duplicates: "Doppelte aussortieren", functions: "Funktionen je Raum", check: "Kontrolle", done: "Fertig" },
-      intro:
-        "Dieser Assistent richtet das Haus einmal sauber ein – in fester Reihenfolge, damit jeder Schritt auf dem vorigen aufbaut. Du kannst jederzeit aufhören, er merkt sich, wo du warst. Nichts wird ohne deinen Klick geändert, alles lässt sich zurücknehmen.",
-      plan: [
-        "Etagen anlegen und benennen – nur die Etagen",
-        "Räume den Etagen zuordnen – du siehst, welche Geräte in jedem Raum sind; die KI schlägt mit Begründung vor",
-        "Grundriss (optional)",
-        "Geräte ohne Raum zuordnen – mit Name, Modell, Entitäten und Begründung; Doppelte noch ausgenommen",
-        "Doppelte aussortieren – Hauptentität wählen und ihr den Raum geben",
-        "Funktionen je Raum – was jedes Gerät ist und kann, welche Funktion der Assistent bekommt, was HA ausblendet oder abschaltet; die KI erklärt und schlägt vor",
-        "Kontrolle: Etage → Raum → Geräte",
-      ],
-      aiStart: "🤖 KI-Durchsicht im Hintergrund starten",
-      aiStartInfo: "Dauert ein paar Minuten. Die Empfehlungen erscheinen dann in den passenden Schritten.",
-      aiReady: (at) => `🤖 KI-Durchsicht vom ${at} – ihre Empfehlungen stehen in den Schritten.`,
-      aiNo: "Ohne Sprachmodell gibt es nur die Vorschläge aus festen Regeln. Ein Modell lässt sich in den Optionen der Integration einstellen.",
-      scanFirst: "Zuerst den Bestand prüfen (nur Regeln, dauert Sekunden)",
-      floorsInfo:
-        "Lege hier nur die Etagen an – Räume kommen im nächsten Schritt. Namen so, wie ihr sie nennt. Die Nummer ist die Höhe im Haus: 0 = Erdgeschoss, 1 = eine höher, -1 = Keller. Jede Etage bekommt ihre eigene Nummer. Darunter siehst du sofort die Reihenfolge.",
-      floorRow: (n) => `${n} Räume`,
-      orderTitle: "So steht das Haus – von oben nach unten:",
-      levelClash: "Zwei Etagen haben dieselbe Nummer. Jede Etage braucht ihre eigene: höchste Nummer = ganz oben, 0 = Erdgeschoss.",
-      roomsInfo:
-        "Jeder Raum gehört zu einer Etage. Unter jedem Raum steht, welche Geräte schon drin sind – so erkennst du, welcher Raum wohin gehört. Etage auswählen = sofort gespeichert. KI-Vorschläge stehen mit Begründung daneben.",
-      aiRooms: "🤖 KI ordnet die Räume zu",
-      aiRoomsInfo: "Nutzt die Etagen von eben und die Gerätenamen in jedem Raum. Dauert etwa eine Minute.",
-      aiRoomsRunning: "🤖 Die KI ordnet die Räume zu …",
-      aiRoomsCount: (n) => `🤖 ${n} Vorschläge – stehen mit Begründung bei den Räumen`,
-      aiMove: (floor) => `KI: auf „${floor}“`,
       noDevices: "noch keine Geräte",
       more: (n) => `+${n} weitere`,
-      savedNow: "Änderungen werden sofort gespeichert. Zwei gleiche Räume (zwei Bäder)? Home Assistant erlaubt jeden Raumnamen nur einmal – nenne sie z. B. „Bad oben“ und „Bad unten“.",
-      takeAll: (n) => `🤖 Alle ${n} Vorschläge übernehmen`,
       nameTaken: "Diesen Raumnamen gibt es schon. Home Assistant erlaubt jeden Namen nur einmal – z. B. „Bad oben“ und „Bad unten“.",
-      planInfo: "Optional: je Etage ein Grundriss-Bild hochladen und von der KI erkennen lassen, oder Räume einzeichnen. Lässt sich auch später unter Karte machen.",
-      devicesInfo:
-        "Geräte ohne Raum – außer Doppelten, die kommen im nächsten Schritt. Raum auswählen = sofort gespeichert. Vorschläge stehen mit Begründung daneben; was nicht ins Haus gehört (NAS-Laufwerke, Browser-Player …), mit „🚫 Unwichtig“ ausblenden.",
-      aiDevices: "🤖 KI nach Räumen fragen",
-      suggestedFor: (room, n) => `Vorschlag: ${room} (${n})`,
-      noSuggestion: (n) => `Ohne Vorschlag (${n})`,
-      byName: (word) => `aus dem Namen („${word}“)`,
-      noneLeft: "Alle Geräte (außer Doppelten) haben einen Raum. 👍",
-      withRoom: (n) => `${n} Geräte haben schon einen Raum – siehe Kontrolle.`,
-      hiddenList: (n) => `Ausgeblendet oder deaktiviert (${n})`,
-      dupsInfo: "Dasselbe Gerät über zwei Systeme. Wähle, welche Entität der Assistent nutzt, und gib ihr den Raum. Die anderen werden ausgeblendet, laufen aber weiter.",
-      dupRoom: "Raum für die Hauptentität",
-      dupsNone: "Keine Doppelten mehr. 👍",
-      fnInfo: "Raum für Raum: Was ist jedes Gerät, was kann es, und welchen Status bekommt jede Funktion? Die KI erklärt die Geräte und schlägt Stufen vor – übernommen wird nur, was du anklickst.",
-      fnRoom: (i, n) => `Raum ${i} von ${n}`,
-      fnNoRoom: "Ohne Raum",
-      fnEmpty: "In diesem Raum sind keine Geräte.",
       fnAsk: (n) => `🤖 Die ${n} Geräte dieses Raums durchsehen`,
-      checkInfo: "So steht das Haus jetzt da. Fehlt etwas oder steht falsch? Zurück zum passenden Schritt oder unter Räume/Geräte ändern.",
-      empty: "leer",
-      rest: (s) => `Noch offen unter Aufräumen: ${s.open} Vorschläge (Freigaben, Namen) · ${s.orphans} verwaiste Entitäten · ${s.silent} Geräte ohne Lebenszeichen`,
-      doneInfo: "Das Haus ist sauber eingerichtet. Der Rest (Freigaben, Namen, Verwaistes) liegt unter Aufräumen.",
-      summary: (s) => `${s.floors} Etagen · ${s.rooms} Räume (${s.loose} ohne Etage) · ${s.dups} Doppelte offen · ${s.unassigned} Geräte ohne Raum`,
     },
     aiReview: "🤖 KI-Durchsicht",
     aiAt: "KI-Durchsicht",
-    aiTasks: { floors: "Etagen", duplicates: "Doppelte", orphans: "Verwaist", silent: "Ohne Lebenszeichen", switches: "Schalter", functions: "Funktionen" },
+    aiTasks: {
+      floors: "Etagen",
+      duplicates: "Doppelte",
+      orphans: "Verwaist",
+      silent: "Ohne Lebenszeichen",
+      functions: "Funktionen",
+    },
     aiRunning: (task, n, total) => `KI prüft: ${task} (${n}/${total})`,
-    aiNone: "Noch keine KI-Durchsicht. „🤖 KI-Durchsicht“ fragt dein Sprachmodell zu allen Schritten – nacheinander, damit der Sprachassistent frei bleibt.",
+    aiNone: "Noch keine KI-Durchsicht. „🤖 KI-Durchsicht“ fragt dein Sprachmodell zu Etagen, Dubletten, Verwaistem und Geräten ohne Lebenszeichen – nacheinander, damit der Sprachassistent frei bleibt.",
     aiFloorsTitle: "🤖 KI-Vorschlag: Räume zu Etagen",
     applySelected: "Ausgewählte übernehmen",
     levelClash: "Achtung: Zwei Etagen hätten dieselbe Nummer. Bitte Nummern prüfen (0 = Erdgeschoss, höher = weiter oben) und dann anhaken.",
     aiSame: (name) => `KI: dasselbe – „${name}“ nutzen`,
     aiDifferent: "KI: verschieden",
-    advice: { remove: "entfernen", keep: "behalten", check: "prüfen", disable: "deaktivieren", delete: "löschen" },
+    advice: {
+      remove: "entfernen",
+      keep: "behalten",
+      check: "prüfen",
+      disable: "deaktivieren",
+      delete: "löschen",
+    },
     aiAdvice: (a) => `KI: ${a}`,
     aiPick: "🤖 Nach KI auswählen",
-    aiKind: (kind) => `KI: vermutlich ${kind}`,
     modeRooms: "🏠 Räume zeichnen",
     modeDevices: "💡 Geräte platzieren",
     hintRooms: "Rechteck aufziehen = neuer Raum (oder „+ Raum“). Räume verschieben, an der Ecke unten rechts vergrößern. Geräte sind in diesem Modus nur blass sichtbar.",
@@ -139,7 +70,7 @@ const TEXT = {
     convertBtn: "In Raumgruppe umwandeln …",
     convertTitle: (name) => `„${name}“ ist eigentlich mehrere Räume?`,
     convertInfo: (name) =>
-      `Wähle die Räume, aus denen „${name}“ besteht. Jedes Gerät kommt in einen davon; danach wird „${name}“ als Raum gelöscht und wird zur Raumgruppe dieser Räume. Lässt sich zurücknehmen.`,
+          `Wähle die Räume, aus denen „${name}“ besteht. Jedes Gerät kommt in einen davon; danach wird „${name}“ als Raum gelöscht und wird zur Raumgruppe dieser Räume. Lässt sich zurücknehmen.`,
     convertPick: "Welche Räume gehören dazu?",
     convertWhere: "Wohin kommt was?",
     convertDo: "Umwandeln",
@@ -149,7 +80,7 @@ const TEXT = {
     mergeWith: (name) => `„${name}“ zusammenführen mit:`,
     mergeChoose: "– Raum wählen –",
     mergeInfo: (name) =>
-      `Alle Geräte und Entitäten wandern in den gewählten Raum. „${name}“ bleibt dort als Alias, damit der Name weiter verstanden wird. Danach wird „${name}“ gelöscht – lässt sich zurücknehmen.`,
+          `Alle Geräte und Entitäten wandern in den gewählten Raum. „${name}“ bleibt dort als Alias, damit der Name weiter verstanden wird. Danach wird „${name}“ gelöscht – lässt sich zurücknehmen.`,
     mergeRefs: (name) => `⚠️ Diese Automationen/Skripte sprechen „${name}“ direkt an und zeigen danach ins Leere – bitte danach anpassen:`,
     mergeNoRefs: "Keine Automation und kein Skript spricht den Raum direkt an.",
     mergeDo: "Zusammenführen",
@@ -165,9 +96,7 @@ const TEXT = {
     iconUpload: "Bild hochladen",
     iconReset: "Standard",
     iconApply: "Übernehmen",
-    sections: { clean: "Aufräumen", map: "Karte", rooms: "Räume", devices: "Geräte", assist: "Assistent" },
     assist: {
-      info: "Jede Entität mit ihrem Status: was der Sprachassistent sieht – und alles andere, auch Ausgeblendetes und Deaktiviertes. Ein Klick schiebt einen Eintrag auf die andere Seite; der Filter „Stufe“ zeigt z. B. nur, was du ausgeblendet oder deaktiviert hast. Alles wirkt sofort; was du wann geändert hast, steht unter Aufräumen → Verlauf.",
       allStatuses: "Alle Stufen",
       summary: (seen, all) => `Der Assistent sieht ${seen} von ${all} Entitäten.`,
       sees: "👁 Sieht",
@@ -185,42 +114,55 @@ const TEXT = {
       noRoom: "Ohne Raum",
       changed: (n) => `${n} geändert`,
     },
-    steps: { rooms: "Etagen", duplicates: "Doppelte", open: "Vorschläge", silent: "Ohne Lebenszeichen", orphans: "Verwaist", telemetry: "Telemetrie", history: "Verlauf" },
     stepInfo: {
-      rooms: "Jeder Raum sollte zu einer Etage gehören – sonst weiß der Assistent nicht, was „oben“ oder „unten“ ist.",
       duplicates: "Dasselbe Gerät über zwei Systeme (z. B. Loxone und Shelly, KNX, Zigbee, MQTT). Zusammenführen heißt: Der Assistent nutzt nur die gewählte Entität, die anderen werden ausgeblendet und nicht freigegeben. Sie laufen weiter – Automationen und die Systeme selbst bleiben unberührt. Lässt sich jederzeit trennen.",
-      open: "Vorschläge für Raum, Name und Freigabe. Prüfen, bei Bedarf anpassen, übernehmen.",
-      telemetry: "Was HA am meisten zumüllt: technische Werte und Funktionen, die ständig schreiben. Auswählen und auf einen Status setzen – „Ausgeblendet“ räumt Dashboards auf, „Deaktiviert“ spart zusätzlich die Datenbank. Nach Integration gruppiert, die meistschreibenden zuerst.",
-      silent: "Ohne Lebenszeichen = ganze Geräte, die HA noch kennt, die aber gerade nichts melden (alle Werte „nicht verfügbar“) – anders als „Verwaist“, wo die Integration einzelne Einträge gar nicht mehr liefert. Wege: Status setzen (z. B. Deaktiviert), „📦 Ins Archiv“ (bleibt, wird hier nicht mehr gezeigt) oder Löschen – Löschen übernimmt die Integration; manche Geräte (z. B. Zigbee) muss man danach neu anlernen.",
     },
     allDone: "Hier ist alles erledigt.",
-    noFloorRooms: (n) => `${n} Räume ohne Etage`,
     allRooms: "Alle Räume und Etagen",
-    propFilter: { open: "Offen", safe: "Sicher", later: "Später", ignored: "Abgelehnt" },
     kinds: {
-      light: "Licht", shading: "Beschattung", window: "Fenster", door: "Tür/Tor", socket: "Steckdose", switch: "Schalter",
-      heating: "Heizung/Klima", fan: "Lüftung", water: "Wasser", lock: "Schloss", media: "Medien", voice: "Sprachgerät",
-      camera: "Kamera", vacuum: "Sauger", garden: "Garten", contact: "Kontakt", motion: "Bewegung", alarm: "Melder",
-      temperature: "Temperatur", humidity: "Luftfeuchte", energy: "Strom", battery: "Batterie", sensor: "Messwert",
-      scene: "Szene", script: "Skript", automation: "Automation", weather: "Wetter", list: "Liste", presence: "Anwesenheit",
-      button: "Taster", setting: "Einstellung", update: "Update", other: "Sonstiges",
+      light: "Licht",
+      shading: "Beschattung",
+      window: "Fenster",
+      door: "Tür/Tor",
+      socket: "Steckdose",
+      switch: "Schalter",
+      heating: "Heizung/Klima",
+      fan: "Lüftung",
+      water: "Wasser",
+      lock: "Schloss",
+      media: "Medien",
+      voice: "Sprachgerät",
+      camera: "Kamera",
+      vacuum: "Sauger",
+      garden: "Garten",
+      contact: "Kontakt",
+      motion: "Bewegung",
+      alarm: "Melder",
+      temperature: "Temperatur",
+      humidity: "Luftfeuchte",
+      energy: "Strom",
+      battery: "Batterie",
+      sensor: "Messwert",
+      scene: "Szene",
+      script: "Skript",
+      automation: "Automation",
+      weather: "Wetter",
+      list: "Liste",
+      presence: "Anwesenheit",
+      button: "Taster",
+      setting: "Einstellung",
+      update: "Update",
+      other: "Sonstiges",
     },
-    allKinds: "Alle Typen",
+    allKinds: "Alle Kategorien",
     allRoomsFilter: "Alle Räume",
     withoutRoom: "Ohne Raum",
     byRoom: "nach Raum",
     byIntegration: "nach System",
-    changeRaum: (a, b) => `Raum: ${a} → ${b}`,
-    needRoom: "Raum fehlt – bitte wählen",
-    changeName: (a, b) => `Name: ${a} → ${b}`,
-    needName: "Technischer Name – besser umbenennen",
-    aliasesSet: (list) => `Aliase: ${list}`,
-    speakerNoRoom: "Sprachgerät ohne Raum – der Assistent weiß nicht, wo gesprochen wird",
     adjust: "Anpassen",
-    nothingChanges: "Keine Änderung nötig",
     dupTitle: (name) => `Vermutlich dasselbe: ${name}`,
     dupHistory: (n, of) => `schalten ${n} von ${of} Mal gleichzeitig (letzte 7 Tage)`,
-    dupName: "gleiche Art, ähnlicher Name, gleicher Raum",
+    dupName: "gleiche Kategorie, ähnlicher Name, gleicher Raum",
     dupStrong: "sicher erkannt",
     dupWeak: "nach Name",
     dupPick: "Diese nutzt der Assistent:",
@@ -237,9 +179,6 @@ const TEXT = {
     saved: "Gespeichert",
     onMapShort: "auf der Karte",
     twinsVia: (list) => `auch über: ${list}`,
-    devices: "Geräte",
-    devicesInfo:
-      "Alle Geräte nach Integration, Geräte ohne Lebenszeichen zuerst. Deaktivieren blendet ein Gerät samt Entitäten aus und lässt sich zurücknehmen. Löschen entfernt es endgültig – nur wenn die Integration das erlaubt; ist es wieder erreichbar, kann sie es neu anlegen.",
     silent: "meldet nichts",
     st: {
       assistant: "Assistent",
@@ -247,41 +186,161 @@ const TEXT = {
       hidden: "Ausgeblendet",
       disabled: "Deaktiviert",
       legendTitle: "ⓘ Was bedeuten die Stufen?",
-      legendHead: ["Stufe", "Assistent", "in HA sichtbar", "zeichnet Daten auf"],
-      legendNote:
-        "Jede Stufe schließt die vorige ein: Was HA ausblendet, bekommt auch der Assistent nicht. „Deaktiviert“ spart Datenbank und Rechenzeit – Automationen, die so eine Funktion nutzen, laufen dann aber ins Leere. Am Gerät ist der Status eine Obergrenze für alle seine Funktionen; „Deaktiviert“ schaltet dort das ganze Gerät ab.",
+      legendHead: [
+        "Stufe",
+        "Assistent",
+        "in HA sichtbar",
+        "zeichnet Daten auf",
+      ],
+      legendNote: "Jede Stufe schließt die vorige ein: Was HA ausblendet, bekommt auch der Assistent nicht. „Deaktiviert“ spart Datenbank und Rechenzeit – Automationen, die so eine Funktion nutzen, laufen dann aber ins Leere. Am Gerät ist der Status eine Obergrenze für alle seine Funktionen; „Deaktiviert“ schaltet dort das ganze Gerät ab.",
       deviceTip: "Status für das ganze Gerät – eine Obergrenze für alle seine Funktionen. Deaktiviert = Gerät in HA abschalten.",
       confirmDevice: (n) => `„${n}“ in Home Assistant deaktivieren? Es liefert dann keine Werte mehr; Automationen damit laufen ins Leere. Rückgängig machbar.`,
       change: (name, from, to) => `${name}: ${from} → ${to}`,
       because: (r) => `Grund: ${r}`,
     },
-    role: { control: "steuert", measure: "misst", technical: "Technik", other: "Sonstiges" },
-    roleCount: { control: (n) => `${n} ${n === 1 ? "steuert" : "steuern"}`, measure: (n) => `${n} ${n === 1 ? "misst" : "messen"}`, technical: (n) => `${n} Technik`, other: (n) => `${n} sonstige` },
+    role: {
+      control: "steuert",
+      measure: "misst",
+      technical: "Technik",
+      other: "Sonstiges",
+    },
+    roleCount: {
+      control: (n) => `${n} ${n === 1 ? "steuert" : "steuern"}`,
+      measure: (n) => `${n} ${n === 1 ? "misst" : "messen"}`,
+      technical: (n) => `${n} Technik`,
+      other: (n) => `${n} sonstige`,
+    },
     writes: (n) => `~${n} Werte/Tag`,
     deviceFns: (n) => `${n} Funktionen`,
+    nav: {
+      sections: {
+        overview: "Übersicht",
+        focus: "Aufräumen",
+        inventory: "Bestand",
+        map: "Karte",
+        house: "Haus",
+      },
+      subs: {
+        devices: "Geräte",
+        functions: "Funktionen",
+        duplicates: "Dubletten",
+        orphans: "Verwaist",
+        history: "Verlauf",
+      },
+    },
+    ov: {
+      title: "So weit bist du",
+      intro: "Vier Schritte, in dieser Reihenfolge. Du kannst jederzeit aufhören – alles bleibt gespeichert und lässt sich rückgängig machen.",
+      floors: "1. Etagen anlegen",
+      floorsDetail: (n) => (n ? `${n} Etagen` : "noch keine Etage"),
+      rooms: "2. Räume den Etagen zuordnen",
+      roomsDetail: (loose, all) => (loose ? `${loose} von ${all} Räumen ohne Etage` : `alle ${all} Räume haben eine Etage`),
+      plan: "3. Grundriss zeichnen (optional)",
+      planDetail: (placed, all) => `${placed} von ${all} Räumen auf der Karte`,
+      clean: "4. Geräte aufräumen – eins nach dem anderen",
+      cleanDetail: (done, total, dups) => `${done} von ${total} erledigt${dups ? ` · ${dups} Dubletten offen` : ""}`,
+      toHouse: "Zum Haus",
+      toMap: "Zur Karte",
+      toFocus: "Weiter aufräumen",
+      toFocusDone: "Ansehen",
+      glance: "Auf einen Blick",
+      statAssistant: "Funktionen sieht der Assistent",
+      statDups: "Dubletten offen",
+      statSilent: "Geräte ohne Lebenszeichen",
+      statOrphans: "verwaiste Einträge",
+      toFunctions: "Was sieht der Assistent?",
+      toOrphans: "Verwaiste ansehen",
+      toHistory: "Verlauf",
+      check: "Bestand prüfen & KI",
+      checkInfo: "„Bestand prüfen“ liest alle Geräte neu ein und macht Vorschläge (mit Sprachmodell auch Räume und Namen). „KI-Durchsicht“ fragt das Modell zu Etagen, Dubletten, Verwaistem und Geräten ohne Lebenszeichen. „Was ist das?“ an jedem Gerät erklärt es und schlägt Status und Kategorie seiner Funktionen vor.",
+    },
+    fc: {
+      room: "Raum",
+      progress: (done, total, left) => `${done} von ${total} erledigt · noch ${left} offen`,
+      unlater: (n) => `${n} zurückgestellte wieder zeigen`,
+      dupInfo: (n) => `Zuerst die Dubletten (${n}): dasselbe Gerät über zwei Systeme. Wähle, welche Entität bleibt – die anderen werden ausgeblendet, laufen aber weiter.`,
+      next: (names, n) => `Danach: ${names}${n > 3 ? ` … (${n})` : ""}`,
+      roomDone: "In diesem Raum ist alles erledigt",
+      allDone: "Alles erledigt",
+      allDoneInfo: "Neue Geräte kommen von selbst hierher. Erledigte findest du unter Bestand → Geräte.",
+      toInventory: "Zum Bestand",
+      later: "Später",
+      laterTip: "Für diesen Besuch zurückstellen – nichts wird gespeichert.",
+      skip: "Ohne Änderung erledigt",
+      skipTip: "Nichts übernehmen; die Vorschläge kommen erst wieder, wenn sich am Gerät etwas ändert.",
+      apply: "Übernehmen & weiter",
+      done: "Erledigt & weiter",
+      marked: "Erledigt",
+    },
+    dc: {
+      status: "Gerät",
+      inDups: "Teil einer Dublette",
+      reviewed: "erledigt",
+      apply: (n) => `${n} Vorschläge übernehmen`,
+      reset: "↺ Erneut prüfen",
+      resetTip: "Wieder in die Aufräum-Liste nehmen und abgelehnte Vorschläge zurückholen.",
+      standalone: (i) => `Funktionen ohne Gerät: ${i}`,
+      standaloneInfo: (n) => `${n} Szenen, Skripte, Helfer … – je Funktion Raum, Status, Name`,
+      suggestions: (n) => `💡 ${n} Vorschläge – angehakt wird übernommen`,
+      sArea: (r) => `Raum → ${r}`,
+      sName: (n) => `Name → ${n}`,
+      sKind: (k) => `Kategorie → ${k}`,
+      sAliases: (a) => `Aliase → ${a}`,
+      sConvert: (name, d) => `„${name}“ in HA als ${d} führen – erst dann versteht der Assistent „${d} …“`,
+      domains: {
+        light: "Licht",
+        cover: "Beschattung",
+        fan: "Lüfter",
+        lock: "Schloss",
+        valve: "Ventil",
+      },
+      convertHint: (d) => `HA kennt das nur als Schalter. Als ${d} geführt versteht der Assistent „${d} …“; der Schalter bleibt dahinter, Automationen laufen weiter.`,
+      convertDo: (d) => `In HA als ${d} führen`,
+      converted: (id) => `In HA neu: ${id}`,
+      shownAs: (id) => `In HA geführt als ${id}`,
+      wraps: (id) => `Zeigt den Schalter ${id}`,
+    },
+    dl: {
+      filter: {
+        "": "Alle Geräte",
+        todo: "Noch nicht erledigt",
+        sug: "Mit Vorschlägen",
+        silent: "Ohne Lebenszeichen",
+      },
+      standalone: "Funktionen ohne Gerät",
+    },
+    fl: {
+      info: "Jede Funktion mit ihrem Status: was der Sprachassistent sieht – und alles andere, auch Ausgeblendetes und Deaktiviertes. „nach Schreibrate“ zeigt, was die Datenbank am meisten füllt. Haken setzen und oben auf einen Status stellen – oder einzeln über „Anpassen“.",
+      byRoom: "nach Raum",
+      byWrites: "nach Schreibrate",
+      selectAll: (n) => `alle ${n} gezeigten auswählen`,
+      askAi: "🤖 KI zu Auswahl fragen",
+    },
+    house: {
+      info: "Das Gerüst des Hauses: Etagen (oben → unten über die Ebene), Räume je Etage – mit den Geräten darin, damit klar ist, welches Bad welches ist –, Raumgruppen und Notizen für den Assistenten.",
+      notesInfo: "Kurze Hinweise, die in die Hausbeschreibung für den Assistenten kommen.",
+      aiRooms: "🤖 KI: Räume den Etagen zuordnen",
+      aiRoomsInfo: "Die KI sieht sich jeden Raum mit seinen Geräten an und schlägt die Etage vor – mit Grund. Übernommen wird nur, was du anhakst.",
+      aiRunning: "🤖 KI ordnet Räume zu …",
+      levelClash: "Zwei Etagen haben dieselbe Ebene – dann weiß der Assistent nicht, was oben und unten ist. Ebene: oben höher, unten niedriger (Erdgeschoss 0).",
+    },
+    dupRoom: "Raum für die Hauptentität",
     fnAi: {
       ask: "🤖 Was ist das?",
       again: "🤖 Neu fragen",
-      take: (n) => `🤖 ${n} KI-Vorschläge übernehmen`,
       running: "🤖 KI sieht sich die Funktionen an …",
     },
     tele: {
-      summary: (n, busy) => `${n} Funktionen sind technisch oder schreiben mehr als ${busy} Werte am Tag in die Datenbank.`,
-      noCount: "Die Schreibrate ließ sich nicht aus dem Recorder lesen – gezeigt werden nur die technischen Funktionen.",
-      loading: "Lade und zähle die Schreibrate der letzten 24 Stunden …",
       apply: "Für Auswahl setzen",
-      askAi: "🤖 KI zu Auswahl fragen",
       none: "Nichts ausgewählt.",
       used: (n) => `⚠️ ${n}× in Automationen/Skripten benutzt`,
       confirmUsed: (n) => `${n} der ausgewählten Funktionen werden in Automationen oder Skripten benutzt. Deaktiviert liefern sie keine Werte mehr. Trotzdem deaktivieren?`,
-      group: (n, w) => `${n} · ${w}`,
     },
     devNamePh: "Name in Home Assistant, z. B. Licht Flur",
     aliasPh: "weitere Namen, mit Komma getrennt – z. B. Licht oben, Deckenlicht",
     fn: {
       title: "⚙️ Funktionen",
-      info: "Was dieses Gerät kann – je Funktion: was sie tut, ihr Status (siehe Legende), Name (so heißt sie überall), Art (wofür sie steht, z. B. ein Schalter, der ein Licht schaltet) und Aliase (weitere Rufnamen). Alles wird sofort gespeichert und ist rückgängig machbar.",
-      kindAuto: (k) => `Art: automatisch (${k})`,
+      kindAuto: (k) => `Kategorie: automatisch (${k})`,
       namePh: (n) => `Name – jetzt: ${n}`,
       technical: (n) => `Technische Werte (${n})`,
     },
@@ -291,16 +350,12 @@ const TEXT = {
     noDelete: "Diese Integration erlaubt kein Löschen einzelner Geräte – deaktivieren oder in der Integration entfernen.",
     confirmDelete: (name) => `„${name}“ endgültig löschen? Das lässt sich nicht zurücknehmen.`,
     deleted: (name) => `„${name}“ gelöscht`,
-    onlySilent: "nur Geräte ohne Lebenszeichen",
-    orphans: "Verwaist",
-    orphansInfo:
-      "Verwaist = einzelne Entitäten, die keine Integration mehr liefert (das Gerät oder der Wert ist aus HA verschwunden, nur der Eintrag ist übrig). Oft nur vorübergehend: Gerät aus, Zubehör ab, Wert kommt nur bei Meldung. Drei Wege: „Entfernen“ – landet im Archiv und lässt sich dort samt Name, Raum und Aliasen wiederherstellen. „Ins Archiv“ – bleibt in HA, taucht hier aber nicht mehr auf. Oder einfach stehen lassen.",
+    orphansInfo: "Verwaist = einzelne Entitäten, die keine Integration mehr liefert (das Gerät oder der Wert ist aus HA verschwunden, nur der Eintrag ist übrig). Oft nur vorübergehend: Gerät aus, Zubehör ab, Wert kommt nur bei Meldung. Drei Wege: „Entfernen“ – landet im Archiv und lässt sich dort samt Name, Raum und Aliasen wiederherstellen. „Ins Archiv“ – bleibt in HA, taucht hier aber nicht mehr auf. Oder einfach stehen lassen.",
     archiveIn: "📦 Ins Archiv",
     archiveTip: "Behalten, aber hier nicht mehr zeigen. Im Archiv jederzeit zurückholbar.",
     archiveChip: (n) => `📦 Archiv ${n}`,
     openChip: (n) => `Offen ${n}`,
-    archiveInfo:
-      "Was du behalten oder entfernt hast. Behaltenes kommt mit „Zurück in die Liste“ wieder; Entferntes legt „Wiederherstellen“ wieder an – mit Name, Raum, Aliasen und Status. Liefert die Integration es später wieder, findet sie es über dieselbe ID.",
+    archiveInfo: "Was du behalten oder entfernt hast. Behaltenes kommt mit „Zurück in die Liste“ wieder; Entferntes legt „Wiederherstellen“ wieder an – mit Name, Raum, Aliasen und Status. Liefert die Integration es später wieder, findet sie es über dieselbe ID.",
     archiveKept: "behalten",
     archiveRemoved: "entfernt",
     archiveBack: "Zurück in die Liste",
@@ -367,6 +422,7 @@ const TEXT = {
       area_missing: "kein Raum zugeordnet",
       name_technical: "technischer Name",
       speaker: "Sprachgerät ohne Raum",
+      convert: "HA kennt es nur als Schalter",
     },
   },
   en: {
@@ -375,10 +431,6 @@ const TEXT = {
     scanRules: "Rules only",
     applySafe: "Apply all safe",
     undo: "Undo last change",
-    open: "Open",
-    later: "Later",
-    ignored: "Rejected",
-    history: "History",
     search: "Search …",
     neverScanned: "Not scanned yet. Start with “Scan”.",
     lastScan: "Last scan",
@@ -389,111 +441,46 @@ const TEXT = {
     empty: "Nothing here.",
     area: "Area",
     noArea: "– no area –",
-    name: "Name",
-    exposed: "for assistant",
-    aliases: "Aliases, comma separated",
-    remove: "remove",
-    more: "more entities",
-    accept: "Apply",
-    postpone: "Later",
-    ignore: "Reject",
-    ignoreTip: "Stop showing this proposal. It only comes back when something about the device changes; “Rejected” brings it back.",
-    ignoredInfo: "Proposals you rejected. They only come back when something about the device changes. “Show again” brings one back at once.",
-    showAgain: "Show again",
-    safe: "safe",
-    ai: "AI proposal",
     showMore: "Show more",
     changes: "changes",
     confirmSafe: (n) => `Apply ${n} safe proposals without reviewing each?`,
-    confirmRemove: "Entities will be removed from the registry for good. This cannot be undone. Continue?",
     undone: (r) => `Reverted ${r.reverted} changes to “${r.title}”` + (r.skipped ? `, ${r.skipped} not possible` : ""),
     nothingToUndo: "Nothing to undo.",
     applied: (n) => `${n} changes saved`,
-    map: "Map",
     edit: "Edit floor plan",
     editDone: "Done",
     onMap: "Show on map",
     wiz: {
-      nav: "Setup",
-      open: "🧭 Setup",
-      stepOf: (n, total) => `Step ${n} of ${total}`,
-      prev: "‹ Back",
-      next: "Next ›",
-      finish: "Finish setup",
-      later: "Continue later",
-      all: "All steps",
-      labels: { welcome: "Welcome", floors: "Floors", rooms: "Rooms to floors", plan: "Floor plan (optional)", devices: "Assign devices", duplicates: "Sort out duplicates", functions: "Functions per room", check: "Check", done: "Done" },
-      intro:
-        "This assistant sets up the home once, cleanly – in a fixed order, so every step builds on the previous one. You can stop any time; it remembers where you were. Nothing changes without your click, everything can be undone.",
-      plan: [
-        "Create and name floors – floors only",
-        "Rooms to floors – you see which devices are in each room; the AI suggests with a reason",
-        "Floor plan (optional)",
-        "Devices without area – with name, model, entities and reason; duplicates left out for now",
-        "Sort out duplicates – choose the main entity and give it its room",
-        "Functions per room – what each device is and can do, which function the assistant gets, what HA hides or switches off; the AI explains and suggests",
-        "Check: floor → room → devices",
-      ],
-      aiStart: "🤖 Start AI review in the background",
-      aiStartInfo: "Takes a few minutes. Its recommendations then show up in the matching steps.",
-      aiReady: (at) => `🤖 AI review from ${at} – its recommendations are in the steps.`,
-      aiNo: "Without a language model there are only rule-based proposals. A model can be set in the integration options.",
-      scanFirst: "Scan first (rules only, takes seconds)",
-      floorsInfo:
-        "Only floors here – rooms come next. Name them the way you call them. The number is the height in the house: 0 = ground floor, 1 = one up, -1 = basement. Every floor gets its own number. Below you see the order right away.",
-      floorRow: (n) => `${n} rooms`,
-      orderTitle: "This is the home – top to bottom:",
-      levelClash: "Two floors share a number. Every floor needs its own: highest number = top, 0 = ground floor.",
-      roomsInfo:
-        "Every room belongs to a floor. Under each room you see which devices are already in it – so you can tell which room goes where. Choosing a floor saves right away. AI suggestions are shown with their reason.",
-      aiRooms: "🤖 Let the AI assign the rooms",
-      aiRoomsInfo: "Uses the floors from the last step and the device names in each room. Takes about a minute.",
-      aiRoomsRunning: "🤖 The AI is assigning the rooms …",
-      aiRoomsCount: (n) => `🤖 ${n} suggestions – shown with their reason at the rooms`,
-      aiMove: (floor) => `AI: on “${floor}”`,
       noDevices: "no devices yet",
       more: (n) => `+${n} more`,
-      savedNow: "Changes are saved right away. Two rooms of the same kind (two bathrooms)? Home Assistant allows every room name only once – call them e.g. “Upstairs bath” and “Downstairs bath”.",
-      takeAll: (n) => `🤖 Apply all ${n} suggestions`,
       nameTaken: "This room name exists already. Home Assistant allows every name only once – e.g. “Upstairs bath” and “Downstairs bath”.",
-      planInfo: "Optional: per floor upload a floor plan image and let the AI detect rooms, or draw them. Can also be done later under Map.",
-      devicesInfo:
-        "Devices without area – except duplicates, they come next. Choosing a room saves right away. Suggestions with reasons are shown next to it; hide what does not belong to the home (NAS drives, browser players …) with “🚫 Not relevant”.",
-      aiDevices: "🤖 Ask the AI for rooms",
-      suggestedFor: (room, n) => `Suggested: ${room} (${n})`,
-      noSuggestion: (n) => `No suggestion (${n})`,
-      byName: (word) => `from the name (“${word}”)`,
-      noneLeft: "Every device (except duplicates) has a room. 👍",
-      withRoom: (n) => `${n} devices already have a room – see Check.`,
-      hiddenList: (n) => `Hidden or disabled (${n})`,
-      dupsInfo: "The same device through two systems. Choose which entity the assistant uses and give it its room. The others are hidden but keep running.",
-      dupRoom: "Room for the main entity",
-      dupsNone: "No duplicates left. 👍",
-      fnInfo: "Room by room: what is each device, what can it do, and which status does each function get? The AI explains the devices and suggests levels – only what you click is applied.",
-      fnRoom: (i, n) => `Room ${i} of ${n}`,
-      fnNoRoom: "Without room",
-      fnEmpty: "No devices in this room.",
       fnAsk: (n) => `🤖 Look through the ${n} devices of this room`,
-      checkInfo: "This is how the home looks now. Something missing or wrong? Go back to the matching step or change it under Rooms/Devices.",
-      empty: "empty",
-      rest: (s) => `Still open under Clean up: ${s.open} proposals (exposure, names) · ${s.orphans} orphaned entities · ${s.silent} silent devices`,
-      doneInfo: "The home is set up cleanly. The rest (exposure, names, orphaned) is under Clean up.",
-      summary: (s) => `${s.floors} floors · ${s.rooms} rooms (${s.loose} without floor) · ${s.dups} duplicates open · ${s.unassigned} devices without area`,
     },
     aiReview: "🤖 AI review",
     aiAt: "AI review",
-    aiTasks: { floors: "floors", duplicates: "duplicates", orphans: "orphaned", silent: "silent", switches: "switches", functions: "functions" },
+    aiTasks: {
+      floors: "floors",
+      duplicates: "duplicates",
+      orphans: "orphaned",
+      silent: "silent",
+      functions: "functions",
+    },
     aiRunning: (task, n, total) => `AI checks: ${task} (${n}/${total})`,
-    aiNone: "No AI review yet. “🤖 AI review” asks your language model about every step – one question at a time, so the voice assistant stays free.",
+    aiNone: "No AI review yet. “🤖 AI review” asks your language model about floors, duplicates, orphaned and silent devices – one question at a time, so the voice assistant stays free.",
     aiFloorsTitle: "🤖 AI proposal: rooms to floors",
     applySelected: "Apply selected",
     levelClash: "Careful: two floors would get the same number. Please check the numbers (0 = ground floor, higher = further up), then tick.",
     aiSame: (name) => `AI: same – use “${name}”`,
     aiDifferent: "AI: different",
-    advice: { remove: "remove", keep: "keep", check: "check", disable: "disable", delete: "delete" },
+    advice: {
+      remove: "remove",
+      keep: "keep",
+      check: "check",
+      disable: "disable",
+      delete: "delete",
+    },
     aiAdvice: (a) => `AI: ${a}`,
     aiPick: "🤖 Select as AI says",
-    aiKind: (kind) => `AI: probably ${kind}`,
     modeRooms: "🏠 Draw rooms",
     modeDevices: "💡 Place devices",
     hintRooms: "Drag a rectangle = new room (or “+ Room”). Move rooms, resize at the bottom right corner. Devices are only faded in this mode.",
@@ -507,7 +494,7 @@ const TEXT = {
     convertBtn: "Turn into room group …",
     convertTitle: (name) => `Is “${name}” really several rooms?`,
     convertInfo: (name) =>
-      `Choose the rooms “${name}” consists of. Every device goes into one of them; then “${name}” is deleted as a room and becomes the room group of these rooms. Can be undone.`,
+          `Choose the rooms “${name}” consists of. Every device goes into one of them; then “${name}” is deleted as a room and becomes the room group of these rooms. Can be undone.`,
     convertPick: "Which rooms belong to it?",
     convertWhere: "What goes where?",
     convertDo: "Convert",
@@ -517,7 +504,7 @@ const TEXT = {
     mergeWith: (name) => `Merge “${name}” into:`,
     mergeChoose: "– choose room –",
     mergeInfo: (name) =>
-      `All devices and entities move to the chosen room. “${name}” stays there as an alias so the name is still understood. Then “${name}” is deleted – can be undone.`,
+          `All devices and entities move to the chosen room. “${name}” stays there as an alias so the name is still understood. Then “${name}” is deleted – can be undone.`,
     mergeRefs: (name) => `⚠️ These automations/scripts use “${name}” directly and will point nowhere – please adjust them afterwards:`,
     mergeNoRefs: "No automation or script uses the room directly.",
     mergeDo: "Merge",
@@ -533,9 +520,7 @@ const TEXT = {
     iconUpload: "Upload picture",
     iconReset: "Default",
     iconApply: "Apply",
-    sections: { clean: "Clean up", map: "Map", rooms: "Rooms", devices: "Devices", assist: "Assistant" },
     assist: {
-      info: "Every entity with its status: what the voice assistant sees – and everything else, hidden and disabled ones too. One click moves an entry to the other side; the “level” filter shows e.g. only what you hid or disabled. Everything takes effect at once; what you changed when is under Clean up → History.",
       allStatuses: "All levels",
       summary: (seen, all) => `The assistant sees ${seen} of ${all} entities.`,
       sees: "👁 Sees",
@@ -553,42 +538,55 @@ const TEXT = {
       noRoom: "Without room",
       changed: (n) => `${n} changed`,
     },
-    steps: { rooms: "Floors", duplicates: "Duplicates", open: "Proposals", silent: "Silent", orphans: "Orphaned", telemetry: "Telemetry", history: "History" },
     stepInfo: {
-      rooms: "Every room should belong to a floor – otherwise the assistant cannot tell what “upstairs” means.",
       duplicates: "The same device through two systems (e.g. Loxone and Shelly, KNX, Zigbee, MQTT). Merging means: the assistant only uses the chosen entity; the others are hidden and not exposed. They keep running – automations and the systems themselves stay untouched. Can be split again any time.",
-      open: "Proposals for area, name and exposure. Review, adjust if needed, apply.",
-      telemetry: "What clutters HA most: technical values and functions that write all the time. Select and set a status – “Hidden” tidies dashboards, “Disabled” also spares the database. Grouped by integration, the busiest first.",
-      silent: "Silent = whole devices HA still knows but which report nothing right now (all values unavailable) – unlike “Orphaned”, where the integration no longer provides single entries at all. Ways: set a status (e.g. Disabled), “📦 To archive” (stays, no longer shown here) or delete – deleting is done by the integration; some devices (e.g. Zigbee) must be paired again afterwards.",
     },
     allDone: "All done here.",
-    noFloorRooms: (n) => `${n} rooms without floor`,
     allRooms: "All rooms and floors",
-    propFilter: { open: "Open", safe: "Safe", later: "Later", ignored: "Rejected" },
     kinds: {
-      light: "Light", shading: "Shading", window: "Window", door: "Door/gate", socket: "Socket", switch: "Switch",
-      heating: "Heating/climate", fan: "Ventilation", water: "Water", lock: "Lock", media: "Media", voice: "Voice device",
-      camera: "Camera", vacuum: "Vacuum", garden: "Garden", contact: "Contact", motion: "Motion", alarm: "Detector",
-      temperature: "Temperature", humidity: "Humidity", energy: "Power", battery: "Battery", sensor: "Reading",
-      scene: "Scene", script: "Script", automation: "Automation", weather: "Weather", list: "List", presence: "Presence",
-      button: "Button", setting: "Setting", update: "Update", other: "Other",
+      light: "Light",
+      shading: "Shading",
+      window: "Window",
+      door: "Door/gate",
+      socket: "Socket",
+      switch: "Switch",
+      heating: "Heating/climate",
+      fan: "Ventilation",
+      water: "Water",
+      lock: "Lock",
+      media: "Media",
+      voice: "Voice device",
+      camera: "Camera",
+      vacuum: "Vacuum",
+      garden: "Garden",
+      contact: "Contact",
+      motion: "Motion",
+      alarm: "Detector",
+      temperature: "Temperature",
+      humidity: "Humidity",
+      energy: "Power",
+      battery: "Battery",
+      sensor: "Reading",
+      scene: "Scene",
+      script: "Script",
+      automation: "Automation",
+      weather: "Weather",
+      list: "List",
+      presence: "Presence",
+      button: "Button",
+      setting: "Setting",
+      update: "Update",
+      other: "Other",
     },
-    allKinds: "All kinds",
+    allKinds: "All categories",
     allRoomsFilter: "All rooms",
     withoutRoom: "No room",
     byRoom: "by room",
     byIntegration: "by system",
-    changeRaum: (a, b) => `Area: ${a} → ${b}`,
-    needRoom: "Area missing – please choose",
-    changeName: (a, b) => `Name: ${a} → ${b}`,
-    needName: "Technical name – better rename",
-    aliasesSet: (list) => `Aliases: ${list}`,
-    speakerNoRoom: "Voice device without area – the assistant cannot tell where someone speaks",
     adjust: "Adjust",
-    nothingChanges: "No change needed",
     dupTitle: (name) => `Probably the same: ${name}`,
     dupHistory: (n, of) => `switch together ${n} of ${of} times (last 7 days)`,
-    dupName: "same kind, similar name, same room",
+    dupName: "same category, similar name, same room",
     dupStrong: "clearly detected",
     dupWeak: "by name",
     dupPick: "The assistant uses:",
@@ -605,9 +603,6 @@ const TEXT = {
     saved: "Saved",
     onMapShort: "on the map",
     twinsVia: (list) => `also via: ${list}`,
-    devices: "Devices",
-    devicesInfo:
-      "All devices by integration, silent ones first. Disabling hides a device with its entities and can be undone. Deleting removes it for good – only where the integration allows it; if it is reachable again, the integration may create it again.",
     silent: "reports nothing",
     st: {
       assistant: "Assistant",
@@ -615,41 +610,161 @@ const TEXT = {
       hidden: "Hidden",
       disabled: "Disabled",
       legendTitle: "ⓘ What do the levels mean?",
-      legendHead: ["Level", "Assistant", "visible in HA", "records data"],
-      legendNote:
-        "Each level includes the one before: what HA hides, the assistant does not get either. “Disabled” saves database and CPU – automations using such a function then run into nothing. On a device the status is a ceiling for all its functions; “Disabled” switches off the whole device there.",
+      legendHead: [
+        "Level",
+        "Assistant",
+        "visible in HA",
+        "records data",
+      ],
+      legendNote: "Each level includes the one before: what HA hides, the assistant does not get either. “Disabled” saves database and CPU – automations using such a function then run into nothing. On a device the status is a ceiling for all its functions; “Disabled” switches off the whole device there.",
       deviceTip: "Status for the whole device – a ceiling for all its functions. Disabled = switch the device off in HA.",
       confirmDevice: (n) => `Disable “${n}” in Home Assistant? It sends no more values; automations using it run into nothing. Can be undone.`,
       change: (name, from, to) => `${name}: ${from} → ${to}`,
       because: (r) => `reason: ${r}`,
     },
-    role: { control: "controls", measure: "measures", technical: "technical", other: "other" },
-    roleCount: { control: (n) => `${n} ${n === 1 ? "controls" : "control"}`, measure: (n) => `${n} ${n === 1 ? "measures" : "measure"}`, technical: (n) => `${n} technical`, other: (n) => `${n} other` },
+    role: {
+      control: "controls",
+      measure: "measures",
+      technical: "technical",
+      other: "other",
+    },
+    roleCount: {
+      control: (n) => `${n} ${n === 1 ? "controls" : "control"}`,
+      measure: (n) => `${n} ${n === 1 ? "measures" : "measure"}`,
+      technical: (n) => `${n} technical`,
+      other: (n) => `${n} other`,
+    },
     writes: (n) => `~${n} values/day`,
     deviceFns: (n) => `${n} functions`,
+    nav: {
+      sections: {
+        overview: "Overview",
+        focus: "Clean up",
+        inventory: "Inventory",
+        map: "Map",
+        house: "House",
+      },
+      subs: {
+        devices: "Devices",
+        functions: "Functions",
+        duplicates: "Duplicates",
+        orphans: "Orphaned",
+        history: "History",
+      },
+    },
+    ov: {
+      title: "Where you are",
+      intro: "Four steps, in this order. You can stop any time – everything is kept and can be undone.",
+      floors: "1. Create floors",
+      floorsDetail: (n) => (n ? `${n} floors` : "no floor yet"),
+      rooms: "2. Rooms to floors",
+      roomsDetail: (loose, all) => (loose ? `${loose} of ${all} rooms without floor` : `all ${all} rooms have a floor`),
+      plan: "3. Draw the floor plan (optional)",
+      planDetail: (placed, all) => `${placed} of ${all} rooms on the map`,
+      clean: "4. Clean up devices – one after the other",
+      cleanDetail: (done, total, dups) => `${done} of ${total} done${dups ? ` · ${dups} duplicates open` : ""}`,
+      toHouse: "To the house",
+      toMap: "To the map",
+      toFocus: "Continue cleaning up",
+      toFocusDone: "View",
+      glance: "At a glance",
+      statAssistant: "functions the assistant sees",
+      statDups: "duplicates open",
+      statSilent: "silent devices",
+      statOrphans: "orphaned entries",
+      toFunctions: "What does the assistant see?",
+      toOrphans: "View orphaned",
+      toHistory: "History",
+      check: "Scan & AI",
+      checkInfo: "“Scan” reads all devices again and makes proposals (with a language model also rooms and names). “AI review” asks the model about floors, duplicates, orphaned and silent devices. “What is this?” on each device explains it and suggests status and category of its functions.",
+    },
+    fc: {
+      room: "Room",
+      progress: (done, total, left) => `${done} of ${total} done · ${left} left`,
+      unlater: (n) => `show ${n} postponed again`,
+      dupInfo: (n) => `Duplicates first (${n}): the same device through two systems. Choose which entity stays – the others are hidden but keep running.`,
+      next: (names, n) => `Next: ${names}${n > 3 ? ` … (${n})` : ""}`,
+      roomDone: "Everything in this room is done",
+      allDone: "All done",
+      allDoneInfo: "New devices show up here by themselves. Done ones are under Inventory → Devices.",
+      toInventory: "To the inventory",
+      later: "Later",
+      laterTip: "Put aside for this visit – nothing is saved.",
+      skip: "Done without changes",
+      skipTip: "Take nothing; the proposals only come back when something about the device changes.",
+      apply: "Apply & next",
+      done: "Done & next",
+      marked: "Done",
+    },
+    dc: {
+      status: "Device",
+      inDups: "part of a duplicate",
+      reviewed: "done",
+      apply: (n) => `Apply ${n} proposals`,
+      reset: "↺ Check again",
+      resetTip: "Back into the clean-up list, with rejected proposals.",
+      standalone: (i) => `Functions without device: ${i}`,
+      standaloneInfo: (n) => `${n} scenes, scripts, helpers … – room, status, name per function`,
+      suggestions: (n) => `💡 ${n} proposals – ticked ones are applied`,
+      sArea: (r) => `room → ${r}`,
+      sName: (n) => `name → ${n}`,
+      sKind: (k) => `category → ${k}`,
+      sAliases: (a) => `aliases → ${a}`,
+      sConvert: (name, d) => `show “${name}” as a ${d} in HA – only then the assistant understands “${d} …”`,
+      domains: {
+        light: "light",
+        cover: "cover",
+        fan: "fan",
+        lock: "lock",
+        valve: "valve",
+      },
+      convertHint: (d) => `HA only knows this as a switch. Shown as a ${d}, the assistant understands “${d} …”; the switch stays behind it, automations keep working.`,
+      convertDo: (d) => `Show as ${d} in HA`,
+      converted: (id) => `New in HA: ${id}`,
+      shownAs: (id) => `Shown in HA as ${id}`,
+      wraps: (id) => `Shows the switch ${id}`,
+    },
+    dl: {
+      filter: {
+        "": "All devices",
+        todo: "Not done yet",
+        sug: "With proposals",
+        silent: "Silent",
+      },
+      standalone: "Functions without device",
+    },
+    fl: {
+      info: "Every function with its status: what the voice assistant sees – and everything else, hidden and disabled too. “by write rate” shows what fills the database most. Tick and set a status above – or one by one under “Adjust”.",
+      byRoom: "by room",
+      byWrites: "by write rate",
+      selectAll: (n) => `select all ${n} shown`,
+      askAi: "🤖 Ask the AI about the selection",
+    },
+    house: {
+      info: "The frame of the house: floors (top → bottom by level), rooms per floor – with the devices in them, so it is clear which bathroom is which –, room groups and notes for the assistant.",
+      notesInfo: "Short hints that go into the house description for the assistant.",
+      aiRooms: "🤖 AI: rooms to floors",
+      aiRoomsInfo: "The AI looks at each room with its devices and suggests the floor – with a reason. Only what you tick is applied.",
+      aiRunning: "🤖 AI places rooms …",
+      levelClash: "Two floors share a level – then the assistant cannot tell up from down. Level: higher above, lower below (ground floor 0).",
+    },
+    dupRoom: "Room for the main entity",
     fnAi: {
       ask: "🤖 What is this?",
       again: "🤖 Ask again",
-      take: (n) => `🤖 Apply ${n} AI suggestions`,
       running: "🤖 The AI is looking at the functions …",
     },
     tele: {
-      summary: (n, busy) => `${n} functions are technical or write more than ${busy} values a day to the database.`,
-      noCount: "The write rate could not be read from the recorder – only the technical functions are shown.",
-      loading: "Loading and counting the write rate of the last 24 hours …",
       apply: "Set for selection",
-      askAi: "🤖 Ask the AI about the selection",
       none: "Nothing selected.",
       used: (n) => `⚠️ used ${n}× in automations/scripts`,
       confirmUsed: (n) => `${n} of the selected functions are used in automations or scripts. Disabled, they send no values. Disable anyway?`,
-      group: (n, w) => `${n} · ${w}`,
     },
     devNamePh: "Name in Home Assistant, e.g. Hall light",
     aliasPh: "more names, separated by commas – e.g. ceiling light, top light",
     fn: {
       title: "⚙️ Functions",
-      info: "What this device can do – per function: what it does, its status (see legend), name (what it is called everywhere), kind (what it stands for, e.g. a switch that drives a light) and aliases (more names to call it). Everything is saved at once and can be undone.",
-      kindAuto: (k) => `Kind: automatic (${k})`,
+      kindAuto: (k) => `Category: automatic (${k})`,
       namePh: (n) => `Name – now: ${n}`,
       technical: (n) => `Technical values (${n})`,
     },
@@ -659,16 +774,12 @@ const TEXT = {
     noDelete: "This integration does not allow deleting single devices – disable it or remove it in the integration.",
     confirmDelete: (name) => `Delete “${name}” for good? This cannot be undone.`,
     deleted: (name) => `“${name}” deleted`,
-    onlySilent: "silent devices only",
-    orphans: "Orphaned",
-    orphansInfo:
-      "Orphaned = single entities no integration provides any more (the device or value is gone from HA, only the entry is left). Often only for a while: device off, accessory unplugged, value only while reporting. Three ways: “Remove” – goes to the archive and can be restored there with name, area and aliases. “To archive” – stays in HA but no longer shows here. Or just leave it.",
+    orphansInfo: "Orphaned = single entities no integration provides any more (the device or value is gone from HA, only the entry is left). Often only for a while: device off, accessory unplugged, value only while reporting. Three ways: “Remove” – goes to the archive and can be restored there with name, area and aliases. “To archive” – stays in HA but no longer shows here. Or just leave it.",
     archiveIn: "📦 To archive",
     archiveTip: "Keep it, but stop showing it here. Can be brought back from the archive any time.",
     archiveChip: (n) => `📦 Archive ${n}`,
     openChip: (n) => `Open ${n}`,
-    archiveInfo:
-      "What you kept or removed. Kept items return with “Back to the list”; removed ones are created again by “Restore” – with name, area, aliases and status. If the integration provides them again later, it finds them by the same id.",
+    archiveInfo: "What you kept or removed. Kept items return with “Back to the list”; removed ones are created again by “Restore” – with name, area, aliases and status. If the integration provides them again later, it finds them by the same id.",
     archiveKept: "kept",
     archiveRemoved: "removed",
     archiveBack: "Back to the list",
@@ -735,13 +846,13 @@ const TEXT = {
       area_missing: "no area",
       name_technical: "technical name",
       speaker: "voice device without area",
+      convert: "HA only knows it as a switch",
     },
   },
 };
 
-const PAGE = 40;
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.15.0";
+const PANEL_VERSION = "0.16.0";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -790,8 +901,6 @@ const STATUSES = ["assistant", "ha", "hidden", "disabled"];
 const ICON_PICKS = ["mdi:ceiling-light", "mdi:lamp", "mdi:floor-lamp", "mdi:led-strip-variant", "mdi:power-socket-de", "mdi:blinds",
   "mdi:window-shutter", "mdi:radiator", "mdi:air-conditioner", "mdi:fan", "mdi:speaker", "mdi:television", "mdi:robot-vacuum",
   "mdi:water-pump", "mdi:garage", "mdi:door", "mdi:thermometer", "mdi:motion-sensor", "mdi:washing-machine", "mdi:coffee-maker"];
-// a proposal speaks about the assistant; what HA hides stays hidden
-const proposedStatus = (e) => (e.proposed.exposed ? "assistant" : e.current.status === "hidden" ? "hidden" : "ha");
 const STATUS_ICON = { assistant: "🗣️", ha: "🏠", hidden: "🙈", disabled: "⛔" };
 const ROLE_ICON = { control: "🎛️", measure: "📈", technical: "🔧", other: "▫️" };
 // the same split as status.py on the server
@@ -808,8 +917,11 @@ const keepOpen = (key, open) => `data-keep="${esc(key)}" data-def="${open ? 1 : 
 const TOGGLE_DOMAINS = new Set(["light", "switch", "fan", "input_boolean", "siren", "humidifier"]);
 const ACTIVE_STATES = new Set(["on", "open", "opening", "closing", "playing", "heat", "cool", "heat_cool", "auto", "dry", "fan_only", "unlocked", "unlocking"]);
 
-const SECTION_ICON = { start: "🧭", clean: "🧹", map: "🗺️", rooms: "🏠", devices: "📦", assist: "🗣️" };
-const STEPS = ["rooms", "duplicates", "open", "silent", "orphans", "telemetry", "history"];
+const SECTIONS = ["overview", "focus", "inventory", "map", "house"];
+const SECTION_ICON = { overview: "🏁", focus: "🧹", inventory: "📦", map: "🗺️", house: "🏠" };
+const SUBS = ["devices", "functions", "duplicates", "orphans", "history"];
+// kinds HA can show a switch as (its own "Show as"); only then does the assistant understand "light …"
+const KIND_DOMAIN = { light: "light", shading: "cover", fan: "fan", lock: "lock", water: "valve" };
 
 const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -822,8 +934,10 @@ class HauskartePanel extends HTMLElement {
     this._tab = "map";
     this._editMode = "rooms";
     this._section = null;
-    this._step = null;
-    this._propFilter = "open";
+    this._sub = "devices";
+    this._devFilter = "";
+    this._lazy = new Map();
+    this._fnSort = "room";
     this._devGroup = "room";
     this._devKind = "";
     this._devRoom = "";
@@ -832,8 +946,6 @@ class HauskartePanel extends HTMLElement {
     this._pending = null;
     this._detecting = null;
     this._search = "";
-    this._onlySafe = false;
-    this._shown = PAGE;
     this._busy = false;
   }
 
@@ -926,7 +1038,7 @@ class HauskartePanel extends HTMLElement {
       return;
     }
     // a background run just finished: lists loaded on their own fetch its results again
-    if (this._wasRunning && !this._data.progress.running) this._telemetry = null;
+    if (this._wasRunning && !this._data.progress.running) this._exposure = null;
     this._wasRunning = this._data.progress.running;
     // while something runs the page polls; do not rebuild it under the user's fingers
     const focused = this.shadowRoot.activeElement;
@@ -971,7 +1083,6 @@ class HauskartePanel extends HTMLElement {
       }
       if (ev.target.id === "search") {
         this._search = ev.target.value.toLowerCase();
-        this._shown = PAGE;
         this._renderList();
       }
     });
@@ -985,6 +1096,17 @@ class HauskartePanel extends HTMLElement {
         this.shadowRoot.querySelector('[data-act="map-place-pending"]')?.click();
       }
     });
+    // a lazy card opened: build it now (toggle does not bubble, so listen while it travels down)
+    this.shadowRoot.addEventListener(
+      "toggle",
+      (ev) => {
+        if (ev.target.matches?.("details[data-lazy]") && ev.target.open) {
+          this._fillLazy(ev.target.parentElement);
+          this._live();
+        }
+      },
+      true,
+    );
     this.shadowRoot.addEventListener("pointerdown", (ev) => this._pointerDown(ev));
     this.shadowRoot.addEventListener("pointermove", (ev) => this._pointerMove(ev));
     this.shadowRoot.addEventListener("pointerup", (ev) => this._pointerUp(ev));
@@ -1006,13 +1128,15 @@ class HauskartePanel extends HTMLElement {
         this._upload(ev.target);
         return;
       }
-      if (ev.target.dataset.telGroup !== undefined) {
-        ev.target.closest("details").querySelectorAll("[data-tel]").forEach((c) => (c.checked = ev.target.checked));
+      if (ev.target.id === "fsel-all") {
+        this.shadowRoot.querySelectorAll("[data-fsel]").forEach((c) => (c.checked = ev.target.checked));
         return;
       }
-      if (ev.target.id === "fn-room") {
-        this._fnRoom = ev.target.value;
-        this._render();
+      if (ev.target.dataset.sug !== undefined) return; // ticks are read when applying
+      if (["focus-room", "dev-filter", "fn-sort"].includes(ev.target.id)) {
+        const key = { "focus-room": "_focusRoom", "dev-filter": "_devFilter", "fn-sort": "_fnSort" }[ev.target.id];
+        this[key] = ev.target.value;
+        this._renderList();
         return;
       }
       if (ev.target.dataset.orphanGroup !== undefined) {
@@ -1041,6 +1165,9 @@ class HauskartePanel extends HTMLElement {
         return this._save("area_update", { area_id: tg.dataset.areaFloor, floor_id: tg.value || null });
       if (tg.dataset.devArea !== undefined) return this._save("device_area", { device_id: tg.dataset.devArea, area_id: tg.value || null });
       if (tg.dataset.devName !== undefined) return this._save("device_name", { device_id: tg.dataset.devName, name: tg.value });
+      if (tg.dataset.devMap !== undefined) return this._save("item_visible", { item_id: tg.dataset.devMap, visible: tg.checked });
+      if (tg.dataset.entArea !== undefined)
+        return this._save("entity_update", { entity_id: tg.dataset.entArea, changes: { area: tg.value || null } });
       const listed = (id) => this._exposure?.entities.find((e) => e.entity_id === id) || {};
       if (tg.dataset.fnStatus !== undefined) {
         return this._setStatus([tg.dataset.fnStatus], tg.value).catch((err) => this._toast(err.message || String(err)));
@@ -1085,16 +1212,7 @@ class HauskartePanel extends HTMLElement {
         this._renderList();
         return;
       }
-      if (ev.target.id === "only-silent") {
-        this._onlySilent = ev.target.checked;
-        this._renderList();
-        return;
-      }
-      if (ev.target.id === "only-safe") {
-        this._onlySafe = ev.target.checked;
-        this._shown = PAGE;
-        this._renderList();
-      }
+
     });
   }
 
@@ -1107,23 +1225,6 @@ class HauskartePanel extends HTMLElement {
     return tpl.replace("{area}", this._areaName(r.area)).replace("{text}", r.text ?? "");
   }
 
-  _filtered() {
-    const d = this._data;
-    const f = this._propFilter;
-    let items = d.proposals.filter((p) => (f === "later" ? p.status === "later" : p.status === "open"));
-    if (f === "safe") items = items.filter((p) => p.safe);
-    if (this._search) {
-      const s = this._search;
-      items = items.filter((p) =>
-        [p.title, p.manufacturer, p.model, p.integration, this._areaName(p.proposed.area_id), ...p.entities.map((e) => e.entity_id)]
-          .join(" ")
-          .toLowerCase()
-          .includes(s),
-      );
-    }
-    return items;
-  }
-
   async _save(type, payload) {
     try {
       await this._ws(type, payload);
@@ -1133,32 +1234,6 @@ class HauskartePanel extends HTMLElement {
       this._toast(/already in use/i.test(msg) ? this._t.wiz.nameTaken : msg);
     }
     await this._load();
-  }
-
-  _counts() {
-    const d = this._data;
-    const c = {
-      rooms: d.map.rooms.filter((r) => !r.floor_id).length,
-      duplicates: d.duplicates.length,
-      open: d.proposals.filter((p) => p.status === "open").length,
-      silent: d.devices.reduce((n, g) => n + g.silent, 0),
-      orphans: d.orphans.reduce((n, g) => n + g.entities.length, 0),
-      history: 0,
-    };
-    c.total = c.rooms + c.duplicates + c.open;
-    return c;
-  }
-
-  _view() {
-    if (this._section === "clean") {
-      if (!this._step) {
-        const c = this._counts();
-        this._step = STEPS.find((s) => s !== "history" && c[s]) || "open";
-      }
-      return this._step;
-    }
-    if (this._section === "start") return "wizard";
-    return this._section;
   }
 
   _fieldKey(el) {
@@ -1213,131 +1288,6 @@ class HauskartePanel extends HTMLElement {
     });
   }
 
-  _renderAll() {
-    const t = this._t;
-    const d = this._data;
-    const p = d.progress;
-    const c = this._counts();
-    const wz = d.wizard || {};
-    if (!this._section) this._section = !wz.finished && !wz.dismissed ? "start" : c.total ? "clean" : "map";
-    this._tab = this._view();
-    const stale = d.version !== PANEL_VERSION;
-    const ver = this.shadowRoot.querySelector("#ver");
-    ver.innerHTML = stale
-      ? `<button data-act="reload" class="reloadbtn">${esc(t.reloadNew(d.version))}</button>`
-      : esc(d.version);
-
-    this.shadowRoot.querySelector("#sections").innerHTML = [...(wz.finished ? [] : ["start"]), "clean", "map", "rooms", "devices", "assist"]
-      .map((sec) => {
-        const badge = sec === "clean" ? c.total : sec === "rooms" ? c.rooms : 0;
-        return `<button data-section="${sec}" class="${this._section === sec ? "active" : ""}">
-          <span class="sicon">${SECTION_ICON[sec]}</span><span class="slabel">${esc(sec === "start" ? t.wiz.nav : t.sections[sec])}</span>
-          ${badge ? `<span class="sbadge">${badge}</span>` : ""}</button>`;
-      })
-      .join("");
-
-    let status = "";
-    if (this._section === "clean") {
-      let line;
-      if (p.running) {
-        const phase = p.phase === "llm" ? `${t.phaseLlm} ${p.done}/${p.total}` : p.phase === "duplicates" ? t.steps.duplicates : t.phaseRules;
-        line =
-          p.phase === "ai"
-            ? `<span class="running">${esc(t.aiRunning(t.aiTasks[p.task] || "…", p.done + 1, p.total))}</span>`
-            : `<span class="running">${esc(t.running)} ${esc(phase)}</span>`;
-      } else if (!d.last_scan) {
-        line = esc(t.neverScanned);
-      } else {
-        line = `${esc(t.lastScan)}: ${esc(new Date(d.last_scan).toLocaleString(this._hass.language))}`;
-      }
-      const aiLine = d.ai?.at ? `<br>${esc(t.aiAt)}: ${esc(new Date(d.ai.at).toLocaleString(this._hass.language))}` : "";
-      status = `<div class="card scan"><div class="muted grow">${line}${d.llm ? aiLine : `<br>${esc(t.noLlm)}`}</div>
-        <button data-act="scan" ${p.running ? "disabled" : ""}>${esc(t.scan)}</button>
-        ${d.llm ? `<button data-act="ai-review" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.aiReview)}</button>` : ""}
-        <button data-act="scan-rules" class="secondary" ${p.running ? "disabled" : ""}>${esc(t.scanRules)}</button>
-        <button data-section-go="start" class="flat">${esc(t.wiz.open)}</button></div>`;
-      if (d.llm && !d.ai?.at && !p.running) status += `<div class="muted ainote">${esc(t.aiNone)}</div>`;
-      if (p.error) status += `<div class="info error">${esc(p.error)}</div>`;
-    }
-    this.shadowRoot.querySelector("#status").innerHTML = status;
-
-    this.shadowRoot.querySelector("#tabs").innerHTML =
-      this._section === "clean"
-        ? `<div class="steps">${STEPS.map(
-            (st, i) => `<button data-step="${st}" class="step ${this._step === st ? "active" : ""}">
-              <span class="num">${i + 1}</span>${esc(t.steps[st])}${c[st] ? `<span class="count">${c[st]}</span>` : st === "history" || st === "telemetry" ? "" : `<span class="ok">✓</span>`}
-            </button>`,
-          ).join("")}</div>`
-        : "";
-
-    this.shadowRoot.querySelector(".step.active")?.scrollIntoView({ block: "nearest", inline: "center" });
-    const tools = this.shadowRoot.querySelector("#tools");
-    const view = this._tab;
-    if (view === "open") {
-      const pc = {
-        open: c.open,
-        safe: d.proposals.filter((x) => x.safe && x.status === "open").length,
-        later: d.proposals.filter((x) => x.status === "later").length,
-        ignored: d.ignored.length,
-      };
-      tools.innerHTML = `<div class="chips">${Object.keys(pc)
-        .map((f) => `<button data-pfilter="${f}" class="chip ${this._propFilter === f ? "active" : ""}">${esc(t.propFilter[f])} ${pc[f]}</button>`)
-        .join("")}</div>
-        <input id="search" type="search" placeholder="${esc(t.search)}">
-        <span class="grow"></span>
-        <button data-act="apply-safe" class="secondary" ${!pc.safe || p.running ? "disabled" : ""}>${esc(t.applySafe)} (${pc.safe})</button>`;
-      tools.querySelector("#search").value = this._search;
-    } else if (view === "telemetry") {
-      tools.innerHTML = `<input id="search" type="search" placeholder="${esc(t.search)}">
-        <span class="grow"></span>
-        <select id="tel-status" class="stsel">${this._statusOptions("hidden")}</select>
-        <button data-act="tel-apply" class="secondary">${esc(t.tele.apply)}</button>
-        ${d.llm ? `<button data-act="tel-ai" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.tele.askAi)}</button>` : ""}`;
-      tools.querySelector("#search").value = this._search;
-    } else if (view === "assist") {
-      const kindsPresent = [...new Set((this._exposure?.entities || []).map((x) => x.kind))].sort((a, b) =>
-        (t.kinds[a] || a).localeCompare(t.kinds[b] || b),
-      );
-      tools.innerHTML = `<input id="search" type="search" placeholder="${esc(t.search)}">
-        <select id="dev-kind"><option value="">${esc(t.allKinds)}</option>${kindsPresent
-          .map((k) => `<option value="${k}" ${this._devKind === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k] || k)}</option>`)
-          .join("")}</select>
-        <select id="dev-room"><option value="">${esc(t.allRoomsFilter)}</option><option value="-" ${this._devRoom === "-" ? "selected" : ""}>${esc(t.withoutRoom)}</option>
-          ${d.areas.map((a) => `<option value="${esc(a.area_id)}" ${this._devRoom === a.area_id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select>
-        <select id="assist-status"><option value="">${esc(t.assist.allStatuses)}</option>
-          ${STATUSES.map((st) => `<option value="${st}" ${this._assistStatus === st ? "selected" : ""}>${STATUS_ICON[st]} ${esc(t.st[st])}</option>`).join("")}</select>
-        <label class="check"><input id="assist-tech" type="checkbox" ${this._assistTech ? "checked" : ""}> ${esc(t.assist.technical)}</label>`;
-      tools.querySelector("#search").value = this._search;
-    } else if (view === "devices" || view === "silent") {
-      const kindsPresent = [...new Set(d.devices.flatMap((g) => g.devices.map((x) => x.kind)))].sort((a, b) =>
-        (t.kinds[a] || a).localeCompare(t.kinds[b] || b),
-      );
-      tools.innerHTML = `<input id="search" type="search" placeholder="${esc(t.search)}">
-        <select id="dev-kind"><option value="">${esc(t.allKinds)}</option>${kindsPresent
-          .map((k) => `<option value="${k}" ${this._devKind === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k] || k)}</option>`)
-          .join("")}</select>
-        <select id="dev-room"><option value="">${esc(t.allRoomsFilter)}</option><option value="-" ${this._devRoom === "-" ? "selected" : ""}>${esc(t.withoutRoom)}</option>
-          ${d.areas.map((a) => `<option value="${esc(a.area_id)}" ${this._devRoom === a.area_id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select>
-        <div class="chips"><button data-devgroup="room" class="chip ${this._devGroup === "room" ? "active" : ""}">${esc(t.byRoom)}</button>
-          <button data-devgroup="integration" class="chip ${this._devGroup === "integration" ? "active" : ""}">${esc(t.byIntegration)}</button></div>
-        ${view === "devices" ? `<label class="check"><input id="only-silent" type="checkbox" ${this._onlySilent ? "checked" : ""}> ${esc(t.onlySilent)}</label>` : this._archiveChips("device", c.silent)}`;
-      tools.querySelector("#search").value = this._search;
-    } else if (view === "orphans") {
-      tools.innerHTML = this._archiveView
-        ? this._archiveChips("entity", c.orphans)
-        : `${this._archiveChips("entity", c.orphans)}
-        ${d.orphans.some((g) => g.ai) ? `<button data-act="ai-orphans-pick" class="secondary ai">${esc(t.aiPick)}</button>` : ""}
-        <span class="grow"></span>
-        <button data-act="archive-orphans" class="secondary" title="${esc(t.archiveTip)}">${esc(t.archiveIn)}</button>
-        <button data-act="remove-orphans" class="secondary danger">${esc(t.removeSelected)}</button>`;
-    } else if (view === "history") {
-      tools.innerHTML = `<span class="grow"></span><button data-act="undo" class="secondary">${esc(t.undo)}</button>`;
-    } else {
-      tools.innerHTML = "";
-    }
-    this._renderList();
-  }
-
   // Open/closed state the user chose survives re-rendering, as long as the default did not change.
   _keepDetails(render) {
     const root = this.shadowRoot;
@@ -1347,6 +1297,7 @@ class HauskartePanel extends HTMLElement {
       const prev = opened.get(el.dataset.keep);
       if (prev && prev[0] === el.dataset.def) el.open = prev[1];
     });
+    this._fillLazy();
     this._live();
     requestAnimationFrame(() => this._markCutNames());
   }
@@ -1355,98 +1306,575 @@ class HauskartePanel extends HTMLElement {
     this._keepDetails(() => this._renderListNow());
   }
 
-  _renderListNow() {
-    const t = this._t;
+  _counts() {
     const d = this._data;
-    const list = this.shadowRoot.querySelector("#list");
-    if (this._tab === "assist") {
-      this._renderAssist(list);
-      return;
-    }
-    if (this._tab === "telemetry") {
-      this._renderTelemetry(list);
-      return;
-    }
-    const info = t.stepInfo[this._tab] ? `<div class="info">${esc(t.stepInfo[this._tab])}</div>` : "";
-    if (this._tab === "map") {
-      this._renderMap(list);
-      return;
-    }
-    if (this._tab === "wizard") {
-      this._renderWizard(list);
-      return;
-    }
-    if (this._tab === "rooms") {
-      list.innerHTML = (this._section === "clean" ? info : "") + this._roomsHtml(this._section === "clean");
-      return;
-    }
-    if (this._tab === "duplicates") {
-      list.innerHTML = info + this._duplicatesHtml();
-      return;
-    }
-    if ((this._tab === "silent" || this._tab === "orphans") && this._archiveView) {
-      list.innerHTML = this._archiveHtml(this._tab === "silent" ? "device" : "entity");
-      return;
-    }
-    if (this._tab === "devices" || this._tab === "silent") {
-      list.innerHTML = (this._tab === "silent" ? info : "") + this._devicesHtml(this._tab === "silent");
-      return;
-    }
-    if (this._tab === "orphans") {
-      list.innerHTML =
-        `<div class="info">${esc(t.orphansInfo)}</div>` +
-        (d.orphans.length
-          ? d.orphans
-              .map(
-                (g) => `<details class="card" data-group ${keepOpen(`orphans:${g.integration}`, false)} data-ai-advice="${g.ai?.advice || ""}">
-            <summary><b>${esc(g.integration)}</b> · ${g.entities.length}${g.running ? "" : ` · <span class="danger">${esc(t.integrationDown)}</span>`}
-              ${g.ai ? `<span class="aibadge ${g.ai.advice}">🤖 ${esc(t.advice[g.ai.advice])}</span>` : ""}</summary>
-            ${g.ai ? `<div class="ailine ${g.ai.advice === "remove" ? "yes" : g.ai.advice === "keep" ? "no" : ""}">🤖 ${esc(t.aiAdvice(t.advice[g.ai.advice]))} · ${esc(g.ai.reason)}</div>` : ""}
-            <label class="check"><input type="checkbox" data-orphan-group> ${esc(t.all)}</label>
-            ${g.entities
-              .map(
-                (e) => `<label class="orphan"><input type="checkbox" data-orphan="${esc(e.entity_id)}">
-                  <span class="ename"><b>${esc(e.title)}</b><span class="muted">${esc(e.entity_id)}${e.device ? ` · ${esc(e.device)}` : ""}</span>
-                  ${e.device ? `<span class="reason">${esc(e.device_live ? t.deviceLive : t.deviceGone)}</span>` : ""}</span></label>`,
-              )
-              .join("")}
-          </details>`,
-              )
-              .join("")
-          : `<p class="muted">${esc(t.empty)}</p>`);
-      return;
-    }
-    if (this._tab === "open" && this._propFilter === "ignored") {
-      list.innerHTML =
-        `<div class="info">${esc(t.ignoredInfo)}</div>` +
-        (d.ignored.length
-          ? d.ignored
-              .map(
-                (i) => `<div class="card row" data-id="${esc(i.id)}"><b>${esc(i.title)}</b><span class="grow"></span>
-                <button data-act="show-again" class="secondary">${esc(t.showAgain)}</button></div>`,
-              )
-              .join("")
-          : `<p class="muted">${esc(t.empty)}</p>`);
-      return;
-    }
-    if (this._tab === "history") {
-      list.innerHTML = d.history.length
-        ? d.history
-            .map(
-              (h) => `<div class="card row"><b>${esc(h.title)}</b><span class="muted">${h.changes} ${esc(t.changes)}</span>
-                <span class="grow"></span><span class="muted">${esc(new Date(h.at).toLocaleString(this._hass.language))}</span></div>`,
-            )
-            .join("")
-        : `<p class="muted">${esc(t.empty)}</p>`;
-      return;
-    }
-    const items = this._filtered();
-    list.innerHTML = info + (items.length
-      ? items.slice(0, this._shown).map((p) => this._card(p)).join("") +
-        (items.length > this._shown ? `<button data-act="more" class="secondary wide">${esc(t.showMore)} (${items.length - this._shown})</button>` : "")
-      : `<p class="muted">${esc(t.allDone)}</p>`);
+    const devices = d.devices.flatMap((g) => g.devices);
+    // what can be gone through: devices with functions that are not hidden or switched off as a whole
+    const units = devices.filter((x) => x.functions.length && x.status !== "hidden" && x.status !== "disabled");
+    const fns = [...devices.flatMap((x) => x.functions), ...d.standalone.flatMap((s) => s.functions)];
+    return {
+      floors: d.map.floors.filter((f) => f.floor_id).length,
+      loose: d.map.rooms.filter((r) => !r.floor_id).length,
+      rooms: d.map.rooms.length,
+      placed: d.map.rooms.filter((r) => r.position).length,
+      dups: d.duplicates.length,
+      queue: d.queue.length,
+      unitsTotal: units.length + d.standalone.length,
+      unitsDone: units.filter((x) => x.reviewed).length + d.standalone.filter((s) => s.reviewed).length,
+      orphans: d.orphans.reduce((n, g) => n + g.entities.length, 0),
+      silent: devices.filter((x) => x.silent).length,
+      safe: d.proposals.filter((p) => p.safe && p.status === "open").length,
+      assistant: fns.filter((f) => f.status === "assistant").length,
+    };
   }
 
+  _view() {
+    return this._section === "inventory" ? this._sub || "devices" : this._section;
+  }
+
+  _progressHtml() {
+    const t = this._t;
+    const p = this._data.progress;
+    let html = "";
+    if (p.running) {
+      const phase = p.phase === "llm" ? `${t.phaseLlm} ${p.done}/${p.total}` : p.phase === "duplicates" ? t.nav.subs.duplicates : t.phaseRules;
+      html += `<div class="info running">${esc(p.phase === "ai" ? t.aiRunning(t.aiTasks[p.task] || "…", p.done + 1, p.total) : `${t.running} ${phase}`)}</div>`;
+    }
+    if (p.error) html += `<div class="info error">${esc(p.error)}</div>`;
+    return html;
+  }
+
+  _renderAll() {
+    const t = this._t;
+    const d = this._data;
+    const c = this._counts();
+    if (!this._section) this._section = "overview";
+    this._tab = this._view();
+    const stale = d.version !== PANEL_VERSION;
+    this.shadowRoot.querySelector("#ver").innerHTML = stale
+      ? `<button data-act="reload" class="reloadbtn">${esc(t.reloadNew(d.version))}</button>`
+      : esc(d.version);
+    const badges = { focus: c.queue + c.dups, house: c.loose };
+    this.shadowRoot.querySelector("#sections").innerHTML = SECTIONS.map(
+      (sec) => `<button data-section="${sec}" class="${this._section === sec ? "active" : ""}">
+        <span class="sicon">${SECTION_ICON[sec]}</span><span class="slabel">${esc(t.nav.sections[sec])}</span>
+        ${badges[sec] ? `<span class="sbadge">${badges[sec]}</span>` : ""}</button>`,
+    ).join("");
+    this.shadowRoot.querySelector("#status").innerHTML = this._progressHtml();
+    const subCount = { duplicates: c.dups, orphans: c.orphans };
+    this.shadowRoot.querySelector("#tabs").innerHTML =
+      this._section === "inventory"
+        ? `<div class="chips subs">${SUBS.map(
+            (s) => `<button data-sub="${s}" class="chip ${this._tab === s ? "active" : ""}">${esc(t.nav.subs[s])}${subCount[s] ? ` <span class="count">${subCount[s]}</span>` : ""}</button>`,
+          ).join("")}</div>`
+        : "";
+    this.shadowRoot.querySelector("#tools").innerHTML = this._toolsHtml(c);
+    const search = this.shadowRoot.querySelector("#search");
+    if (search) search.value = this._search;
+    this._renderList();
+  }
+
+  _roomFilter(id, selected) {
+    const t = this._t;
+    return `<select id="${id}"><option value="">${esc(t.allRoomsFilter)}</option>
+      <option value="-" ${selected === "-" ? "selected" : ""}>${esc(t.withoutRoom)}</option>
+      ${this._data.areas.map((a) => `<option value="${esc(a.area_id)}" ${selected === a.area_id ? "selected" : ""}>${esc(a.name)}${a.floor ? ` · ${esc(a.floor)}` : ""}</option>`).join("")}</select>`;
+  }
+
+  _kindFilter(kindsPresent) {
+    const t = this._t;
+    const sorted = [...new Set(kindsPresent)].sort((a, b) => (t.kinds[a] || a).localeCompare(t.kinds[b] || b));
+    return `<select id="dev-kind"><option value="">${esc(t.allKinds)}</option>${sorted
+      .map((k) => `<option value="${k}" ${this._devKind === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k] || k)}</option>`)
+      .join("")}</select>`;
+  }
+
+  _toolsHtml(c) {
+    const t = this._t;
+    const d = this._data;
+    const search = `<input id="search" type="search" placeholder="${esc(t.search)}">`;
+    switch (this._tab) {
+      case "focus":
+        return `<label class="fld inline"><span>${esc(t.fc.room)}</span>${this._roomFilter("focus-room", this._focusRoom || "")}</label>`;
+      case "devices":
+        return `${search}${this._kindFilter(d.devices.flatMap((g) => g.devices.map((x) => x.kind)))}${this._roomFilter("dev-room", this._devRoom)}
+          <select id="dev-filter">${["", "todo", "sug", "silent", ...STATUSES]
+            .map((f) => `<option value="${f}" ${this._devFilter === f ? "selected" : ""}>${f && STATUS_ICON[f] ? `${STATUS_ICON[f]} ` : ""}${esc(t.dl.filter[f] || t.st[f])}</option>`)
+            .join("")}</select>
+          <div class="chips"><button data-devgroup="room" class="chip ${this._devGroup === "room" ? "active" : ""}">${esc(t.byRoom)}</button>
+            <button data-devgroup="integration" class="chip ${this._devGroup === "integration" ? "active" : ""}">${esc(t.byIntegration)}</button></div>`;
+      case "functions": {
+        const ents = this._exposure?.entities || [];
+        return `${search}${this._kindFilter(ents.map((x) => x.kind))}${this._roomFilter("dev-room", this._devRoom)}
+          <select id="assist-status"><option value="">${esc(t.assist.allStatuses)}</option>
+            ${STATUSES.map((st) => `<option value="${st}" ${this._assistStatus === st ? "selected" : ""}>${STATUS_ICON[st]} ${esc(t.st[st])}</option>`).join("")}</select>
+          <select id="fn-sort"><option value="room">${esc(t.fl.byRoom)}</option><option value="writes" ${this._fnSort === "writes" ? "selected" : ""}>${esc(t.fl.byWrites)}</option></select>
+          <label class="check"><input id="assist-tech" type="checkbox" ${this._assistTech ? "checked" : ""}> ${esc(t.assist.technical)}</label>`;
+      }
+      case "orphans":
+        return this._archiveView
+          ? this._archiveChips("entity", c.orphans)
+          : `${this._archiveChips("entity", c.orphans)}
+          ${d.orphans.some((g) => g.ai) ? `<button data-act="ai-orphans-pick" class="secondary ai">${esc(t.aiPick)}</button>` : ""}
+          <span class="grow"></span>
+          <button data-act="archive-orphans" class="secondary" title="${esc(t.archiveTip)}">${esc(t.archiveIn)}</button>
+          <button data-act="remove-orphans" class="secondary danger">${esc(t.removeSelected)}</button>`;
+      case "history":
+        return `<span class="grow"></span><button data-act="undo" class="secondary">${esc(t.undo)}</button>`;
+      default:
+        return "";
+    }
+  }
+
+  _renderListNow() {
+    const list = this.shadowRoot.querySelector("#list");
+    const views = {
+      overview: () => this._overviewHtml(),
+      focus: () => this._focusHtml(),
+      devices: () => this._devicesHtml(),
+      duplicates: () => `<div class="info">${esc(this._t.stepInfo.duplicates)}</div>${this._duplicatesHtml()}`,
+      orphans: () => (this._archiveView ? this._archiveHtml("entity") : this._orphansHtml()),
+      history: () => this._historyHtml(),
+      house: () => this._houseHtml(),
+    };
+    if (this._tab === "map") return this._renderMap(list);
+    if (this._tab === "functions") return this._renderFunctions(list);
+    list.innerHTML = (views[this._tab] || views.overview)();
+  }
+
+  // ---- overview: where things stand and what comes next ----------------------
+
+  _overviewHtml() {
+    const t = this._t;
+    const d = this._data;
+    const p = d.progress;
+    const c = this._counts();
+    const step = (done, title, detail, go, label, primary = false) => `<div class="ovstep ${done ? "done" : ""}">
+        <span class="ovmark">${done ? "✓" : "•"}</span>
+        <div class="ename"><b>${esc(title)}</b><span class="muted small">${esc(detail)}</span></div>
+        <button data-section-go="${go}" class="${primary ? "" : "secondary"}">${esc(label)}</button></div>`;
+    const left = c.queue + c.dups;
+    let html = `<div class="card"><h2>${esc(t.ov.title)}</h2><p class="muted">${esc(t.ov.intro)}</p>
+      ${step(c.floors > 0, t.ov.floors, t.ov.floorsDetail(c.floors), "house", t.ov.toHouse)}
+      ${step(c.floors > 0 && !c.loose, t.ov.rooms, t.ov.roomsDetail(c.loose, c.rooms), "house", t.ov.toHouse)}
+      ${step(c.placed > 0, t.ov.plan, t.ov.planDetail(c.placed, c.rooms), "map", t.ov.toMap)}
+      ${step(!left, t.ov.clean, t.ov.cleanDetail(c.unitsDone, c.unitsTotal, c.dups), "focus", left ? t.ov.toFocus : t.ov.toFocusDone, !!left)}
+      </div>`;
+    html += `<div class="card"><h2>${esc(t.ov.glance)}</h2><div class="ovstats">
+      <div><b>${c.assistant}</b><span class="muted small">${esc(t.ov.statAssistant)}</span></div>
+      <div><b>${c.dups}</b><span class="muted small">${esc(t.ov.statDups)}</span></div>
+      <div><b>${c.silent}</b><span class="muted small">${esc(t.ov.statSilent)}</span></div>
+      <div><b>${c.orphans}</b><span class="muted small">${esc(t.ov.statOrphans)}</span></div></div>
+      <div class="row"><button data-go-sub="functions" class="secondary">${esc(t.ov.toFunctions)}</button>
+        <button data-go-sub="orphans" class="secondary">${esc(t.ov.toOrphans)}</button>
+        <button data-go-sub="history" class="flat">${esc(t.ov.toHistory)}</button></div></div>`;
+    const when = (iso) => new Date(iso).toLocaleString(this._hass.language);
+    html += `<div class="card"><h2>${esc(t.ov.check)}</h2>
+      <div class="muted">${d.last_scan ? `${esc(t.lastScan)}: ${esc(when(d.last_scan))}` : esc(t.neverScanned)}
+        ${d.llm ? (d.ai?.at ? `<br>${esc(t.aiAt)}: ${esc(when(d.ai.at))}` : `<br>${esc(t.aiNone)}`) : `<br>${esc(t.noLlm)}`}</div>
+      <div class="row">
+        <button data-act="scan" ${p.running ? "disabled" : ""}>${esc(t.scan)}</button>
+        ${d.llm ? `<button data-act="ai-review" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.aiReview)}</button>` : ""}
+        <button data-act="scan-rules" class="secondary" ${p.running ? "disabled" : ""}>${esc(t.scanRules)}</button>
+        ${c.safe ? `<button data-act="apply-safe" class="secondary" ${p.running ? "disabled" : ""}>${esc(t.applySafe)} (${c.safe})</button>` : ""}</div>
+      <p class="muted small">${esc(t.ov.checkInfo)}</p></div>`;
+    html += `<details class="card" ${keepOpen("desc", false)}><summary><b>${esc(t.description)}</b></summary>${this._descriptionHtml(true)}</details>`;
+    return html;
+  }
+
+  // ---- clean up: one thing at a time -------------------------------------------
+
+  _focusHtml() {
+    const t = this._t;
+    const d = this._data;
+    const c = this._counts();
+    const devices = new Map(d.devices.flatMap((g) => g.devices.map((x) => [x.unit, { ...x, integration: g.integration }])));
+    const standalone = new Map(d.standalone.map((s) => [s.unit, s]));
+    const later = this._later || (this._later = new Set());
+    const room = this._focusRoom || "";
+    const inRoom = (u) => {
+      const x = devices.get(u);
+      if (!room) return true;
+      if (!x) return room === "-";
+      return room === "-" ? !x.area_id : x.area_id === room;
+    };
+    const units = d.queue.filter((u) => !later.has(u) && inRoom(u));
+    const dups = room ? [] : d.duplicates.filter((g) => !later.has(`dup:${g.key}`));
+    const pct = c.unitsTotal ? Math.round((c.unitsDone / c.unitsTotal) * 100) : 100;
+    const roomDevices = room ? units.map((u) => devices.get(u)).filter(Boolean) : [];
+    let html = `<div class="card fchead"><div class="wizbar"><span style="width:${pct}%"></span></div>
+      <div class="row"><span class="muted">${esc(t.fc.progress(c.unitsDone, c.unitsTotal, dups.length + units.length))}</span><span class="grow"></span>
+        ${roomDevices.length > 1 ? this._fnAiBar(roomDevices) : ""}
+        ${later.size ? `<button data-act="focus-unlater" class="flat">${esc(t.fc.unlater(later.size))}</button>` : ""}</div></div>`;
+    if (dups.length) {
+      html += `<div class="info">${esc(t.fc.dupInfo(dups.length))}</div>
+        <div data-unit="dup:${esc(dups[0].key)}">${this._dupCard(dups[0], true)}
+          <div class="actions"><button data-act="unit-later" class="flat" title="${esc(t.fc.laterTip)}">${esc(t.fc.later)}</button></div></div>`;
+    } else if (units.length) {
+      const u = units[0];
+      html += devices.has(u) ? this._deviceCard(devices.get(u), true) : this._standaloneCard(standalone.get(u), true);
+      const next = units.slice(1, 4).map((n) => devices.get(n)?.name || standalone.get(n)?.integration || n);
+      if (next.length) html += `<p class="muted small">${esc(t.fc.next(next.join(" · "), units.length - 1))}</p>`;
+    } else {
+      html += `<div class="card done"><h2>🎉 ${esc(room ? t.fc.roomDone : t.fc.allDone)}</h2><p class="muted">${esc(t.fc.allDoneInfo)}</p>
+        <div class="row"><button data-go-sub="devices" class="secondary">${esc(t.fc.toInventory)}</button>
+          <button data-section-go="map" class="secondary">${esc(t.ov.toMap)}</button></div></div>`;
+    }
+    return html;
+  }
+
+  _focusFoot(n) {
+    const t = this._t;
+    return `<div class="actions focusfoot">
+      <button data-act="unit-later" class="flat" title="${esc(t.fc.laterTip)}">${esc(t.fc.later)}</button>
+      <span class="grow"></span>
+      ${n ? `<button data-act="unit-skip" class="secondary" title="${esc(t.fc.skipTip)}">${esc(t.fc.skip)}</button>` : ""}
+      <button data-act="unit-done">${esc(n ? t.fc.apply : t.fc.done)}</button></div>`;
+  }
+
+  // ---- the device card: one component for clean-up and inventory ------------
+
+  _deviceCard(x, focus = false) {
+    const t = this._t;
+    const sugs = x.suggestions || [];
+    const where = [t.kinds[x.kind], x.model, x.integration].filter(Boolean).join(" · ");
+    const flags = [
+      x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : "",
+      x.in_duplicates ? `<span class="reason">${esc(t.dc.inDups)}</span>` : "",
+      x.reviewed && !focus ? `<span class="reason ok">✓ ${esc(t.dc.reviewed)}</span>` : "",
+    ].join("");
+    const main = x.functions.filter((f) => !f.technical);
+    const tech = x.functions.filter((f) => f.technical);
+    const used = main.filter((f) => f.status === "assistant").map((f) => f.name);
+    const roles = ["control", "measure", "technical", "other"]
+      .map((r) => [r, x.functions.filter((f) => f.role === r).length])
+      .filter(([, n]) => n)
+      .map(([r, n]) => t.roleCount[r](n))
+      .join(" · ");
+    return `<div class="card devcard ${focus ? "focus" : ""}" data-device="${esc(x.device_id)}" data-unit="${esc(x.unit)}"
+        data-entry="${esc(x.config_entry_id || "")}" data-name="${esc(x.name)}">
+      <div class="dchead"><span class="kicon">${kindIcon(x.kind)}</span>
+        <div class="ename">${this._devNameField(x)}<span class="muted small">${esc(where)}</span>${flags}</div></div>
+      ${x.what ? `<div class="what">🤖 ${esc(x.what)}</div>` : ""}
+      ${x.ai ? `<div class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</div>` : ""}
+      <div class="dcrow">
+        <label class="fld"><span>${esc(t.area)}</span><select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id || "")}</select></label>
+        <label class="fld" title="${esc(t.st.deviceTip)}"><span>${esc(t.dc.status)}</span>
+          <select class="stsel" data-dev-status="${esc(x.device_id)}" data-name="${esc(x.name)}">${this._statusOptions(x.status || "ha")}</select></label>
+        <label class="check"><input type="checkbox" data-dev-map="${esc(x.device_id)}" ${x.on_map ? "checked" : ""}> 🗺️ ${esc(t.onMap)}</label>
+        <span class="grow"></span>${this._fnAiBar([x])}
+      </div>
+      ${this._suggestionsHtml(sugs, x.functions, x.unit)}
+      <details class="fns" ${keepOpen(`fn:${x.device_id}`, focus)}><summary>${esc(`${t.fn.title} · ${t.deviceFns(x.functions.length)}: ${roles}`)}${used.length ? ` · 🗣️ ${esc(used.join(", "))}` : ""}</summary>
+        ${this._statusLegend(x.unit)}
+        ${main.map((f) => this._fnRow(f)).join("")}
+        ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map((f) => this._fnRow(f)).join("")}</details>` : ""}
+      </details>
+      ${focus ? this._focusFoot(sugs.length) : this._listFoot(x, sugs.length)}
+    </div>`;
+  }
+
+  _listFoot(x, n) {
+    const t = this._t;
+    return `<div class="actions">
+      ${n ? `<button data-act="unit-apply">${esc(t.dc.apply(n))}</button>` : ""}
+      ${x.reviewed ? `<button data-act="unit-reset" class="flat" title="${esc(t.dc.resetTip)}">${esc(t.dc.reset)}</button>` : ""}
+      <span class="grow"></span>
+      ${x.device_id ? `<button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>` : ""}</div>`;
+  }
+
+  // Functions without a device (scenes, scripts, helpers …) of one integration.
+  _standaloneCard(s, focus = false) {
+    const t = this._t;
+    return `<div class="card devcard ${focus ? "focus" : ""}" data-unit="${esc(s.unit)}">
+      <div class="dchead"><span class="kicon">🧩</span>
+        <div class="ename"><b>${esc(t.dc.standalone(s.integration))}</b><span class="muted small">${esc(t.dc.standaloneInfo(s.functions.length))}</span></div></div>
+      ${this._suggestionsHtml(s.suggestions || [], s.functions, s.unit)}
+      <details class="fns" ${keepOpen(`fn:${s.unit}`, focus)}><summary>${esc(`${t.fn.title} · ${t.deviceFns(s.functions.length)}`)}</summary>
+        ${this._statusLegend(s.unit)}${s.functions.map((f) => this._fnRow(f, true)).join("")}</details>
+      ${focus ? this._focusFoot((s.suggestions || []).length) : this._listFoot(s, (s.suggestions || []).length)}
+    </div>`;
+  }
+
+  // Everything suggested for a unit, from rules and AI, each with a tick.
+  _suggestionsHtml(sugs, functions, unit) {
+    const t = this._t;
+    if (!sugs.length) return "";
+    const fn = (id) => functions.find((f) => f.entity_id === id) || { name: id, status: "ha" };
+    const rows = sugs.map((s) => {
+      const f = s.entity_id ? fn(s.entity_id) : null;
+      const who = f ? `${f.name}: ` : "";
+      let icon = "💡";
+      let text = "";
+      if (s.type === "area") [icon, text] = ["📍", `${who}${t.dc.sArea(this._areaName(s.value))}`];
+      else if (s.type === "name") [icon, text] = ["✏️", `${who}${t.dc.sName(s.value)}`];
+      else if (s.type === "status") [icon, text] = [`${STATUS_ICON[f.status]}→${STATUS_ICON[s.value]}`, `${who}${t.st[f.status]} → ${t.st[s.value]}`];
+      else if (s.type === "kind") [icon, text] = [kindIcon(s.value), `${who}${t.dc.sKind(t.kinds[s.value] || s.value)}`];
+      else if (s.type === "convert") [icon, text] = ["💡", t.dc.sConvert(f.name, t.dc.domains[s.value] || s.value)];
+      else if (s.type === "aliases") [icon, text] = ["🏷️", `${who}${t.dc.sAliases(s.value.join(", "))}`];
+      const why = s.reason || (s.reasons || []).map((r) => this._reason(r)).join(" · ");
+      const ai = s.source === "ai" || s.source === "llm";
+      return `<label class="sug"><input type="checkbox" data-sug="${esc(`${unit}|${s.id}`)}" ${s.type === "convert" ? "" : "checked"}><span class="sicon">${icon}</span>
+        <span>${esc(text)}${ai ? " 🤖" : ""}${why ? `<span class="muted small"> – ${esc(why)}</span>` : ""}</span></label>`;
+    });
+    return `<div class="sugs"><div class="sugshead">${esc(t.dc.suggestions(sugs.length))}</div>${rows.join("")}</div>`;
+  }
+
+  // ---- inventory: devices ------------------------------------------------------
+
+  _devicesHtml() {
+    const t = this._t;
+    const s = this._search;
+    const all = this._data.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration, entryTitle: g.title })));
+    const f = this._devFilter || "";
+    const shown = all.filter(
+      (x) =>
+        (!f ||
+          (f === "todo" && !x.reviewed && x.functions.length) ||
+          (f === "sug" && x.suggestions?.length) ||
+          (f === "silent" && x.silent) ||
+          x.status === f) &&
+        (!this._devKind || x.kind === this._devKind) &&
+        (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
+        (!s || [x.name, x.model, x.area, x.integration, x.entryTitle, t.kinds[x.kind]].join(" ").toLowerCase().includes(s)),
+    );
+    const groups = new Map();
+    for (const x of shown) {
+      const key = this._devGroup === "integration" ? x.integration : x.area || t.withoutRoom;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(x);
+    }
+    const ordered = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    // functions without a device: per integration, only without a device filter (they have no kind or room)
+    const standalone =
+      f === "silent" || STATUSES.includes(f) || this._devKind || this._devRoom
+        ? []
+        : this._data.standalone.filter(
+            (u) => (f !== "todo" || !u.reviewed) && (f !== "sug" || u.suggestions?.length) && (!s || u.integration.toLowerCase().includes(s)),
+          );
+    if (!ordered.length && !standalone.length) return `<p class="muted">${esc(t.empty)}</p>`;
+    this._lazy = new Map();
+    const open = ordered.length <= 3 || !!s || !!f || !!this._devKind || !!this._devRoom;
+    return (
+      ordered
+        .map(
+          ([key, items]) => `<details class="card" ${keepOpen(`devs:${key}`, open)}>
+          <summary><b>${esc(key)}</b> · ${items.length}</summary>
+          ${items.sort((a, b) => a.name.localeCompare(b.name)).map((x) => this._deviceItem(x)).join("")}</details>`,
+        )
+        .join("") +
+      (standalone.length
+        ? `<details class="card" ${keepOpen("devs:standalone", open)}><summary><b>${esc(t.dl.standalone)}</b> · ${standalone.length}</summary>
+          ${standalone.map((u) => this._standaloneItem(u)).join("")}</details>`
+        : "")
+    );
+  }
+
+  // A compact line; opened it is the same card as in clean-up.
+  _deviceItem(x) {
+    const t = this._t;
+    const n = x.suggestions?.length || 0;
+    const key = `dev:${x.device_id}`;
+    this._lazy.set(key, () => this._deviceCard(x));
+    return `<details class="devitem" data-lazy="${esc(key)}" ${keepOpen(key, false)}>
+      <summary><span class="kicon small">${kindIcon(x.kind)}</span><span class="grow"><b>${esc(x.name)}</b>
+        <span class="muted small">${esc([this._devGroup === "integration" ? x.area : x.integration, x.model].filter(Boolean).join(" · "))}</span></span>
+        ${x.status ? `<span title="${esc(t.st[x.status])}">${STATUS_ICON[x.status]}</span>` : ""}
+        ${x.on_map ? `<span title="${esc(t.onMap)}">🗺️</span>` : ""}
+        ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
+        ${n ? `<span class="count">💡${n}</span>` : ""}
+        ${x.reviewed ? `<span class="ok" title="${esc(t.dc.reviewed)}">✓</span>` : ""}</summary>
+      <div class="lazybody"></div></details>`;
+  }
+
+  _standaloneItem(s) {
+    const t = this._t;
+    const n = s.suggestions?.length || 0;
+    const key = `unit:${s.unit}`;
+    this._lazy.set(key, () => this._standaloneCard(s));
+    return `<details class="devitem" data-lazy="${esc(key)}" ${keepOpen(key, false)}>
+      <summary><span class="kicon small">🧩</span><span class="grow"><b>${esc(s.integration)}</b>
+        <span class="muted small">${esc(t.dc.standaloneInfo(s.functions.length))}</span></span>
+        ${n ? `<span class="count">💡${n}</span>` : ""}
+        ${s.reviewed ? `<span class="ok" title="${esc(t.dc.reviewed)}">✓</span>` : ""}</summary>
+      <div class="lazybody"></div></details>`;
+  }
+
+  // Fill opened lazy cards (after a render, or when one is opened).
+  _fillLazy(root = this.shadowRoot) {
+    root.querySelectorAll("details[data-lazy][open] > .lazybody:empty").forEach((body) => {
+      const make = this._lazy.get(body.parentElement.dataset.lazy);
+      if (make) body.innerHTML = make();
+    });
+  }
+
+  // ---- inventory: functions (what the assistant sees, and everything else) -------
+
+  _renderFunctions(list) {
+    const t = this._t;
+    const a = t.assist;
+    if (!this._exposure) {
+      list.innerHTML = `<div class="info">${esc(t.fl.info)}</div><p class="muted running">${esc(a.loading)}</p>`;
+      if (!this._exposureLoading) {
+        this._exposureLoading = true;
+        this._ws("exposure").then(
+          (res) => {
+            this._exposure = res;
+            this._exposureLoading = false;
+            if (this._tab === "functions") this._render();
+          },
+          (err) => {
+            this._exposureLoading = false;
+            this._toast(err.message || String(err));
+          },
+        );
+      }
+      return;
+    }
+    const s = this._search;
+    const all = this._exposure.entities;
+    const shown = all.filter(
+      (x) =>
+        (this._assistTech || !x.quiet) &&
+        (!this._assistStatus || x.status === this._assistStatus) &&
+        (!this._devKind || x.kind === this._devKind) &&
+        (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
+        (!s || [x.name, x.entity_id, x.area, x.floor, x.device, t.kinds[x.kind], ...x.aliases].join(" ").toLowerCase().includes(s)),
+    );
+    const byWrites = this._fnSort === "writes";
+    if (byWrites) shown.sort((p, q) => (q.writes || 0) - (p.writes || 0));
+    const limit = this._assistShown || 150;
+    const row = (x) => {
+      const tags = [x.twin ? `⧉ ${a.twinLbl}` : "", x.technical ? a.techLbl : ""].filter(Boolean);
+      const exposed = x.status === "assistant";
+      return `<div class="devrow arow"><label class="check"><input type="checkbox" data-fsel="${esc(x.entity_id)}" data-used="${x.used_in || 0}"></label>
+        <span class="kicon">${kindIcon(x.kind)}</span>
+        <div class="ename"><b>${STATUS_ICON[x.status]} ${esc(x.name)}</b>
+          <span class="muted small">${this._fnWhat(x)}</span>
+          <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
+          ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}
+          ${x.used_in ? `<span class="reason">${esc(t.tele.used(x.used_in))}</span>` : ""}
+          <details class="aliases" ${keepOpen(`edit:${x.entity_id}`, false)}><summary>✏️ ${esc(t.adjust)}${x.aliases.length ? ` · 🏷️ ${esc(x.aliases.join(", "))}` : ""}</summary>
+            ${this._fnRow(x)}</details></div>
+        <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? (x.hidden ? "hidden" : "ha") : "assistant"}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
+    };
+    const column = (items, title) => {
+      let room;
+      const rows = items
+        .slice(0, limit)
+        .map((x) => {
+          const head = !byWrites && x.area !== room ? `<h3 class="wizsec">${esc(x.area ? (x.floor ? `${x.area} · ${x.floor}` : x.area) : a.noRoom)}</h3>` : "";
+          room = x.area;
+          return head + row(x);
+        })
+        .join("");
+      return `<div class="card acol"><div class="floorhead"><h2>${esc(title)} (${items.length})</h2></div>
+        ${rows || `<p class="muted">${esc(a.none)}</p>`}
+        ${items.length > limit ? `<button data-act="assist-more" class="secondary wide">${esc(t.showMore)} (${items.length - limit})</button>` : ""}</div>`;
+    };
+    const seen = all.filter((x) => x.status === "assistant").length;
+    const rendered = this._assistStatus || byWrites
+      ? Math.min(shown.length, limit)
+      : Math.min(shown.filter((x) => x.status === "assistant").length, limit) + Math.min(shown.filter((x) => x.status !== "assistant").length, limit);
+    const bulk = `<div class="card row bulkbar"><label class="check"><input type="checkbox" id="fsel-all"> ${esc(t.fl.selectAll(rendered))}</label>
+      <span class="grow"></span><select id="fsel-status" class="stsel">${this._statusOptions("hidden")}</select>
+      <button data-act="fsel-apply" class="secondary">${esc(t.tele.apply)}</button>
+      ${this._data.llm ? `<button data-act="fsel-ai" class="secondary ai" ${this._data.progress.running ? "disabled" : ""}>${esc(t.fl.askAi)}</button>` : ""}</div>`;
+    const cols =
+      this._assistStatus || byWrites
+        ? `<div class="acols one">${column(shown, this._assistStatus ? `${STATUS_ICON[this._assistStatus]} ${t.st[this._assistStatus]}` : t.fl.byWrites)}</div>`
+        : `<div class="acols">${column(shown.filter((x) => x.status === "assistant"), a.sees)}${column(shown.filter((x) => x.status !== "assistant"), a.notSees)}</div>`;
+    list.innerHTML = `<div class="info">${esc(t.fl.info)}</div>${this._statusLegend("functions")}<p class="muted">${esc(a.summary(seen, all.length))}</p>${bulk}${cols}`;
+  }
+
+  // ---- inventory: orphaned, history ----------------------------------------------
+
+  _orphansHtml() {
+    const t = this._t;
+    const d = this._data;
+    return (
+      `<div class="info">${esc(t.orphansInfo)}</div>` +
+      (d.orphans.length
+        ? d.orphans
+            .map(
+              (g) => `<details class="card" data-group ${keepOpen(`orphans:${g.integration}`, false)} data-ai-advice="${g.ai?.advice || ""}">
+          <summary><b>${esc(g.integration)}</b> · ${g.entities.length}${g.running ? "" : ` · <span class="danger">${esc(t.integrationDown)}</span>`}
+            ${g.ai ? `<span class="aibadge ${g.ai.advice}">🤖 ${esc(t.advice[g.ai.advice])}</span>` : ""}</summary>
+          ${g.ai ? `<div class="ailine ${g.ai.advice === "remove" ? "yes" : g.ai.advice === "keep" ? "no" : ""}">🤖 ${esc(t.aiAdvice(t.advice[g.ai.advice]))} · ${esc(g.ai.reason)}</div>` : ""}
+          <label class="check"><input type="checkbox" data-orphan-group> ${esc(t.all)}</label>
+          ${g.entities
+            .map(
+              (e) => `<label class="orphan"><input type="checkbox" data-orphan="${esc(e.entity_id)}">
+                <span class="ename"><b>${esc(e.title)}</b><span class="muted">${esc(e.entity_id)}${e.device ? ` · ${esc(e.device)}` : ""}</span>
+                ${e.device ? `<span class="reason">${esc(e.device_live ? t.deviceLive : t.deviceGone)}</span>` : ""}</span></label>`,
+            )
+            .join("")}
+        </details>`,
+            )
+            .join("")
+        : `<p class="muted">${esc(t.empty)}</p>`)
+    );
+  }
+
+  _historyHtml() {
+    const t = this._t;
+    const d = this._data;
+    return d.history.length
+      ? d.history
+          .map(
+            (h) => `<div class="card row"><b>${esc(h.title)}</b><span class="muted">${h.changes} ${esc(t.changes)}</span>
+              <span class="grow"></span><span class="muted">${esc(new Date(h.at).toLocaleString(this._hass.language))}</span></div>`,
+          )
+          .join("")
+      : `<p class="muted">${esc(t.empty)}</p>`;
+  }
+
+  // ---- house: floors, rooms, groups, notes ------------------------------------------
+
+  _houseHtml() {
+    const t = this._t;
+    const m = this._data.map;
+    const levels = m.floors.filter((f) => f.floor_id && f.level != null).map((f) => f.level);
+    const clash = levels.length !== new Set(levels).size;
+    const p = this._data.progress;
+    const aiBar = this._data.llm
+      ? `<div class="card aicard row">${p.running && p.phase === "ai"
+          ? `<span class="running">${esc(t.house.aiRunning)}</span>`
+          : `<button data-act="ai-rooms" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.house.aiRooms)}</button><span class="muted grow">${esc(t.house.aiRoomsInfo)}</span>`}</div>`
+      : "";
+    return `<div class="info">${esc(t.house.info)}</div>${clash ? `<div class="info warn">${esc(t.house.levelClash)}</div>` : ""}${aiBar}${this._roomsHtml()}
+      <details class="card" ${keepOpen("notes", false)}><summary><b>${esc(t.notes)}</b></summary>
+        <p class="muted small">${esc(t.house.notesInfo)}</p>
+        <label class="note">${esc(t.houseNote)}<textarea data-note="_house" rows="2">${esc(m.house_note)}</textarea></label>
+        ${m.rooms.map((r) => `<label class="note">${esc(r.name)}<input data-note="${esc(r.area_id)}" value="${esc(r.note)}"></label>`).join("")}
+      </details>`;
+  }
+
+  // One function (entity): what it is, its status, name, kind, aliases – and, for a switch, how HA shows it.
+  // The same block wherever an entity is edited; withArea for functions without a device.
+  _fnRow(e, withArea = false) {
+    const t = this._t;
+    const kindChoices = Object.keys(t.kinds).sort((a, b) => t.kinds[a].localeCompare(t.kinds[b]));
+    const kind = e.kind_override || e.kind;
+    let shownAs = "";
+    if (e.wrapped_as) shownAs = `<div class="muted small">💡 ${esc(t.dc.shownAs(e.wrapped_as))}</div>`;
+    else if (e.wraps) shownAs = `<div class="muted small">💡 ${esc(t.dc.wraps(e.wraps))}</div>`;
+    else if (e.domain === "switch" && !e.technical && KIND_DOMAIN[kind] && (e.status === "assistant" || e.status === "ha")) {
+      shownAs = `<div class="ailine">💡 ${esc(t.dc.convertHint(t.dc.domains[KIND_DOMAIN[kind]]))}
+        <button data-act="fn-convert" data-eid="${esc(e.entity_id)}" data-domain="${KIND_DOMAIN[kind]}" class="flat inline">${esc(t.dc.convertDo(t.dc.domains[KIND_DOMAIN[kind]]))}</button></div>`;
+    }
+    return `<div class="fnrow st-${e.status}">
+        <div class="fnhead"><select class="stsel" data-fn-status="${esc(e.entity_id)}">${this._statusOptions(e.status)}</select>
+          <span>${this._fnWhat(e)}</span>
+          <span class="muted small">${esc(e.entity_id)}</span></div>
+        ${shownAs}
+        <div class="fnfields">
+          <input data-fn-name="${esc(e.entity_id)}" value="${esc(e.own_name || "")}" placeholder="${esc(t.fn.namePh(e.name))}">
+          <select data-fn-kind="${esc(e.entity_id)}"><option value="">${esc(t.fn.kindAuto(t.kinds[e.auto_kind || e.kind] || e.auto_kind || e.kind))}</option>
+            ${kindChoices.map((k) => `<option value="${k}" ${e.kind_override === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k])}</option>`).join("")}</select>
+          ${withArea ? `<select data-ent-area="${esc(e.entity_id)}">${this._areaOptions(e.area_id || "")}</select>` : ""}
+          ${this._aliasInput(e.entity_id, e.aliases)}</div></div>`;
+  }
 
   // ---- rooms, duplicates, devices ------------------------------------------
 
@@ -1591,7 +2019,7 @@ class HauskartePanel extends HTMLElement {
         <button data-act="merge-cancel" class="flat">${esc(t.cancel)}</button></div></div>`;
   }
 
-  _roomsHtml(onlyMissing) {
+  _roomsHtml() {
     const t = this._t;
     const m = this._data.map;
     const roomRow = (r) => `<div class="roomrow">
@@ -1600,17 +2028,8 @@ class HauskartePanel extends HTMLElement {
         <span class="counts">${this._countsHtml(r.counts)}</span>
         ${r.position ? `<span class="muted" title="${esc(t.onMapShort)}">🗺️</span>` : ""}
         <span class="roomacts">${this._mergeButton(r)}${this._convertButton(r)}</span>
-      </div>${this._mergeForm(r)}${this._convertForm(r)}`;
+      </div>${r.devices.length ? `<div class="wdevs">${this._roomDevicesHtml(r)}</div>` : ""}${this._mergeForm(r)}${this._convertForm(r)}`;
     const loose = m.rooms.filter((r) => !r.floor_id);
-    if (onlyMissing) {
-      return (
-        this._aiFloorsHtml() +
-        (loose.length
-          ? `<div class="card warnline"><b>${esc(t.noFloorRooms(loose.length))}</b>${loose.map(roomRow).join("")}</div>`
-          : `<p class="muted">${esc(t.allDone)}</p>`) +
-        `<button data-section-go="rooms" class="secondary wide">🏠 ${esc(t.allRooms)}</button>`
-      );
-    }
     let html = this._aiFloorsHtml() + this._groupsHtml();
     if (loose.length) {
       html += `<div class="card warnline"><div class="floorhead"><h2>${esc(t.noFloor)}</h2><span class="muted">${esc(t.roomsCount(loose.length))}</span></div>
@@ -1659,7 +2078,7 @@ class HauskartePanel extends HTMLElement {
               <span class="muted">${esc([m.platform, m.device, this._areaName(m.area_id) || null, m.entity_id].filter(Boolean).join(" · "))}</span></span></label>`,
         )
         .join("")}
-      ${withRoom ? `<label class="duproom">${esc(t.wiz.dupRoom)}
+      ${withRoom ? `<label class="duproom">${esc(t.dupRoom)}
         <select data-dup-area>${this._areaOptions(g.members.find((m) => m.entity_id === pick)?.area_id || g.members.find((m) => m.area_id)?.area_id || "")}</select></label>` : ""}
       <div class="actions"><button data-act="dup-merge" class="${ai && !ai.same ? "secondary" : ""}">${esc(t.merge)}</button>
         <span class="grow"></span><button data-act="dup-different" class="${ai && !ai.same ? "" : "flat"}">${esc(t.different)}</button></div>
@@ -1706,7 +2125,7 @@ class HauskartePanel extends HTMLElement {
   }
 
   // The same legend wherever a status can be chosen.
-  _statusLegend() {
+  _statusLegend(where = "") {
     const t = this._t;
     const yes = (b) => (b ? "✓" : "–");
     const rows = [
@@ -1715,7 +2134,7 @@ class HauskartePanel extends HTMLElement {
       ["hidden", false, false, true],
       ["disabled", false, false, false],
     ];
-    return `<details class="legend" ${keepOpen("legend", false)}><summary>${esc(t.st.legendTitle)}</summary>
+    return `<details class="legend" ${keepOpen(`legend:${where}`, false)}><summary>${esc(t.st.legendTitle)}</summary>
       <table class="legendtab"><tr>${t.st.legendHead.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>
         ${rows.map(([s, a, v, d]) => `<tr><td>${STATUS_ICON[s]} ${esc(t.st[s])}</td><td>${yes(a)}</td><td>${yes(v)}</td><td>${yes(d)}</td></tr>`).join("")}</table>
       <p class="muted small">${esc(t.st.legendNote)}</p></details>`;
@@ -1731,240 +2150,23 @@ class HauskartePanel extends HTMLElement {
     return `<span class="fnwhat">${ROLE_ICON[role]} ${esc(t.role[role])}${kind ? ` ${esc(kind)}` : ""}</span>${value}${writes}`;
   }
 
-  // One function (entity): what it is, its status, name, kind, aliases. The same block wherever an entity is edited.
-  _fnRow(e) {
-    const t = this._t;
-    const kindChoices = Object.keys(t.kinds).sort((a, b) => t.kinds[a].localeCompare(t.kinds[b]));
-    const ai = e.ai && e.ai.status !== e.status
-      ? `<div class="ailine">🤖 ${STATUS_ICON[e.ai.status]} ${esc(t.st[e.ai.status])} · ${esc(e.ai.reason)}
-          <button data-act="fn-ai-take" data-eid="${esc(e.entity_id)}" data-status="${esc(e.ai.status)}" class="flat inline">${esc(t.take)}</button></div>`
-      : "";
-    return `<div class="fnrow st-${e.status}">
-        <div class="fnhead"><select class="stsel" data-fn-status="${esc(e.entity_id)}">${this._statusOptions(e.status)}</select>
-          <span>${this._fnWhat(e)}</span>
-          <span class="muted small">${esc(e.entity_id)}</span></div>
-        ${ai}
-        <div class="fnfields">
-          <input data-fn-name="${esc(e.entity_id)}" value="${esc(e.own_name || "")}" placeholder="${esc(t.fn.namePh(e.name))}">
-          <select data-fn-kind="${esc(e.entity_id)}"><option value="">${esc(t.fn.kindAuto(t.kinds[e.kind] || e.kind))}</option>
-            ${kindChoices.map((k) => `<option value="${k}" ${e.kind_override === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k])}</option>`).join("")}</select>
-          ${this._aliasInput(e.entity_id, e.aliases)}</div></div>`;
-  }
-
-  // The functions of a device, folded; the summary says what the device is made of and what the assistant gets.
-  _functionsBlock(x, open = false) {
-    const t = this._t;
-    const fns = x.functions || [];
-    if (!fns.length) return "";
-    const main = fns.filter((e) => !e.technical);
-    const tech = fns.filter((e) => e.technical);
-    const roles = ["control", "measure", "technical", "other"]
-      .map((r) => [r, fns.filter((e) => e.role === r).length])
-      .filter(([, n]) => n)
-      .map(([r, n]) => t.roleCount[r](n))
-      .join(" · ");
-    const used = main.filter((e) => e.status === "assistant");
-    const summary = `${t.fn.title} · ${t.deviceFns(fns.length)}: ${roles}${used.length ? ` · 🗣️ ${used.map((e) => e.name).join(", ")}` : ""}`;
-    return `<details class="aliases fns" ${keepOpen(`fn:${x.device_id}`, open)}><summary>${esc(summary)}</summary>
-      <span class="muted small">${esc(t.fn.info)}</span>
-      ${this._fnAiBar([x])}
-      ${this._statusLegend()}
-      ${main.map((e) => this._fnRow(e)).join("")}
-      ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map((e) => this._fnRow(e)).join("")}</details>` : ""}
-    </details>`;
-  }
-
   // AI for one or more devices: explain them and suggest a status per function; take the suggestions.
   _fnAiBar(devices) {
     const t = this._t;
     const d = this._data;
     if (!d.llm || !devices.length) return "";
     const ids = devices.map((x) => x.device_id).join(",");
-    const open = devices.flatMap((x) => (x.functions || []).filter((f) => f.ai && f.ai.status !== f.status)).length;
     if (d.progress.running && d.progress.task === "functions") return `<div class="ailine running">${esc(t.fnAi.running)}</div>`;
     const asked = devices.some((x) => x.what);
     return `<div class="row aibar">
       <button data-act="ai-fn" data-devices="${esc(ids)}" class="secondary ai small" ${d.progress.running ? "disabled" : ""}>${esc(devices.length > 1 ? t.wiz.fnAsk(devices.length) : asked ? t.fnAi.again : t.fnAi.ask)}</button>
-      ${open ? `<button data-act="ai-fn-take" data-devices="${esc(ids)}" class="small">${esc(t.fnAi.take(open))}</button>` : ""}</div>`;
-  }
-
-  // On a clean-up card: everything the device consists of, so it is clear what is being decided about.
-  _cardFunctions(p) {
-    const t = this._t;
-    const dev = p.id.startsWith("device:")
-      ? this._data.devices.flatMap((g) => g.devices).find((x) => x.device_id === p.id.slice(7))
-      : null;
-    const what = dev
-      ? `${dev.what ? `<div class="muted small">🤖 ${esc(dev.what)}</div>` : ""}${this._fnAiBar([dev])}`
-      : "";
-    if (!p.entities || p.entities.length < 2) return what;
-    return `${what}<div class="fnlist"><span class="muted">${esc(t.deviceFns(p.entities.length))}:</span>
-      ${p.entities
-        .map((e) => {
-          const role = roleOf(e.domain, e.category);
-          const value = e.current.status === "disabled" ? "" : ` <span class="muted" data-state-entity="${esc(e.entity_id)}"></span>`;
-          return `<span>${ROLE_ICON[role]} ${esc(e.title)}${value} ${STATUS_ICON[e.current.status]}</span>`;
-        })
-        .join("")}</div>`;
-  }
-
-  // One device row, used in the Devices tab and in the setup step (wiz = {area, why}: suggested room there).
-  _deviceRow(x, wiz = null) {
-    const t = this._t;
-    const where = wiz || this._devGroup === "room" ? x.integration : x.area;
-    return `<div class="devrow" data-device="${esc(x.device_id)}" data-entry="${esc(x.config_entry_id || "")}"
-                data-name="${esc(x.name)}" data-disabled="${x.disabled ? 1 : 0}">
-                <span class="kicon">${kindIcon(x.kind)}</span>
-                <div class="ename">${this._devNameField(x)}
-                  <span class="muted">${esc([t.kinds[x.kind], x.model, where].filter(Boolean).join(" · "))}</span>
-                  ${wiz?.why ? `<span class="ailine">${esc(wiz.why)}
-                    <button data-act="ai-dev-take" data-device="${esc(x.device_id)}" data-area="${esc(wiz.area)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
-                  ${x.what ? `<span class="muted small">🤖 ${esc(x.what)}</span>` : ""}
-                  ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
-                  ${x.ai ? `<span class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</span>` : ""}
-                  ${x.ai_kind ? `<span class="ailine">🤖 ${esc(t.aiKind(t.kinds[x.ai_kind.kind] || x.ai_kind.kind))} · ${esc(x.ai_kind.reason)}
-                    <button data-act="ai-kind" data-entity="${esc(x.ai_kind.entity_id)}" data-kind="${esc(x.ai_kind.kind)}" class="flat inline">${esc(t.take)}</button></span>` : ""}
-                  ${this._functionsBlock(x, wiz?.open)}</div>
-                <div class="devbtns">
-                  <select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id || "")}</select>
-                  ${x.status ? `<select class="stsel" data-dev-status="${esc(x.device_id)}" data-name="${esc(x.name)}" title="${esc(t.st.deviceTip)}">${this._statusOptions(x.status)}</select>` : ""}
-                  ${!wiz && x.silent ? `<button data-act="dev-archive" data-device="${esc(x.device_id)}" class="flat" title="${esc(t.archiveTip)}">${esc(t.archiveIn)}</button>` : ""}
-                  ${wiz ? "" : `<button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>`}
-                </div>
-              </div>`;
-  }
-
-  // What the voice assistant sees and what not, side by side; loaded on entering the section.
-  _renderAssist(list) {
-    const t = this._t;
-    const a = t.assist;
-    if (!this._exposure) {
-      list.innerHTML = `<div class="info">${esc(a.info)}</div><p class="muted running">${esc(a.loading)}</p>`;
-      if (!this._exposureLoading) {
-        this._exposureLoading = true;
-        this._ws("exposure").then(
-          (res) => {
-            this._exposure = res;
-            this._exposureLoading = false;
-            if (this._tab === "assist") this._render(); // the kind filter needs the list too
-          },
-          (err) => {
-            this._exposureLoading = false;
-            this._toast(err.message || String(err));
-          },
-        );
-      }
-      return;
-    }
-    const s = this._search;
-    const all = this._exposure.entities;
-    const shown = all.filter(
-      (x) =>
-        (this._assistTech || !x.quiet) &&
-        (!this._assistStatus || x.status === this._assistStatus) &&
-        (!this._devKind || x.kind === this._devKind) &&
-        (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
-        (!s || [x.name, x.entity_id, x.area, x.floor, x.device, t.kinds[x.kind], ...x.aliases].join(" ").toLowerCase().includes(s)),
-    );
-    const limit = this._assistShown || 150;
-    const column = (exposed) => {
-      const items = shown.filter((x) => (x.status === "assistant") === exposed);
-      let room;
-      const rows = items
-        .slice(0, limit)
-        .map((x) => {
-          const head = x.area !== room ? `<h3 class="wizsec">${esc(x.area ? (x.floor ? `${x.area} · ${x.floor}` : x.area) : a.noRoom)}</h3>` : "";
-          room = x.area;
-          const tags = [x.twin ? `⧉ ${a.twinLbl}` : "", x.technical ? a.techLbl : ""].filter(Boolean);
-          return `${head}<div class="devrow arow"><span class="kicon">${kindIcon(x.kind)}</span>
-            <div class="ename"><b>${exposed ? "" : `${STATUS_ICON[x.status]} `}${esc(x.name)}</b>
-              <span class="muted small">${this._fnWhat(x)}</span>
-              <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
-              ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}
-              <details class="aliases" ${keepOpen(`edit:${x.entity_id}`, false)}><summary>✏️ ${esc(t.adjust)}${x.aliases.length ? ` · 🏷️ ${esc(x.aliases.join(", "))}` : ""}</summary>
-                ${this._fnRow(x)}</details></div>
-            <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? "ha" : "assistant"}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
-        })
-        .join("");
-      const bulk = items.length > 1 && (s || this._devKind || this._devRoom || this._assistStatus)
-        ? `<button data-act="assist-all" data-to="${exposed ? "ha" : "assistant"}" class="flat">${esc(exposed ? a.hideAll(items.length) : a.showAll(items.length))}</button>`
-        : "";
-      const title = this._assistStatus ? `${STATUS_ICON[this._assistStatus]} ${t.st[this._assistStatus]}` : exposed ? a.sees : a.notSees;
-      return `<div class="card acol"><div class="floorhead"><h2>${esc(title)} (${items.length})</h2><span class="grow"></span>${bulk}</div>
-        ${rows || `<p class="muted">${esc(a.none)}</p>`}
-        ${items.length > limit ? `<button data-act="assist-more" class="secondary wide">${esc(t.showMore)} (${items.length - limit})</button>` : ""}</div>`;
-    };
-    const seen = all.filter((x) => x.status === "assistant").length;
-    list.innerHTML = `<div class="info">${esc(a.info)}</div>${this._statusLegend()}<p class="muted">${esc(a.summary(seen, all.length))}</p>
-      ${this._assistStatus
-        ? `<div class="acols one">${column(this._assistStatus === "assistant")}</div>`
-        : `<div class="acols">${column(true)}${column(false)}</div>`}`;
-    this._assistIds = (exposed) => shown.filter((x) => (x.status === "assistant") === exposed).map((x) => x.entity_id);
-  }
-
-  // Technical and busy functions over the whole house, grouped by integration; loaded when the step opens.
-  _renderTelemetry(list) {
-    const t = this._t;
-    const info = `<div class="info">${esc(t.stepInfo.telemetry)}</div>${this._statusLegend()}`;
-    if (!this._telemetry) {
-      list.innerHTML = `${info}<p class="muted running">${esc(t.tele.loading)}</p>`;
-      if (!this._telemetryLoading) {
-        this._telemetryLoading = true;
-        this._ws("telemetry").then(
-          (res) => {
-            this._telemetry = res;
-            this._telemetryLoading = false;
-            if (this._tab === "telemetry") this._renderList();
-          },
-          (err) => {
-            this._telemetryLoading = false;
-            this._toast(err.message || String(err));
-          },
-        );
-      }
-      return;
-    }
-    const s = this._search;
-    const items = this._telemetry.entities.filter(
-      (x) => !s || [x.name, x.entity_id, x.device, x.integration, t.kinds[x.kind]].join(" ").toLowerCase().includes(s),
-    );
-    const groups = new Map();
-    for (const x of items) {
-      if (!groups.has(x.integration)) groups.set(x.integration, []);
-      groups.get(x.integration).push(x);
-    }
-    const sum = (xs) => xs.reduce((n, x) => n + (x.writes || 0), 0);
-    const ordered = [...groups.entries()].sort((a, b) => sum(b[1]) - sum(a[1]) || a[0].localeCompare(b[0]));
-    const lang = this._hass?.language;
-    const html = ordered
-      .map(
-        ([integ, xs]) => `<details class="card" ${keepOpen(`tel:${integ}`, false)}>
-          <summary><label class="check" onclick="event.stopPropagation()"><input type="checkbox" data-tel-group></label>
-            <b>${esc(integ)}</b> · ${esc(t.tele.group(xs.length, t.writes(sum(xs).toLocaleString(lang))))}</summary>
-          ${xs
-            .map(
-              (x) => `<div class="devrow telrow st-${x.status}"><label class="check"><input type="checkbox" data-tel="${esc(x.entity_id)}" data-used="${x.used_in || 0}"></label>
-                <div class="ename"><b>${STATUS_ICON[x.status]} ${esc(x.name)}</b>
-                  <span class="muted small">${this._fnWhat(x)}</span>
-                  <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
-                  ${x.used_in ? `<span class="reason">${esc(t.tele.used(x.used_in))}</span>` : ""}
-                  ${x.ai && x.ai.status !== x.status ? `<span class="ailine">🤖 ${STATUS_ICON[x.ai.status]} ${esc(t.st[x.ai.status])} · ${esc(x.ai.reason)}
-                    <button data-act="fn-ai-take" data-eid="${esc(x.entity_id)}" data-status="${esc(x.ai.status)}" class="flat inline">${esc(t.take)}</button></span>` : ""}</div>
-                <select class="stsel" data-fn-status="${esc(x.entity_id)}">${this._statusOptions(x.status)}</select></div>`,
-            )
-            .join("")}</details>`,
-      )
-      .join("");
-    list.innerHTML = `${info}<p class="muted">${esc(t.tele.summary(items.length, this._telemetry.busy))}</p>
-      ${this._telemetry.counted ? "" : `<p class="muted">${esc(t.tele.noCount)}</p>`}${html}`;
+</div>`;
   }
 
   // One status for several functions; lists already loaded (Assistant tab, telemetry) follow at once.
   async _setStatus(ids, status) {
     const res = await this._ws("set_status", { entity_ids: ids, status });
-    for (const list of [this._exposure?.entities, this._telemetry?.entities]) {
-      for (const x of list || []) if (ids.includes(x.entity_id)) this._patchStatus(x, status);
-    }
+    for (const x of this._exposure?.entities || []) if (ids.includes(x.entity_id)) this._patchStatus(x, status);
     this._toast(this._t.assist.changed(res.changes));
     await this._load();
   }
@@ -2002,163 +2204,15 @@ class HauskartePanel extends HTMLElement {
         : `<p class="muted">${esc(t.archiveEmpty)}</p>`}`;
   }
 
-  _devicesHtml(silentOnly) {
-    const t = this._t;
-    const s = this._search;
-    const all = this._data.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration, entryTitle: g.title })));
-    const shown = all.filter(
-      (x) =>
-        (!(silentOnly || this._onlySilent) || x.silent) &&
-        (!this._devKind || x.kind === this._devKind) &&
-        (!this._devRoom || (this._devRoom === "-" ? !x.area_id : x.area_id === this._devRoom)) &&
-        (!s || [x.name, x.model, x.area, x.integration, x.entryTitle, t.kinds[x.kind]].join(" ").toLowerCase().includes(s)),
-    );
-    const groups = new Map();
-    for (const x of shown) {
-      const key = this._devGroup === "room" ? x.area || t.withoutRoom : x.integration;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(x);
-    }
-    const sorted = [...groups.entries()].sort((a, b) => b[1].filter((x) => x.silent).length - a[1].filter((x) => x.silent).length || a[0].localeCompare(b[0]));
-    if (!sorted.length) return `<p class="muted">${esc(silentOnly ? t.allDone : t.empty)}</p>`;
-    const open = sorted.length <= 3 || !!s || silentOnly || !!this._devKind || !!this._devRoom || this._onlySilent;
-    return sorted
-      .map(([key, items]) => {
-        const silent = items.filter((x) => x.silent).length;
-        return `<details class="card" ${keepOpen(`devices:${key}`, open || !!silent)}>
-          <summary><b>${esc(key)}</b> · ${items.length}${silent ? ` · <span class="danger">${silent} ${esc(t.silent)}</span>` : ""}</summary>
-          ${items.map((x) => this._deviceRow(x)).join("")}
-        </details>`;
-      })
-      .join("");
-  }
-
   // ---- start assistant ---------------------------------------------------
 
   _descriptionHtml() {
     const t = this._t;
     const tpl = `{{ state_attr('${this._data.sensor || "sensor.hauskarte_beschreibung"}', 'text') }}`;
-    return `<div class="card"><b>${esc(t.description)}</b>
-      <pre class="desc">${esc(this._data.description)}</pre>
+    return `<pre class="desc">${esc(this._data.description)}</pre>
       <div class="muted">${esc(t.descriptionHint)}</div>
       <div class="row"><code class="tpl grow">${esc(tpl)}</code>
-        <button data-act="map-copy" data-copy="${esc(tpl)}" class="secondary">${esc(t.copy)}</button></div></div>`;
-  }
-
-  _wizSteps() {
-    return ["welcome", "floors", "rooms", "plan", "devices", "duplicates", "functions", "check", "done"].map((id) => ({ id }));
-  }
-
-  _wizIndex(steps) {
-    const w = this._data.wizard || {};
-    let i = steps.findIndex((s) => s.id === w.pos);
-    if (i < 0) i = Math.max(0, steps.findIndex((s) => !(w.done || []).includes(s.id)));
-    return i;
-  }
-
-  _wizGo(id, doneId) {
-    this._floorOrder = null;
-    const w = (this._data.wizard = this._data.wizard || { done: [] });
-    w.pos = id;
-    if (doneId && !w.done.includes(doneId)) w.done.push(doneId);
-    this._ws("wizard", { pos: id, ...(doneId ? { done: doneId } : {}) }).catch((err) => this._toast(err.message || String(err)));
-    this._edit = false;
-    this._pending = null;
-    this._render();
-    window.scrollTo({ top: 0 });
-  }
-
-  _wizLabel(step) {
-    return this._t.wiz.labels[step.id] || step.id;
-  }
-
-  _renderWizard(list) {
-    const t = this._t;
-    const steps = this._wizSteps();
-    const i = this._wizIndex(steps);
-    const step = steps[i];
-    const done = this._data.wizard?.done || [];
-    const pct = Math.round((i / (steps.length - 1)) * 100);
-    const body = {
-      welcome: () => this._wizWelcome(),
-      floors: () => this._wizFloors(),
-      rooms: () => this._wizRooms(),
-      plan: () => this._wizPlan(),
-      devices: () => this._wizDevices(),
-      duplicates: () => this._wizDups(),
-      functions: () => this._wizFunctions(),
-      check: () => this._wizCheck(),
-      done: () => this._wizDone(),
-    }[step.id]();
-    const last = i === steps.length - 1;
-    list.innerHTML = `<div class="wiz">
-      <div class="wizhead"><div class="wizbar"><span style="width:${pct}%"></span></div>
-        <div class="muted">${esc(t.wiz.stepOf(i + 1, steps.length))} · <b>${esc(this._wizLabel(step))}</b></div></div>
-      ${body}
-      <div class="wiznav">
-        <button data-wiz="prev" class="secondary" ${i === 0 ? "disabled" : ""}>${esc(t.wiz.prev)}</button>
-        <span class="grow"></span>
-        ${last ? `<button data-wiz="finish">${esc(t.wiz.finish)}</button>` : `<button data-wiz="next">${esc(t.wiz.next)}</button>`}
-      </div>
-      <details class="card wizall"><summary>${esc(t.wiz.all)}</summary>
-        ${steps
-          .map(
-            (s, n) => `<button data-wiz-go="${esc(s.id)}" class="wizstep ${n === i ? "active" : ""}">
-              <span>${done.includes(s.id) ? "✓" : n + 1}</span>${esc(this._wizLabel(s))}</button>`,
-          )
-          .join("")}
-      </details>
-      <button data-wiz="later" class="flat wide">${esc(t.wiz.later)}</button>
-    </div>`;
-    if (step.id === "plan") this._applyImages();
-    this._live();
-  }
-
-  _wizWelcome() {
-    const t = this._t;
-    const d = this._data;
-    const ai = d.llm
-      ? d.ai?.at
-        ? `<div class="ailine yes">${esc(t.wiz.aiReady(new Date(d.ai.at).toLocaleString(this._hass.language)))}</div>`
-        : d.progress.running && d.progress.phase === "ai"
-          ? `<div class="ailine">${esc(t.aiRunning(t.aiTasks[d.progress.task] || "…", d.progress.done + 1, d.progress.total))}</div>`
-          : `<button data-act="ai-review" class="secondary ai" ${d.progress.running ? "disabled" : ""}>${esc(t.wiz.aiStart)}</button>
-             <div class="muted">${esc(t.wiz.aiStartInfo)}</div>`
-      : `<div class="muted">${esc(t.wiz.aiNo)}</div>`;
-    return `<div class="card"><h2>👋 ${esc(t.wiz.labels.welcome)}</h2>
-      <p>${esc(t.wiz.intro)}</p>
-      <ol class="wizplan">${t.wiz.plan.map((x) => `<li>${esc(x)}</li>`).join("")}</ol>
-      ${d.last_scan ? "" : `<button data-act="scan-rules" ${d.progress.running ? "disabled" : ""}>${esc(t.wiz.scanFirst)}</button>`}
-      <div class="wizai">${ai}</div></div>`;
-  }
-
-  _wizFloors() {
-    const t = this._t;
-    const floors = this._data.map.floors.filter((f) => f.floor_id);
-    // keep the list where it is while numbers change; the order preview below shows the effect
-    const ids = floors.map((f) => f.floor_id);
-    this._floorOrder = [...(this._floorOrder || []).filter((id) => ids.includes(id)), ...ids.filter((id) => !(this._floorOrder || []).includes(id))];
-    const ordered = this._floorOrder.map((id) => floors.find((f) => f.floor_id === id));
-    const byLevel = [...floors].sort((a, b) => (b.level ?? -999) - (a.level ?? -999));
-    const levels = floors.map((f) => f.level).filter((l) => l != null);
-    const clash = levels.length !== new Set(levels).size;
-    return `<div class="info">${esc(t.wiz.floorsInfo)}</div>
-      ${ordered
-        .map(
-          (f) => `<div class="card floorhead">
-            <input class="fname" data-floor-name="${esc(f.floor_id)}" value="${esc(f.name)}">
-            <label class="muted">${esc(t.floorLevelShort)} <input type="number" class="level" data-floor-level="${esc(f.floor_id)}" value="${f.level ?? ""}"></label>
-            <span class="muted">${esc(t.wiz.floorRow(this._data.map.rooms.filter((r) => r.floor_id === f.floor_id).length))}</span></div>`,
-        )
-        .join("")}
-      <div class="card order"><b>${esc(t.wiz.orderTitle)}</b>
-        <div class="orderlist">${byLevel
-          .map((f) => `<span class="orderitem">${esc(f.name)} <span class="muted">${f.level ?? "–"}</span></span>`)
-          .join('<span class="muted">↓</span>')}</div>
-        ${clash ? `<div class="ailine no">${esc(t.wiz.levelClash)}</div>` : ""}</div>
-      <div class="card row addrow"><input id="floor-name" placeholder="${esc(t.floorName)}">
-        <input id="floor-level" type="number" placeholder="${esc(t.floorLevel)}" class="level">
-        <button data-act="floor-add">${esc(t.addFloor)}</button></div>`;
+        <button data-act="map-copy" data-copy="${esc(tpl)}" class="secondary">${esc(t.copy)}</button></div>`;
   }
 
   _roomDevicesHtml(room) {
@@ -2171,196 +2225,6 @@ class HauskartePanel extends HTMLElement {
         .map((d) => `<span class="wdev">${kindIcon(d.speaker ? "voice" : d.what)} ${esc(d.name)}</span>`)
         .join("") + (devs.length > 8 ? `<span class="muted">${esc(t.wiz.more(devs.length - 8))}</span>` : "")
     );
-  }
-
-  _wizRooms() {
-    const t = this._t;
-    const d = this._data;
-    const m = d.map;
-    const floors = m.floors.filter((f) => f.floor_id);
-    const aiRooms = d.ai?.rooms || [];
-    const sure = aiRooms.filter((r) => r.confidence >= 0.4);
-    const running = d.progress.running && d.progress.phase === "ai";
-    const floorName = (id) => floors.find((f) => f.floor_id === id)?.name || id;
-    const roomCard = (r) => {
-      const ai = aiRooms.find((x) => x.area_id === r.area_id);
-      return `<div class="wroom ${ai ? "aisuggest" : ""}">
-        <div class="wroomhead"><input class="rname" data-area-name="${esc(r.area_id)}" value="${esc(r.name)}">
-          ${this._floorSelect("data-area-floor", r.area_id, r.floor_id)}</div>
-        <div class="wdevs">${this._roomDevicesHtml(r)}</div>
-        ${ai ? `<div class="ailine">🤖 ${esc(t.wiz.aiMove(floorName(ai.floor_id)))} · ${esc(ai.reason)} · ${Math.round(ai.confidence * 100)} %
-          <button data-act="ai-room-take" data-area="${esc(r.area_id)}" data-floor="${esc(ai.floor_id)}" class="flat inline">${esc(t.take)}</button></div>` : ""}
-        <div>${this._mergeButton(r)}${this._convertButton(r)}</div>${this._mergeForm(r)}${this._convertForm(r)}
-      </div>`;
-    };
-    const group = (title, rooms, floorId, warn) => `<div class="card ${warn ? "warnline" : ""}">
-        <div class="floorhead"><h2>${esc(title)}</h2><span class="muted">${esc(t.roomsCount(rooms.length))}</span></div>
-        ${rooms.map(roomCard).join("")}
-        ${floorId ? `<div class="row addrow"><input data-new-room="${esc(floorId)}" placeholder="${esc(t.newRoomPh)}">
-          <button data-act="room-add" class="secondary">${esc(t.addRoom)}</button></div>` : ""}
-      </div>`;
-    const loose = m.rooms.filter((r) => !r.floor_id);
-    const aiBar = d.llm
-      ? `<div class="card aicard row">${
-          running
-            ? `<span class="running">${esc(t.wiz.aiRoomsRunning)}</span>`
-            : `${sure.length ? `<button data-act="ai-rooms-all">${esc(t.wiz.takeAll(sure.length))}</button>` : ""}
-               <button data-act="ai-rooms" class="secondary ai">${esc(t.wiz.aiRooms)}</button>
-               <span class="muted grow">${esc(aiRooms.length ? t.wiz.aiRoomsCount(aiRooms.length) : t.wiz.aiRoomsInfo)}</span>`
-        }</div>`
-      : "";
-    return `<div class="info">${esc(t.wiz.roomsInfo)}</div>${aiBar}
-      <div class="muted">${esc(t.wiz.savedNow)}</div>
-      ${loose.length ? group(t.noFloor, loose, null, true) : ""}
-      ${floors.map((f) => group(f.name, m.rooms.filter((r) => r.floor_id === f.floor_id), f.floor_id)).join("")}
-      ${this._groupsHtml()}`;
-  }
-
-  _wizPlan() {
-    const t = this._t;
-    const floors = this._data.map.floors.filter((f) => f.floor_id);
-    this._edit = true;
-    return `<div class="info">${esc(t.wiz.planInfo)}</div>${this._modeChips()}
-      ${floors
-        .map((f, i) => `<details class="card" ${keepOpen(`plan:${f.floor_id}`, i === 0 || !!f.image)}><summary><b>${esc(f.name)}</b></summary>${this._floorHtml(f)}</details>`)
-        .join("")}`;
-  }
-
-  _wizDevices() {
-    const t = this._t;
-    const d = this._data;
-    const dupDevices = new Set(d.duplicates.flatMap((g) => g.members.map((m) => m.device_id)).filter(Boolean));
-    const all = d.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration })));
-    // hidden or disabled as a whole: nothing to place, listed apart so they can come back
-    const out = (x) => x.status === "hidden" || x.status === "disabled";
-    const todo = all.filter((x) => !x.area_id && !out(x) && !dupDevices.has(x.device_id));
-    const skipped = all.filter((x) => out(x) && !x.area_id);
-    const skippedHtml = skipped.length
-      ? `<details class="card" ${keepOpen("wiz-hidden", false)}><summary>${esc(t.wiz.hiddenList(skipped.length))}</summary>
-          ${skipped.map((x) => this._deviceRow(x, {})).join("")}</details>`
-      : "";
-    const placed = all.filter((x) => x.area_id).length;
-    const aiBtn = d.llm
-      ? `<div class="card aicard row">
-          <button data-act="scan" class="secondary ai" ${d.progress.running ? "disabled" : ""}>${esc(t.wiz.aiDevices)}</button>
-          ${d.progress.running ? `<span class="running">${esc(t.running)}</span>` : ""}</div>`
-      : "";
-    if (!todo.length) {
-      return `<div class="info">${esc(t.wiz.devicesInfo)}</div><p class="muted">${esc(t.wiz.noneLeft)}</p>
-        <p class="muted">${esc(t.wiz.withRoom(placed))}</p>${skippedHtml}`;
-    }
-    const rows = todo.map((x) => {
-      const prop = d.proposals.find((p) => p.id === `device:${x.device_id}`);
-      const area = prop?.proposed.area_id && prop.proposed.area_id !== prop.current.area_id ? prop.proposed.area_id : "";
-      let why = "";
-      if (area) {
-        const note = prop.reasons.find((r) => r.code === "llm_note")?.text;
-        const byName = prop.reasons.some((r) => r.code === "area_from_name");
-        why =
-          prop.source === "llm" && !byName
-            ? `🤖 ${this._areaName(area)}${note ? ` · ${note}` : ""} · ${Math.round(prop.confidence * 100)} %`
-            : `${this._areaName(area)} · ${t.wiz.byName(this._areaName(area))}`;
-      }
-      return { x, area, why };
-    });
-    const groups = new Map();
-    for (const r of rows) {
-      if (!groups.has(r.area)) groups.set(r.area, []);
-      groups.get(r.area).push(r);
-    }
-    const ordered = [...groups.entries()].sort(
-      (a, b) => (a[0] === "") - (b[0] === "") || this._areaName(a[0]).localeCompare(this._areaName(b[0])),
-    );
-    const html = ordered
-      .map(
-        ([area, items]) => `<div class="card"><h3 class="wizsec">${esc(area ? t.wiz.suggestedFor(this._areaName(area), items.length) : t.wiz.noSuggestion(items.length))}</h3>
-          ${items
-            .map(
-              ({ x, area: a, why }) => this._deviceRow(x, { area: a, why }),
-            )
-            .join("")}</div>`,
-      )
-      .join("");
-    const withSuggestion = rows.filter((r) => r.area).length;
-    const takeAll = withSuggestion
-      ? `<div class="actions"><button data-act="ai-devs-all" class="wide">${esc(t.wiz.takeAll(withSuggestion))}</button></div>`
-      : "";
-    return `<div class="info">${esc(t.wiz.devicesInfo)}</div>${aiBtn}${takeAll}${html}
-      <p class="muted">${esc(t.wiz.withRoom(placed))}</p>${skippedHtml}`;
-  }
-
-  _wizDups() {
-    const t = this._t;
-    const d = this._data;
-    return `<div class="info">${esc(t.wiz.dupsInfo)}</div>
-      ${d.duplicates.length ? d.duplicates.map((g) => this._dupCard(g, true)).join("") : `<p class="muted">${esc(t.wiz.dupsNone)}</p>`}`;
-  }
-
-  // Room by room: every device with its functions open, the AI bar for the whole room.
-  _wizFunctions() {
-    const t = this._t;
-    const d = this._data;
-    const m = d.map;
-    const floorOrder = new Map(m.floors.map((f, i) => [f.floor_id ?? "", i]));
-    const rooms = [...m.rooms]
-      .sort((a, b) => (floorOrder.get(a.floor_id ?? "") ?? 99) - (floorOrder.get(b.floor_id ?? "") ?? 99) || a.name.localeCompare(b.name))
-      .map((r) => ({ id: r.area_id, name: r.name }));
-    rooms.push({ id: "-", name: t.wiz.fnNoRoom });
-    const all = d.devices.flatMap((g) => g.devices.map((x) => ({ ...x, integration: g.integration })));
-    const inRoom = (id) =>
-      all.filter((x) => (id === "-" ? !x.area_id && x.status !== "disabled" && x.status !== "hidden" : x.area_id === id));
-    for (const r of rooms) r.n = inRoom(r.id).length;
-    if (!rooms.some((r) => r.id === this._fnRoom)) this._fnRoom = (rooms.find((r) => r.n) || rooms[0]).id;
-    const i = rooms.findIndex((r) => r.id === this._fnRoom);
-    const here = inRoom(this._fnRoom).sort((a, b) => a.name.localeCompare(b.name));
-    return `<div class="info">${esc(t.wiz.fnInfo)}</div>
-      <div class="card row fnroomnav">
-        <button data-act="fn-room" data-to="${esc(rooms[Math.max(0, i - 1)].id)}" class="secondary small" ${i === 0 ? "disabled" : ""}>‹</button>
-        <select id="fn-room">${rooms.map((r) => `<option value="${esc(r.id)}" ${r.id === this._fnRoom ? "selected" : ""}>${esc(r.name)} (${r.n})</option>`).join("")}</select>
-        <button data-act="fn-room" data-to="${esc(rooms[Math.min(rooms.length - 1, i + 1)].id)}" class="secondary small" ${i === rooms.length - 1 ? "disabled" : ""}>›</button>
-        <span class="muted">${esc(t.wiz.fnRoom(i + 1, rooms.length))}</span></div>
-      ${this._statusLegend()}
-      ${here.length ? `<div class="card">${this._fnAiBar(here)}${here.map((x) => this._deviceRow(x, { open: true })).join("")}</div>` : `<p class="muted">${esc(t.wiz.fnEmpty)}</p>`}`;
-  }
-
-  _wizCheck() {
-    const t = this._t;
-    const m = this._data.map;
-    const c = this._counts();
-    const floors = [
-      ...m.floors.filter((f) => f.floor_id),
-      ...(m.rooms.some((r) => !r.floor_id) ? [{ floor_id: null, name: t.noFloor }] : []),
-    ];
-    return `<div class="info">${esc(t.wiz.checkInfo)}</div>
-      ${floors
-        .map((f) => {
-          const rooms = m.rooms.filter((r) => (r.floor_id || null) === f.floor_id);
-          return `<details class="card ${f.floor_id ? "" : "warnline"}" ${keepOpen(`check:${f.floor_id}`, true)}><summary><b>${esc(f.name)}</b> · ${esc(t.roomsCount(rooms.length))}</summary>
-            ${rooms
-              .map(
-                (r) => `<div class="wroom"><div class="wroomhead"><b>${esc(r.name)}</b><span class="counts">${this._countsHtml(r.counts)}</span></div>
-                  <div class="wdevs">${r.devices.length ? this._roomDevicesHtml(r) : `<span class="muted">${esc(t.wiz.empty)}</span>`}</div></div>`,
-              )
-              .join("")}</details>`;
-        })
-        .join("")}
-      <p class="muted">${esc(t.wiz.rest({ open: c.open, orphans: c.orphans, silent: c.silent }))}</p>`;
-  }
-
-  _wizDone() {
-    const t = this._t;
-    const d = this._data;
-    const c = this._counts();
-    const summary = t.wiz.summary({
-      floors: d.map.floors.filter((f) => f.floor_id).length,
-      rooms: d.map.rooms.length,
-      loose: c.rooms,
-      open: c.open,
-      dups: c.duplicates,
-      unassigned: d.map.unassigned_total,
-    });
-    return `<div class="card"><h2>🎉 ${esc(t.wiz.labels.done)}</h2><p>${esc(t.wiz.doneInfo)}</p><p><b>${esc(summary)}</b></p></div>
-      ${this._descriptionHtml()}`;
   }
 
   // ---- map ---------------------------------------------------------------
@@ -2398,14 +2262,9 @@ class HauskartePanel extends HTMLElement {
         <div class="traylist">${m.unassigned.map((d) => this._pinHtml(d, null, "traypin")).join("")}</div></div>`;
     }
     if (this._edit) {
-      html += `<div class="muted">🏠 <button data-section-go="rooms" class="flat inline">${esc(t.allRooms)}</button></div>`;
+      html += `<div class="muted">🏠 <button data-section-go="house" class="flat inline">${esc(t.allRooms)}</button></div>`;
     }
     html += m.floors.map((f) => this._floorHtml(f)).join("");
-    html += `<details class="card" ${keepOpen("notes", !!this._edit)}><summary><b>${esc(t.notes)}</b></summary>
-      <label class="note">${esc(t.houseNote)}<textarea data-note="_house" rows="2">${esc(m.house_note)}</textarea></label>
-      ${m.rooms.map((r) => `<label class="note">${esc(r.name)}<input data-note="${esc(r.area_id)}" value="${esc(r.note)}"></label>`).join("")}
-    </details>`;
-    html += this._descriptionHtml();
     list.innerHTML = html;
     this._applyImages();
     this._live();
@@ -2774,7 +2633,7 @@ class HauskartePanel extends HTMLElement {
       }
       return;
     }
-    if (!["map", "wizard"].includes(this._tab) || ev.button > 0) return;
+    if (this._tab !== "map" || ev.button > 0) return;
     const pin = ev.target.closest?.(".pin");
     if (pin && this._editMode !== "devices") return; // rooms mode: devices are not handled
     // the small buttons on a pin (× hide, 🎨 symbol) are clicks, not the start of a drag
@@ -3073,117 +2932,6 @@ class HauskartePanel extends HTMLElement {
     return html + (floor !== undefined ? "</optgroup>" : "");
   }
 
-  _entityRow(e) {
-    const t = this._t;
-    const cur = e.current;
-    const pro = e.proposed;
-    const status = proposedStatus(e);
-    const changed = pro.remove || status !== cur.status || pro.aliases.join("|") !== cur.aliases.join("|");
-    const reasons = e.reasons.map((r) => this._reason(r)).join(" · ");
-    return `<div class="entity ${changed ? "changed" : ""}" data-entity="${esc(e.entity_id)}">
-      <select class="stsel" data-f="status">${this._statusOptions(status)}</select>
-      <div class="ename"><b>${e.what ? kindIcon(e.what) + " " : ""}${esc(e.title)}</b>
-        <span class="muted small">${this._fnWhat({ ...e, role: roleOf(e.domain, e.category), kind: e.what })}</span>
-        <span class="muted">${esc(e.entity_id)}</span>
-        ${reasons ? `<span class="reason">${esc(reasons)}</span>` : ""}</div>
-      <input data-f="aliases" placeholder="${esc(t.aliases)}" value="${esc(pro.aliases.join(", "))}">
-      ${pro.remove || e.reasons.some((r) => r.code === "orphaned")
-        ? `<label class="check danger"><input type="checkbox" data-f="remove" ${pro.remove ? "checked" : ""}> ${esc(t.remove)}</label>`
-        : ""}
-    </div>`;
-  }
-
-
-  _changesHtml(p) {
-    const t = this._t;
-    const lines = [];
-    const areaName = (id) => (id ? this._areaName(id) : "–");
-    if (p.proposed.area_id !== p.current.area_id) lines.push(["📍", t.changeRaum(areaName(p.current.area_id), areaName(p.proposed.area_id))]);
-    else if (p.flags.includes("area_missing")) lines.push(["📍", t.needRoom, "need"]);
-    if (p.proposed.name !== p.current.name) lines.push(["✏️", t.changeName(p.current.name || p.title, p.proposed.name || p.title)]);
-    else if (p.flags.includes("name_technical")) lines.push(["✏️", t.needName, "need"]);
-    if (p.flags.includes("speaker")) lines.push(["🎙️", t.speakerNoRoom, "need"]);
-    for (const e of p.entities) {
-      const to = proposedStatus(e);
-      if (to === e.current.status) continue;
-      const why = e.reasons.map((r) => this._reason(r)).join(" · ");
-      lines.push([
-        `${STATUS_ICON[e.current.status]}→${STATUS_ICON[to]}`,
-        t.st.change(e.title, t.st[e.current.status], t.st[to]) + (why ? ` – ${t.st.because(why)}` : ""),
-      ]);
-    }
-    for (const e of p.entities) {
-      if (e.proposed.aliases.join("|") !== e.current.aliases.join("|") && e.proposed.aliases.length) {
-        lines.push(["🏷️", t.aliasesSet(e.proposed.aliases.join(", "))]);
-      }
-    }
-    if (!lines.length) lines.push(["✓", t.nothingChanges]);
-    return `<ul class="changes">${lines.map(([i, txt, cls]) => `<li class="${cls || ""}"><span>${i}</span>${esc(txt)}</li>`).join("")}</ul>`;
-  }
-
-  _card(p) {
-    const t = this._t;
-    const meta = [t.kinds[p.what], p.manufacturer, p.model, p.integration].filter(Boolean).join(" · ");
-    const notes = p.reasons.filter((r) => r.code === "llm_note").map((r) => this._reason(r));
-    const changedRows = p.entities.filter(
-      (e) => e.proposed.remove || proposedStatus(e) !== e.current.status || e.proposed.aliases.join("|") !== e.current.aliases.join("|") || e.entity_id === p.main_entity,
-    );
-    const otherRows = p.entities.filter((e) => !changedRows.includes(e));
-    const needInput =
-      (p.flags.includes("area_missing") && !p.proposed.area_id) || (p.flags.includes("name_technical") && !p.proposed.name);
-    const badges = [
-      p.safe ? `<span class="badge safe">${esc(t.safe)}</span>` : "",
-      p.source === "llm" ? `<span class="badge ai">${esc(t.ai)}</span>` : "",
-    ].join("");
-    return `<div class="card prop" data-id="${esc(p.id)}">
-      <div class="head"><span class="kicon">${kindIcon(p.what)}</span>
-        <div class="htxt"><h2>${esc(p.title)}</h2><div class="muted">${esc(meta)}</div></div>
-        <span class="grow"></span>${badges}</div>
-      ${this._cardFunctions(p)}
-      ${this._changesHtml(p)}
-      ${notes.length ? `<div class="muted small">${esc(notes.join(" · "))}</div>` : ""}
-      <details class="edit" ${needInput ? "open" : ""}><summary>${esc(t.adjust)}</summary>
-        <div class="fields">
-          <label>${esc(t.area)}<select data-f="area">${this._areaOptions(p.proposed.area_id)}</select></label>
-          <label>${esc(t.name)}<input data-f="name" value="${esc(p.proposed.name ?? "")}" placeholder="${esc(p.title)}"></label>
-        </div>
-        <label class="check maptoggle"><input type="checkbox" data-f="on_map" ${p.on_map ? "checked" : ""}> 🗺️ ${esc(t.onMap)}</label>
-        ${this._statusLegend()}
-        <div class="entities">${changedRows.map((e) => this._entityRow(e)).join("")}
-          ${otherRows.length ? `<details><summary>${otherRows.length} ${esc(t.more)}</summary>${otherRows.map((e) => this._entityRow(e)).join("")}</details>` : ""}
-        </div>
-      </details>
-      <div class="actions">
-        <button data-act="accept">${esc(t.accept)}</button>
-        <span class="grow"></span>
-        ${p.status === "open" ? `<button data-act="later" class="flat">${esc(t.postpone)}</button>` : ""}
-        <button data-act="ignore" class="flat" title="${esc(t.ignoreTip)}">${esc(t.ignore)}</button>
-      </div>
-    </div>`;
-  }
-
-  _values(card) {
-    const entities = {};
-    card.querySelectorAll("[data-entity]").forEach((row) => {
-      const aliases = row
-        .querySelector('[data-f="aliases"]')
-        .value.split(",")
-        .map((a) => a.trim())
-        .filter(Boolean);
-      entities[row.dataset.entity] = {
-        status: row.querySelector('[data-f="status"]').value,
-        aliases,
-        remove: !!row.querySelector('[data-f="remove"]')?.checked,
-      };
-    });
-    return {
-      area_id: card.querySelector('[data-f="area"]').value || null,
-      name: card.querySelector('[data-f="name"]').value.trim() || null,
-      on_map: card.querySelector('[data-f="on_map"]').checked,
-      entities,
-    };
-  }
-
   async _click(ev) {
     if (this._suppressClick) {
       this._suppressClick = false;
@@ -3222,51 +2970,28 @@ class HauskartePanel extends HTMLElement {
       this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true }));
       return;
     }
-    const nav = el.dataset.section || el.dataset.sectionGo;
+    const nav = el.dataset.section || el.dataset.sectionGo || (el.dataset.goSub ? "inventory" : null);
     if (nav) {
       this._section = nav;
-      if (nav === "assist") this._exposure = null;
+      if (el.dataset.goSub) this._sub = el.dataset.goSub;
+      if (this._view() === "functions") this._exposure = null;
       this._search = "";
       this._edit = false;
-      this._shown = PAGE;
+      this._archiveView = false;
       this._render();
       window.scrollTo({ top: 0 });
       return;
     }
-    if (el.dataset.wiz || el.dataset.wizGo) {
-      const steps = this._wizSteps();
-      const i = this._wizIndex(steps);
-      const cur = steps[i].id;
-      if (el.dataset.wizGo) return this._wizGo(el.dataset.wizGo);
-      if (el.dataset.wiz === "next") return this._wizGo(steps[Math.min(i + 1, steps.length - 1)].id, cur);
-      if (el.dataset.wiz === "prev") return this._wizGo(steps[Math.max(i - 1, 0)].id);
-      if (el.dataset.wiz === "later" || el.dataset.wiz === "finish") {
-        const finish = el.dataset.wiz === "finish";
-        await this._ws("wizard", finish ? { finished: true, done: cur } : { dismissed: true, pos: cur });
-        this._section = "clean";
-        this._edit = false;
-        await this._load();
-        window.scrollTo({ top: 0 });
-      }
+    if (el.dataset.sub) {
+      this._sub = el.dataset.sub;
+      if (el.dataset.sub === "functions") this._exposure = null;
+      this._search = "";
+      this._archiveView = false;
+      this._render();
       return;
     }
     if (el.dataset.archiveView !== undefined) {
       this._archiveView = el.dataset.archiveView === "1";
-      this._render();
-      return;
-    }
-    if (el.dataset.step) {
-      this._step = el.dataset.step;
-      this._archiveView = false;
-      if (el.dataset.step === "telemetry") this._telemetry = null;
-      this._search = "";
-      this._shown = PAGE;
-      this._render();
-      return;
-    }
-    if (el.dataset.pfilter) {
-      this._propFilter = el.dataset.pfilter;
-      this._shown = PAGE;
       this._render();
       return;
     }
@@ -3303,15 +3028,48 @@ class HauskartePanel extends HTMLElement {
       if (!this._busy) await this._mapAction(act, el);
       return;
     }
-    const card = el.closest("[data-id]");
-    const id = card?.dataset.id;
     this._busy = true;
     try {
       if (act === "scan" || act === "scan-rules") {
         await this._ws("scan", { use_llm: act === "scan" });
-      } else if (act === "more") {
-        this._shown += PAGE;
+      } else if (act === "unit-done" || act === "unit-skip" || act === "unit-apply") {
+        const unitCard = el.closest("[data-unit]");
+        const ticked =
+          act === "unit-skip"
+            ? []
+            : [...unitCard.querySelectorAll("[data-sug]:checked")].map((c) => c.dataset.sug.slice(c.dataset.sug.indexOf("|") + 1));
+        // in the inventory taking proposals is just that; in clean-up it also marks the unit as gone through
+        const r = await this._ws("review", { unit: unitCard.dataset.unit, apply: ticked, done: act !== "unit-apply" });
+        this._toast(r.changes ? t.applied(r.changes) : t.fc.marked);
+        if (this._tab === "focus") window.scrollTo({ top: 0 });
+      } else if (act === "unit-later") {
+        (this._later || (this._later = new Set())).add(el.closest("[data-unit]").dataset.unit);
         this._renderList();
+        window.scrollTo({ top: 0 });
+        return;
+      } else if (act === "focus-unlater") {
+        this._later = new Set();
+        this._renderList();
+        return;
+      } else if (act === "unit-reset") {
+        await this._ws("review_reset", { unit: el.closest("[data-unit]").dataset.unit });
+        this._toast(t.saved);
+      } else if (act === "fn-convert") {
+        const r = await this._ws("convert", { entity_id: el.dataset.eid, domain: el.dataset.domain });
+        this._toast(t.dc.converted(r.entity_id || ""));
+        this._exposure = null;
+      } else if (act === "fsel-ai") {
+        const ids = [...this.shadowRoot.querySelectorAll("[data-fsel]:checked")].map((b) => b.dataset.fsel);
+        const devices = [...new Set(ids.map((id) => this._exposure.entities.find((x) => x.entity_id === id)?.device_id).filter(Boolean))];
+        if (!devices.length) return this._toast(t.tele.none);
+        await this._ws("ai_functions", { device_ids: devices });
+      } else if (act === "fsel-apply") {
+        const boxes = [...this.shadowRoot.querySelectorAll("[data-fsel]:checked")];
+        if (!boxes.length) return this._toast(t.tele.none);
+        const status = this.shadowRoot.querySelector("#fsel-status").value;
+        const used = boxes.filter((b) => Number(b.dataset.used)).length;
+        if (status === "disabled" && used && !confirm(t.tele.confirmUsed(used))) return;
+        await this._setStatus(boxes.map((b) => b.dataset.fsel), status);
         return;
       } else if (act === "apply-safe") {
         const n = this._data.proposals.filter((p) => p.safe && p.status === "open").length;
@@ -3321,12 +3079,6 @@ class HauskartePanel extends HTMLElement {
       } else if (act === "assist-move") {
         await this._setStatus([el.dataset.eid], el.dataset.to);
         return;
-      } else if (act === "assist-all") {
-        const on = el.dataset.to === "assistant";
-        const ids = this._assistIds(!on);
-        if (!confirm(t.assist.confirmAll(ids.length, on))) return;
-        await this._setStatus(ids, el.dataset.to);
-        return;
       } else if (act === "assist-more") {
         this._assistShown = (this._assistShown || 150) + 150;
         this._renderList();
@@ -3334,35 +3086,6 @@ class HauskartePanel extends HTMLElement {
       } else if (act === "ai-fn") {
         await this._ws("ai_functions", { device_ids: el.dataset.devices.split(",") });
         await this._load();
-        return;
-      } else if (act === "ai-fn-take") {
-        const res = await this._ws("ai_functions_take", { device_ids: el.dataset.devices.split(",") });
-        this._toast(t.assist.changed(res.changes));
-        this._telemetry = null;
-        await this._load();
-        return;
-      } else if (act === "fn-room") {
-        this._fnRoom = el.dataset.to;
-        this._render();
-        window.scrollTo({ top: 0 });
-        return;
-      } else if (act === "tel-apply" || act === "tel-ai") {
-        const boxes = [...this.shadowRoot.querySelectorAll("[data-tel]:checked")];
-        if (!boxes.length) return this._toast(t.tele.none);
-        if (act === "tel-ai") {
-          const devices = [...new Set(boxes.map((b) => this._telemetry.entities.find((x) => x.entity_id === b.dataset.tel)?.device_id).filter(Boolean))];
-          await this._ws("ai_functions", { device_ids: devices });
-          this._telemetry = null;
-          await this._load();
-          return;
-        }
-        const status = this.shadowRoot.querySelector("#tel-status").value;
-        const used = boxes.filter((b) => Number(b.dataset.used)).length;
-        if (status === "disabled" && used && !confirm(t.tele.confirmUsed(used))) return;
-        await this._setStatus(boxes.map((b) => b.dataset.tel), status);
-        return;
-      } else if (act === "fn-ai-take") {
-        await this._setStatus([el.dataset.eid], el.dataset.status);
         return;
       } else if (act === "dev-delete") {
         const row = el.closest("[data-device]");
@@ -3424,23 +3147,6 @@ class HauskartePanel extends HTMLElement {
         await this._ws("merge_areas", { source_id: this._merge.source, target_id: target });
         this._toast(t.mergedInto(this._merge.name, targetName));
         this._merge = null;
-      } else if (act === "ai-room-take") {
-        await this._ws("area_update", { area_id: el.dataset.area, floor_id: el.dataset.floor });
-        this._toast(t.saved);
-      } else if (act === "ai-rooms-all") {
-        const rooms = (this._data.ai?.rooms || [])
-          .filter((r) => r.confidence >= 0.4)
-          .map((r) => ({ area_id: r.area_id, floor_id: r.floor_id }));
-        this._toast(t.applied((await this._ws("apply_floor_plan", { rooms })).changes));
-      } else if (act === "ai-dev-take") {
-        await this._ws("device_area", { device_id: el.dataset.device, area_id: el.dataset.area });
-        this._toast(t.saved);
-      } else if (act === "ai-devs-all") {
-        const items = [...this.shadowRoot.querySelectorAll('[data-act="ai-dev-take"]')].map((b) => ({
-          device_id: b.dataset.device,
-          area_id: b.dataset.area,
-        }));
-        this._toast(t.applied((await this._ws("device_areas", { items })).changes));
       } else if (act === "ai-rooms") {
         await this._ws("ai_review", { only: ["floors"] });
       } else if (act === "ai-review") {
@@ -3464,8 +3170,6 @@ class HauskartePanel extends HTMLElement {
           g.querySelectorAll("[data-orphan], [data-orphan-group]").forEach((c) => (c.checked = yes));
         });
         return;
-      } else if (act === "ai-kind") {
-        await this._ws("kind_override", { entity_id: el.dataset.entity, kind: el.dataset.kind });
       } else if (act === "dup-merge" || act === "dup-different") {
         const box = el.closest("[data-key]");
         if (act === "dup-merge") {
@@ -3492,9 +3196,6 @@ class HauskartePanel extends HTMLElement {
         if (!ids.length) return this._toast(t.tele.none);
         const r = await this._ws("archive", { items: ids.map((id) => ({ kind: "entity", id })) });
         this._toast(t.archived(r.archived));
-      } else if (act === "dev-archive") {
-        const r = await this._ws("archive", { items: [{ kind: "device", id: el.dataset.device }] });
-        this._toast(t.archived(r.archived));
       } else if (act === "unarchive") {
         const r = await this._ws("unarchive", { key: el.dataset.key });
         if (el.dataset.key.startsWith("entity:") && el.textContent.trim() === t.archiveRestore) this._toast(r.restored ? t.restoredOk : t.restoredNo);
@@ -3507,16 +3208,6 @@ class HauskartePanel extends HTMLElement {
       } else if (act === "undo") {
         const r = await this._ws("undo");
         this._toast(r.title ? t.undone(r) : t.nothingToUndo);
-      } else if (act === "accept") {
-        const values = this._values(card);
-        if (Object.values(values.entities).some((e) => e.remove) && !confirm(t.confirmRemove)) return;
-        const r = await this._ws("apply", { proposal_id: id, values });
-        card.remove();
-        this._toast(t.applied(r.changes));
-      } else if (act === "later" || act === "ignore" || act === "show-again") {
-        const status = { later: "later", ignore: "ignored", "show-again": "open" }[act];
-        await this._ws("decide", { proposal_id: id, status });
-        card.remove();
       }
       await this._load();
     } catch (err) {
@@ -3576,6 +3267,43 @@ const STYLE = `
   .danger { color: var(--error-color, #db4437); }
   details summary { cursor: pointer; color: var(--secondary-text-color); font-size: 13px; padding: 6px 8px; }
   .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  /* overview */
+  .ovstep { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--divider-color); }
+  .ovstep .ename { flex: 1; display: flex; flex-direction: column; }
+  .ovmark { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--secondary-background-color); flex: none; }
+  .ovstep.done .ovmark { background: var(--success-color, #43a047); color: #fff; }
+  .ovstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 8px 0 12px; }
+  .ovstats div { display: flex; flex-direction: column; padding: 10px; border-radius: 10px; background: var(--secondary-background-color); }
+  .ovstats b { font-size: 24px; }
+  /* clean-up and the device card */
+  .fchead { padding: 12px 16px; }
+  .devcard.focus { border: 2px solid var(--primary-color); }
+  .dchead { display: flex; gap: 12px; align-items: flex-start; }
+  .dchead .ename { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .what { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: var(--secondary-background-color); font-size: 14px; }
+  .dcrow { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; margin: 10px 0; }
+  .fld { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--secondary-text-color); }
+  .fld.inline { flex-direction: row; align-items: center; gap: 8px; }
+  .sugs { border-left: 4px solid var(--primary-color); padding: 6px 10px; margin: 10px 0; border-radius: 6px;
+    background: color-mix(in srgb, var(--primary-color) 8%, transparent); }
+  .sugshead { font-weight: 500; margin-bottom: 4px; }
+  .sug { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; cursor: pointer; }
+  .sug .sicon { min-width: 36px; text-align: center; }
+  details.fns > summary { cursor: pointer; padding: 6px 0; color: var(--primary-color); }
+  .focusfoot { position: sticky; bottom: 0; background: var(--card-background-color); padding-top: 8px; }
+  .devitem { border-top: 1px solid var(--divider-color); }
+  .devitem > summary { display: flex; gap: 8px; align-items: center; padding: 6px 2px; cursor: pointer; list-style: none; }
+  .devitem > summary::-webkit-details-marker { display: none; }
+  .devitem > summary .grow { display: flex; flex-direction: column; min-width: 0; }
+  .devitem[open] > summary { font-weight: 500; }
+  .devitem > .devcard { margin: 4px 0 12px; box-shadow: none; border: 1px solid var(--divider-color); }
+  .ok { color: var(--success-color, #43a047); }
+  .reason.ok { color: var(--success-color, #43a047); }
+  .bulkbar { gap: 10px; align-items: center; }
+  .chips.subs { margin-bottom: 12px; }
+  .chip .count, .devitem .count { font-size: 12px; padding: 0 6px; border-radius: 8px; background: var(--primary-color); color: var(--text-primary-color, #fff); }
+
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 18px; border-radius: 8px;
     background: var(--primary-text-color); color: var(--primary-background-color); z-index: 5; max-width: 90vw; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -3848,6 +3576,10 @@ const STYLE = `
   main { overflow-x: clip; }
   input[type=checkbox], input[type=radio] { min-height: 0; }
   @media (max-width: 700px) {
+    /* clean-up foot above the bottom bar; the main button on top, full width */
+    .focusfoot { bottom: calc(64px + env(safe-area-inset-bottom)); flex-wrap: wrap; }
+    .focusfoot [data-act="unit-done"] { flex: 1 0 100%; order: -1; }
+    .focusfoot .grow { display: none; }
     main { padding: 12px 12px 88px; }
     .sections { position: fixed; bottom: 0; top: auto; left: 0; right: 0; max-width: none; padding: 0 0 env(safe-area-inset-bottom);
       border-top: 1px solid var(--divider-color); border-bottom: none; background: var(--card-background-color); justify-content: space-around;

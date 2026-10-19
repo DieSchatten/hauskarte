@@ -74,20 +74,6 @@ def test_advice_values_are_limited():
     )
 
 
-def test_switch_kinds():
-    switches = [{"entity_id": "switch.a"}, {"entity_id": "switch.b"}]
-    out = review.parse_switches(
-        {
-            "switches": [
-                {"entity_id": "switch.a", "kind": "light"},
-                {"entity_id": "switch.b", "kind": "switch"},
-            ]
-        },
-        switches,
-    )
-    assert list(out) == ["switch.a"] and out["switch.a"]["kind"] == "light"
-
-
 def test_functions_never_switch_off_what_is_used():
     devices = [
         {

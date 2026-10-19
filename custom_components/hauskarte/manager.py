@@ -11,6 +11,8 @@ from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
 
+import voluptuous as vol
+from homeassistant import config_entries
 from homeassistant.components.homeassistant.exposed_entities import (
     async_expose_entity,
     async_should_expose,
@@ -30,7 +32,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from . import description, duplicates, kinds, llm, review, rules
+from . import description, duplicates, kinds, llm, review, rules, units
 from . import status as fn_status
 from .const import (
     ASSISTANT,
@@ -65,6 +67,8 @@ _LOGGER = logging.getLogger(__name__)
 
 WRITES_MAX_AGE = 3600  # seconds the write counts are kept
 FUNCTIONS_BATCH = 3  # devices per question to the model
+# undo records that only keep track (not a change anyone would count)
+BOOKKEEPING = {"reviewed", "decision", "proposal"}
 
 
 def values_from_proposal(prop: dict) -> dict:
@@ -112,6 +116,7 @@ class HauskarteManager:
             "groups": [],
             "irrelevant": {},
             "archive": {},
+            "reviewed": {},
         }
         self.progress: dict[str, Any] = {
             "running": False,
@@ -125,6 +130,7 @@ class HauskarteManager:
         self._writes_cache: dict[str, int] | None = None
         self._writes_at: float = 0.0
         self._writes_loading = False
+        self._wrapped_cache: dict[str, str] | None = None
         self._watch_unsub: Callable[[], None] | None = None
         self._refresh_unsub: Callable[[], None] | None = None
 
@@ -472,6 +478,10 @@ class HauskarteManager:
         area_reg = ar.async_get(self.hass)
         floor_reg = fr.async_get(self.hass)
         reverted = skipped = 0
+        exposed_before: dict[str, bool] = {}
+        for rec in records:
+            if rec["type"] == "entity_exposed":
+                exposed_before.setdefault(rec["target"], rec["old"])
         for rec in reversed(records):
             target, old = rec["target"], rec["old"]
             kind = rec["type"]
@@ -484,10 +494,16 @@ class HauskarteManager:
                 "icon",
                 "irrelevant",
                 "archive",
+                "reviewed",
+                "decision",
+                "proposal",
             ):
                 store = {
+                    "decision": "decisions",
+                    "proposal": "proposals",
                     "irrelevant": "irrelevant",
                     "archive": "archive",
+                    "reviewed": "reviewed",
                     "layout": "layout",
                     "pin": "pins",
                     "map_visible": "shown",
@@ -624,7 +640,12 @@ class HauskarteManager:
             if kind.startswith("device_") and dev_reg.async_get(target) is None:
                 skipped += 1
                 continue
-            if kind.startswith("entity_") and kind != "entity_exposed" and ent_reg.async_get(target) is None:
+            # removed and converted records point at what is gone (or at a config entry) – handled below
+            if (
+                kind.startswith("entity_")
+                and kind not in ("entity_exposed", "entity_removed", "entity_converted")
+                and ent_reg.async_get(target) is None
+            ):
                 skipped += 1
                 continue
             if kind == "device_disabled":
@@ -648,6 +669,10 @@ class HauskarteManager:
             elif kind == "entity_aliases":
                 ent = ent_reg.async_get(target)
                 ent_reg.async_update_entity(target, aliases=deserialize_aliases(ent.aliases, old))
+            elif kind == "entity_converted":
+                switch = old if isinstance(old, str) else None
+                exposed = exposed_before.get(switch, rec.get("exposed")) if switch else None
+                self.hass.async_create_task(self._undo_convert(target, switch, exposed))
             elif kind == "entity_removed" and isinstance(old, dict):
                 if not self._restore_entity(old):
                     skipped += 1
@@ -827,7 +852,7 @@ class HauskarteManager:
             raise HomeAssistantError("No language model configured")
         if self._scan_task and not self._scan_task.done():
             return False
-        total = len(only) if only else 5
+        total = len(only) if only else 4
         self.progress = {
             "running": True,
             "phase": "ai",
@@ -869,22 +894,6 @@ class HauskarteManager:
             for d in g["devices"]
             if d["silent"]
         ]
-        switches = [
-            {
-                "entity_id": e["entity_id"],
-                "name": e.get("title"),
-                "device": (inv["devices"].get(e.get("device_id") or "") or {}).get("name"),
-                "model": (inv["devices"].get(e.get("device_id") or "") or {}).get("model"),
-                "integration": e.get("platform"),
-                "room": area_names.get(duplicates.effective_area(inv, e) or ""),
-            }
-            for e in inv["entities"].values()
-            if e["domain"] == "switch"
-            and not e.get("entity_category")
-            and not e.get("restored")
-            and kinds.entity_kind(e, (inv["devices"].get(e.get("device_id") or "") or {}).get("name"))
-            == "switch"
-        ][:80]
         tasks = [
             (
                 "floors",
@@ -905,11 +914,6 @@ class HauskarteManager:
                 "silent",
                 review.silent_task(silent) if silent else None,
                 lambda d: review.parse_silent(d, silent),
-            ),
-            (
-                "switches",
-                review.switches_task(switches) if switches else None,
-                lambda d: review.parse_switches(d, switches),
             ),
         ]
         try:
@@ -1619,10 +1623,16 @@ class HauskarteManager:
         ent_reg = er.async_get(self.hass)
         area_reg = ar.async_get(self.hass)
         archived = self._archived("device")
+        shown = self.data.get("shown", {})
+        speakers = {d["device_id"] for d in description.speaker_devices(inv)} if inv else set()
+        in_duplicates = {
+            m.get("device_id")
+            for g in self.data.get("duplicates") or []
+            if g["key"] not in self.data.get("dup_decisions", {})
+            for m in g["members"]
+        }
         groups: dict[str, dict] = {}
         for dev in device_entries(dev_reg):
-            if dev.entry_type is dr.DeviceEntryType.SERVICE:
-                continue
             entry_id = device_entry_id(dev)
             entry = self.hass.config_entries.async_get_entry(entry_id) if entry_id else None
             entities = er.async_entries_for_device(ent_reg, dev.id, include_disabled_entities=True)
@@ -1663,6 +1673,17 @@ class HauskarteManager:
                     "what": ((self.data.get("fn_ai") or {}).get(dev.id) or {}).get("what"),
                     "silent": silent and not dev.disabled_by and dev.id not in archived,
                     "archived": dev.id in archived,
+                    # going through it: done (kept from the old device archive too), what is suggested
+                    **(
+                        unit_state := self._unit_state(
+                            units.device_unit(dev.id), [e.entity_id for e in entities]
+                        )
+                    ),
+                    "reviewed": unit_state["reviewed"] or dev.id in archived,
+                    "suggestions": units.suggestions(self._unit_proposals([f"device:{dev.id}"]), functions),
+                    # on the map unless hidden there; by default what the assistant uses
+                    "on_map": shown.get(dev.id, any(f["exposed"] for f in functions) or dev.id in speakers),
+                    "in_duplicates": dev.id in in_duplicates,
                     "disabled": dev.disabled_by is not None,
                     "deletable": bool(entry and entry.supports_remove_device),
                 }
@@ -1675,18 +1696,9 @@ class HauskarteManager:
     def _devices_with_ai(self, inv: dict, ai: dict) -> list[dict]:
         groups = self.devices_overview(inv)
         silent_ai = ai.get("silent") or {}
-        switch_ai = ai.get("switches") or {}
-        overridden = self.data.get("kind_override", {})
         for g in groups:
             for d in g["devices"]:
                 d["ai"] = silent_ai.get(d["device_id"]) if d["silent"] else None
-                dev = inv["devices"].get(d["device_id"])
-                hint = None
-                for entity_id in dev["entity_ids"] if dev else []:
-                    if entity_id in switch_ai and entity_id not in overridden:
-                        hint = {"entity_id": entity_id, **switch_ai[entity_id]}
-                        break
-                d["ai_kind"] = hint
         return groups
 
     def set_device_disabled(self, device_id: str, disabled: bool) -> None:
@@ -1707,12 +1719,26 @@ class HauskarteManager:
         )
         self._changed()
 
+    def _with_wrap_cache(self, func):
+        """Run func with the switch_as_x lookup read once (it is needed for every function)."""
+        if self._wrapped_cache is not None:
+            return func()
+        self._wrapped_cache = self._wrapped()
+        try:
+            return func()
+        finally:
+            self._wrapped_cache = None
+
     def exposure_overview(self) -> dict:
+        return self._with_wrap_cache(self._exposure_overview)
+
+    def _exposure_overview(self) -> dict:
         """Every entity and whether the voice assistant sees it, to go through and switch."""
         inv = self._inventory()
         ent_reg = er.async_get(self.hass)
         floors = {f["floor_id"]: f["name"] for f in inv["floors"].values()}
         merged_away = {o for m in self.data["merged"].values() for o in m["others"]}
+        used = self.used_in()
         items = []
         for ent in inv["entities"].values():
             if ent["restored"] or (entry := ent_reg.async_get(ent["entity_id"])) is None:
@@ -1731,6 +1757,7 @@ class HauskarteManager:
                     "quiet": bool(ent["entity_category"])
                     or entry.hidden_by is er.RegistryEntryHider.INTEGRATION,
                     "twin": ent["entity_id"] in merged_away,
+                    "used_in": used.get(ent["entity_id"], 0),
                 }
             )
         # disabled ones are not in the inventory; listed so what was switched off can be found and brought back
@@ -1791,14 +1818,29 @@ class HauskarteManager:
             "kind_override": self.data["kind_override"].get(ent.entity_id),
         }
         category = ent.entity_category.value if ent.entity_category else None
-        ai = (
+        raw = (
             ((self.data.get("fn_ai") or {}).get(ent.device_id or "") or {})
             .get("functions", {})
             .get(ent.entity_id)
         )
         current = self._entity_status(ent)
-        if ai and (ai.get("from", current) != current or ai["status"] == current):
-            ai = None  # decided since the AI looked (taken or chosen otherwise)
+        kind = kinds.entity_kind(inv_ent, dev["name"] if dev else None)
+        own_kind = self.data["kind_override"].get(ent.entity_id)
+        auto_kind = kinds.entity_kind({**inv_ent, "kind_override": None}, dev["name"] if dev else None)
+        ai = None
+        if raw:
+            # each part holds only while undecided: status not touched since, kind not chosen by hand
+            status_open = (
+                raw.get("status") and raw.get("from", current) == current and raw["status"] != current
+            )
+            kind_open = raw.get("kind") and not own_kind and raw["kind"] != kind
+            if status_open or kind_open:
+                ai = {
+                    "status": raw["status"] if status_open else None,
+                    "kind": raw["kind"] if kind_open else None,
+                    "reason": raw.get("reason", ""),
+                }
+        wrapped = self._wrapped_cache if self._wrapped_cache is not None else self._wrapped()
         return {
             "entity_id": ent.entity_id,
             "name": name,
@@ -1808,9 +1850,13 @@ class HauskarteManager:
             "device_class": ent.device_class or ent.original_device_class,
             "unit": (state.attributes.get("unit_of_measurement") if state else None)
             or ent.unit_of_measurement,
-            "kind": kinds.entity_kind(inv_ent, dev["name"] if dev else None),
-            "kind_override": self.data["kind_override"].get(ent.entity_id),
+            "kind": kind,
+            "kind_override": own_kind,
+            "auto_kind": auto_kind,
             "role": fn_status.role(ent.domain, category),
+            # HA shows this switch as something else (or this is what it shows instead of a switch)
+            "wrapped_as": wrapped.get(ent.entity_id),
+            "wraps": next((s for s, shown in wrapped.items() if shown == ent.entity_id), None),
             "technical": category is not None,
             "status": current,
             "exposed": async_should_expose(self.hass, ASSISTANT, ent.entity_id),
@@ -1820,6 +1866,353 @@ class HauskarteManager:
             else None,
             "ai": ai,
         }
+
+    # --- units: one device (or the device-less functions of an integration) to go through -----------
+
+    def _wrapped(self) -> dict[str, str]:
+        """Switches HA shows as something else (switch_as_x): switch entity → the entity shown instead."""
+        ent_reg = er.async_get(self.hass)
+        result = {}
+        for entry in self.hass.config_entries.async_entries("switch_as_x"):
+            source = entry.options.get("entity_id")
+            try:
+                source = er.async_validate_entity_id(ent_reg, source) if source else None
+            except vol.Invalid:  # unknown registry id
+                source = None
+            shown = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
+            if source and shown:
+                result[source] = shown[0].entity_id
+        return result
+
+    def _unit_proposals(self, pids: list[str]) -> list[dict]:
+        """Open (or later) proposals of a unit, with the current status read fresh."""
+        ent_reg = er.async_get(self.hass)
+        found = []
+        for pid in pids:
+            prop = self.data["proposals"].get(pid)
+            if prop is None:
+                continue
+            rows = []
+            for r in prop["entities"]:
+                entry = ent_reg.async_get(r["entity_id"])
+                exposed = async_should_expose(self.hass, ASSISTANT, r["entity_id"])
+                status = (
+                    self._entity_status(entry) if entry else fn_status.entity_status(exposed, False, False)
+                )
+                aliases = alias_strings(entry.aliases) if entry else r["current"].get("aliases")
+                rows.append({**r, "now": {"status": status, "exposed": exposed, "aliases": aliases}})
+            kind, _, key = pid.partition(":")
+            if kind == "device":
+                dev = dr.async_get(self.hass).async_get(key)
+                now = {"area_id": dev.area_id, "name": dev.name_by_user} if dev else prop["current"]
+            else:
+                ent = ent_reg.async_get(key)
+                now = {"area_id": ent.area_id, "name": ent.name} if ent else prop["current"]
+            found.append({**prop, "now": now, "entities": rows})
+        return found
+
+    def _unit_state(self, unit: str, entity_ids: list[str]) -> dict:
+        done = (self.data.get("reviewed") or {}).get(unit)
+        return {"unit": unit, "reviewed": bool(done) and units.still_done(done.get("fp"), entity_ids)}
+
+    def standalone_units(self, inv: dict) -> list[dict]:
+        """Functions without a device (scenes, scripts, helpers …), one unit per integration."""
+        ent_reg = er.async_get(self.hass)
+        groups: dict[str, list[er.RegistryEntry]] = {}
+        for ent in inv["entities"].values():
+            if (
+                ent.get("device_id")
+                or ent.get("restored")
+                or ent["domain"] in rules.NEVER_DOMAINS
+                or ent.get("platform") == DOMAIN
+            ):
+                continue
+            entry = ent_reg.async_get(ent["entity_id"])
+            if entry is not None:
+                groups.setdefault(ent.get("platform") or "?", []).append(entry)
+        result = []
+        for platform, entries in sorted(groups.items()):
+            functions = []
+            for entry in sorted(entries, key=lambda e: e.entity_id):
+                f = self._function(inv, entry, None)
+                area = inv["areas"].get(entry.area_id or "")
+                functions.append({**f, "area_id": entry.area_id, "area": area["name"] if area else None})
+            unit = units.standalone_unit(platform)
+            proposals = self._unit_proposals([f"entity:{f['entity_id']}" for f in functions])
+            result.append(
+                {
+                    **self._unit_state(unit, [f["entity_id"] for f in functions]),
+                    "integration": platform,
+                    "functions": functions,
+                    "suggestions": units.suggestions(proposals, functions),
+                }
+            )
+        return result
+
+    def _queue(self, devices: list[dict], standalone: list[dict], inv: dict) -> list[str]:
+        """What is left to go through, in house order: floors top down, rooms, devices; then without room."""
+        order: dict[str | None, int] = {}
+        for i, floor in enumerate(description.floors_top_down(inv)):
+            for j, area in enumerate(description.rooms_of(inv, floor["floor_id"])):
+                order[area["area_id"]] = i * 1000 + j
+        for j, area in enumerate(description.rooms_of(inv, None)):
+            order.setdefault(area["area_id"], 900_000 + j)
+        todo = [
+            d
+            for d in devices
+            if not d["reviewed"]
+            and d["status"] not in (fn_status.HIDDEN, fn_status.DISABLED)
+            and d["functions"]
+        ]
+        todo.sort(key=lambda d: (order.get(d["area_id"], 999_999), (d["name"] or "").lower()))
+        return [d["unit"] for d in todo] + [s["unit"] for s in standalone if not s["reviewed"]]
+
+    def review_reset(self, unit: str) -> dict:
+        """Back into the clean-up list, and what was turned down there is suggested again. Undoable."""
+        info = self._unit_info(unit)
+        store = self.data.setdefault("reviewed", {})
+        records = []
+        if unit in store:
+            records.append({"type": "reviewed", "target": unit, "old": store[unit], "new": None})
+            del store[unit]
+        archive = self.data.setdefault("archive", {})
+        if unit in archive:  # kept in the device archive of 0.15: that counted as done too
+            records.append({"type": "archive", "target": unit, "old": archive[unit], "new": None})
+            del archive[unit]
+        fresh = rules.build_proposals(self._inventory())
+        for pid in info["pids"]:
+            decision = self.data["decisions"].get(pid)
+            if decision and decision["status"] == STATUS_IGNORED:
+                records.append({"type": "decision", "target": pid, "old": decision, "new": None})
+                del self.data["decisions"][pid]
+                if pid in fresh:
+                    records.append(
+                        {
+                            "type": "proposal",
+                            "target": pid,
+                            "old": self.data["proposals"].get(pid),
+                            "new": True,
+                        }
+                    )
+                    self.data["proposals"][pid] = {**fresh[pid], "status": STATUS_OPEN}
+        if records:
+            self._push_undo(None, info["title"], records)
+        self._changed()
+        return {"reset": bool(records)}
+
+    async def _apply_suggestions(self, chosen: list[dict], info: dict, records: list[dict]) -> None:
+        dev_reg = dr.async_get(self.hass)
+        ent_reg = er.async_get(self.hass)
+        for s in chosen:
+            target = s.get("entity_id")
+            if s["type"] == "area":
+                area_id = s["value"]
+                if ar.async_get(self.hass).async_get_area(area_id) is None:
+                    continue
+                if target:
+                    ent = ent_reg.async_get(target)
+                    if ent and ent.area_id != area_id:
+                        records.append(
+                            {"type": "entity_area", "target": target, "old": ent.area_id, "new": area_id}
+                        )
+                        ent_reg.async_update_entity(target, area_id=area_id)
+                elif (dev := dev_reg.async_get(info["device_id"])) and dev.area_id != area_id:
+                    records.append(
+                        {"type": "device_area", "target": dev.id, "old": dev.area_id, "new": area_id}
+                    )
+                    dev_reg.async_update_device(dev.id, area_id=area_id)
+            elif s["type"] == "name":
+                if target:
+                    ent = ent_reg.async_get(target)
+                    if ent and ent.name != s["value"]:
+                        records.append(
+                            {"type": "entity_name", "target": target, "old": ent.name, "new": s["value"]}
+                        )
+                        ent_reg.async_update_entity(target, name=s["value"])
+                elif (dev := dev_reg.async_get(info["device_id"])) and dev.name_by_user != s["value"]:
+                    records.append(
+                        {"type": "device_name", "target": dev.id, "old": dev.name_by_user, "new": s["value"]}
+                    )
+                    dev_reg.async_update_device(dev.id, name_by_user=s["value"])
+            elif s["type"] == "status":
+                self._apply_status(target, s["value"], records)
+            elif s["type"] == "aliases":
+                ent = ent_reg.async_get(target)
+                if ent is not None:
+                    records.append(
+                        {
+                            "type": "entity_aliases",
+                            "target": target,
+                            "old": serialize_aliases(ent.aliases),
+                            "new": s["value"],
+                        }
+                    )
+                    ent_reg.async_update_entity(target, aliases=build_aliases(ent.aliases, s["value"]))
+            elif s["type"] == "kind":
+                old = self.data["kind_override"].get(target)
+                records.append({"type": "kind_override", "target": target, "old": old, "new": s["value"]})
+                self.data["kind_override"][target] = s["value"]
+            elif s["type"] == "convert":
+                await self._convert(target, s["value"], records)
+
+    async def review(self, unit: str, apply_ids: list[str], done: bool) -> dict:
+        """Apply the ticked suggestions of a unit and, if done, remember it as gone through. One undo step."""
+        info = self._unit_info(unit)
+        chosen = units.apply_order([s for s in info["suggestions"] if s["id"] in set(apply_ids)])
+        records: list[dict] = []
+        try:
+            await self._apply_suggestions(chosen, info, records)
+        except Exception:
+            # what was written already must stay undoable as one step
+            if records:
+                self._push_undo(None, info["title"], records)
+                self._changed()
+            raise
+        self._decided_by_hand(records)
+        inv = self._inventory()
+        for pid in info["pids"]:
+            if pid not in self.data["proposals"]:
+                continue
+            if done:
+                # gone through: what was not ticked was not wanted – it comes back only when something changes;
+                # proposal and decision go into the undo step, so undo brings the proposal back as well
+                decision = {
+                    "status": STATUS_DONE if any(c.get("pid") == pid for c in chosen) else STATUS_IGNORED,
+                    "fingerprint": rules.fingerprint(inv, pid),
+                    "title": self.data["proposals"][pid]["title"],
+                    "at": dt_util.utcnow().isoformat(),
+                }
+                records.append(
+                    {
+                        "type": "decision",
+                        "target": pid,
+                        "old": self.data["decisions"].get(pid),
+                        "new": decision,
+                    }
+                )
+                records.append(
+                    {"type": "proposal", "target": pid, "old": self.data["proposals"][pid], "new": None}
+                )
+                self.data["decisions"][pid] = decision
+                del self.data["proposals"][pid]
+            else:
+                self._refresh_unit(pid)
+        if done:
+            store = self.data.setdefault("reviewed", {})
+            ids = info["entity_ids"]
+            if info["device_id"]:
+                ids = [
+                    e.entity_id
+                    for e in er.async_entries_for_device(
+                        er.async_get(self.hass), info["device_id"], include_disabled_entities=True
+                    )
+                ]
+            new = {"fp": units.fingerprint(ids), "at": dt_util.utcnow().isoformat()}
+            records.append({"type": "reviewed", "target": unit, "old": store.get(unit), "new": new})
+            store[unit] = new
+        if records:
+            self._push_undo(None, info["title"], records)
+        self._changed()
+        return {"changes": sum(1 for r in records if r["type"] not in BOOKKEEPING)}
+
+    def _unit_info(self, unit: str) -> dict:
+        return self._with_wrap_cache(lambda: self._unit_info_now(unit))
+
+    def _unit_info_now(self, unit: str) -> dict:
+        """Suggestions, proposals and entities of one unit, as the panel sees them."""
+        inv = self._inventory()
+        ent_reg = er.async_get(self.hass)
+        kind, _, key = unit.partition(":")
+        if kind == "device":
+            dev = dr.async_get(self.hass).async_get(key)
+            if dev is None:
+                raise HomeAssistantError("Device no longer exists")
+            entries = er.async_entries_for_device(ent_reg, key, include_disabled_entities=True)
+            functions = [self._function(inv, e, inv["devices"].get(key)) for e in entries]
+            pids = [f"device:{key}"]
+            title = dev.name_by_user or dev.name or key
+            device_id = key
+        elif kind == "standalone":
+            found = next((s for s in self.standalone_units(inv) if s["unit"] == unit), None)
+            if found is None:
+                raise HomeAssistantError("Nothing left there")
+            functions = found["functions"]
+            pids = [f"entity:{f['entity_id']}" for f in functions]
+            title = key
+            device_id = None
+        else:
+            raise HomeAssistantError(f"Unknown unit {unit}")
+        return {
+            "suggestions": units.suggestions(self._unit_proposals(pids), functions),
+            "pids": pids,
+            "entity_ids": [f["entity_id"] for f in functions],
+            "title": title,
+            "device_id": device_id,
+        }
+
+    async def _convert(self, entity_id: str, domain: str, records: list[dict]) -> str | None:
+        """Let HA show a switch as a light (cover, fan …): a new entity in front, the switch behind it.
+
+        HA's own "Show as" (switch_as_x) takes over name and exposure and hides the switch; automations keep
+        working. Aliases and an own area of the switch are carried over here. Undo removes it again.
+        """
+        ent_reg = er.async_get(self.hass)
+        ent = ent_reg.async_get(entity_id)
+        if ent is None or ent.domain != "switch" or domain not in units.KIND_DOMAIN.values():
+            raise HomeAssistantError("Only a switch can be shown as something else")
+        if entity_id in self._wrapped():
+            return self._wrapped()[entity_id]
+        exposed_before = async_should_expose(self.hass, ASSISTANT, entity_id)
+        flow = await self.hass.config_entries.flow.async_init(
+            "switch_as_x", context={"source": config_entries.SOURCE_USER}
+        )
+        result = await self.hass.config_entries.flow.async_configure(
+            flow["flow_id"], {"entity_id": entity_id, "target_domain": domain}
+        )
+        entry = result.get("result")
+        if entry is None:
+            raise HomeAssistantError(
+                f"HA did not create the {domain}: {result.get('reason') or result.get('errors')}"
+            )
+        shown = None
+        for _ in range(50):  # the new entity appears once the entry is set up
+            if found := er.async_entries_for_config_entry(ent_reg, entry.entry_id):
+                shown = found[0].entity_id
+                break
+            await asyncio.sleep(0.1)
+        records.append(
+            {
+                "type": "entity_converted",
+                "target": entry.entry_id,
+                "old": entity_id,
+                "new": shown,
+                "exposed": exposed_before,  # the switch, before HA moved its exposure to the new entity
+            }
+        )
+        if shown:
+            new = ent_reg.async_get(shown)
+            ent_reg.async_update_entity(
+                shown,
+                aliases=build_aliases(new.aliases, alias_strings(ent.aliases)),
+                area_id=ent.area_id or new.area_id,
+            )
+        return shown
+
+    async def _undo_convert(self, entry_id: str, switch: str | None, exposed: bool | None) -> None:
+        """HA's own removal unhides the switch and hands it the light's exposure; then the one it had before."""
+        if self.hass.config_entries.async_get_entry(entry_id) is not None:
+            await self.hass.config_entries.async_remove(entry_id)
+        if switch and exposed is not None:
+            async_expose_entity(self.hass, ASSISTANT, switch, bool(exposed))
+        self._changed()
+
+    async def convert(self, entity_id: str, domain: str) -> dict:
+        records: list[dict] = []
+        shown = await self._convert(entity_id, domain, records)
+        if records:
+            self._push_undo(None, entity_id, records)
+            self._changed()
+        return {"entity_id": shown}
 
     def _apply_status(self, entity_id: str, wanted: str, records: list[dict]) -> None:
         """Put one entity on a status of the ladder; what changes goes into `records`."""
@@ -2026,6 +2419,9 @@ class HauskarteManager:
         """Functions that are technical or write a lot – the ones that clutter HA most often."""
         writes = await self.load_writes()
         used = self.used_in()
+        return self._with_wrap_cache(lambda: self._telemetry_list(writes, used))
+
+    def _telemetry_list(self, writes: dict[str, int], used: dict[str, int]) -> dict:
         ent_reg = er.async_get(self.hass)
         dev_reg = dr.async_get(self.hass)
         items = []
@@ -2118,7 +2514,9 @@ class HauskarteManager:
             writes = await self.load_writes()
             used = self.used_in()
             for batch in batches:
-                devices = [p for d in batch if (p := self._function_payload(d, writes, used))]
+                devices = self._with_wrap_cache(
+                    lambda b=batch: [p for d in b if (p := self._function_payload(d, writes, used))]
+                )
                 if devices:
                     try:
                         answer = await llm.ask_json(
@@ -2152,9 +2550,10 @@ class HauskarteManager:
                 if ent is None or ent.device_id != device_id:
                     continue
                 current = self._entity_status(ent)
-                if current == suggestion["status"] or suggestion.get("from", current) != current:
-                    continue  # already there, or decided otherwise since
-                self._apply_status(entity_id, suggestion["status"], records)
+                wanted = suggestion.get("status")
+                if not wanted or current == wanted or suggestion.get("from", current) != current:
+                    continue  # nothing about the status, already there, or decided otherwise since
+                self._apply_status(entity_id, wanted, records)
         self._decided_by_hand(records)
         if records:
             self._push_undo(None, f"KI-Vorschläge ({len(device_ids)} Geräte)", records)
@@ -2171,6 +2570,15 @@ class HauskarteManager:
         if "status" in changes:
             self._apply_status(entity_id, changes["status"], records)
             self._decided_by_hand(records)
+        if "area" in changes:
+            area_id = changes["area"] or None
+            if area_id and ar.async_get(self.hass).async_get_area(area_id) is None:
+                raise HomeAssistantError(f"Unknown area {area_id}")
+            if area_id != ent.area_id:
+                records.append(
+                    {"type": "entity_area", "target": entity_id, "old": ent.area_id, "new": area_id}
+                )
+                ent_reg.async_update_entity(entity_id, area_id=area_id)
         if "name" in changes:
             name = (changes["name"] or "").strip()[:100] or None
             if name != ent.name:
@@ -2407,6 +2815,9 @@ class HauskarteManager:
 
     def snapshot(self) -> dict:
         """Everything the panel shows."""
+        return self._with_wrap_cache(self._snapshot)
+
+    def _snapshot(self) -> dict:
         inv = self._inventory()
         floors = inv["floors"]
         areas = sorted(
@@ -2453,7 +2864,9 @@ class HauskarteManager:
                     (self.data.get("archive") or {}).values(), key=lambda i: i["at"], reverse=True
                 )
             ],
-            "devices": self._devices_with_ai(inv, ai),
+            "devices": (devices := self._devices_with_ai(inv, ai)),
+            "standalone": (standalone := self.standalone_units(inv)),
+            "queue": self._queue([d for g in devices for d in g["devices"]], standalone, inv),
             "duplicates": [
                 {**g, "ai": (ai.get("duplicates") or {}).get(g["key"])}
                 for g in self.data["duplicates"]
