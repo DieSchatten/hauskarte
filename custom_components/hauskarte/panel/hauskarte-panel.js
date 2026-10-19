@@ -30,9 +30,9 @@ const TEXT = {
       noDevices: "noch keine Geräte",
       more: (n) => `+${n} weitere`,
       nameTaken: "Diesen Raumnamen gibt es schon. Home Assistant erlaubt jeden Namen nur einmal – z. B. „Bad oben“ und „Bad unten“.",
-      fnAsk: (n) => `🤖 Die ${n} Geräte dieses Raums durchsehen`,
+      fnAsk: (n) => `Die ${n} Geräte dieses Raums durchsehen`,
     },
-    aiReview: "🤖 KI-Durchsicht",
+    aiReview: "KI-Durchsicht",
     aiAt: "KI-Durchsicht",
     aiTasks: {
       floors: "Etagen",
@@ -42,8 +42,8 @@ const TEXT = {
       functions: "Funktionen",
     },
     aiRunning: (task, n, total) => `KI prüft: ${task} (${n}/${total})`,
-    aiNone: "Noch keine KI-Durchsicht. „🤖 KI-Durchsicht“ fragt dein Sprachmodell zu Etagen, Dubletten, Verwaistem und Geräten ohne Lebenszeichen – nacheinander, damit der Sprachassistent frei bleibt.",
-    aiFloorsTitle: "🤖 KI-Vorschlag: Räume zu Etagen",
+    aiNone: "Noch keine KI-Durchsicht. „KI-Durchsicht“ fragt dein Sprachmodell zu Etagen, Dubletten, Verwaistem und Geräten ohne Lebenszeichen – nacheinander, damit der Sprachassistent frei bleibt.",
+    aiFloorsTitle: "KI-Vorschlag: Räume zu Etagen",
     applySelected: "Ausgewählte übernehmen",
     levelClash: "Achtung: Zwei Etagen hätten dieselbe Nummer. Bitte Nummern prüfen (0 = Erdgeschoss, höher = weiter oben) und dann anhaken.",
     aiSame: (name) => `KI: dasselbe – „${name}“ nutzen`,
@@ -56,9 +56,9 @@ const TEXT = {
       delete: "löschen",
     },
     aiAdvice: (a) => `KI: ${a}`,
-    aiPick: "🤖 Nach KI auswählen",
-    modeRooms: "🏠 Räume zeichnen",
-    modeDevices: "💡 Geräte platzieren",
+    aiPick: "Nach KI auswählen",
+    modeRooms: "Räume zeichnen",
+    modeDevices: "Geräte platzieren",
     hintRooms: "Rechteck aufziehen = neuer Raum (oder „+ Raum“). Räume verschieben, an der Ecke unten rechts vergrößern. Geräte sind in diesem Modus nur blass sichtbar.",
     hintDevices: "Geräte an ihren Platz ziehen – auch in einen anderen Raum oder aus der Ablage. Räume bleiben in diesem Modus fest.",
     groupsTitle: "Raumgruppen",
@@ -81,7 +81,7 @@ const TEXT = {
     mergeChoose: "– Raum wählen –",
     mergeInfo: (name) =>
           `Alle Geräte und Entitäten wandern in den gewählten Raum. „${name}“ bleibt dort als Alias, damit der Name weiter verstanden wird. Danach wird „${name}“ gelöscht – lässt sich zurücknehmen.`,
-    mergeRefs: (name) => `⚠️ Diese Automationen/Skripte sprechen „${name}“ direkt an und zeigen danach ins Leere – bitte danach anpassen:`,
+    mergeRefs: (name) => `Diese Automationen/Skripte sprechen „${name}“ direkt an und zeigen danach ins Leere – bitte danach anpassen:`,
     mergeNoRefs: "Keine Automation und kein Skript spricht den Raum direkt an.",
     mergeDo: "Zusammenführen",
     mergedInto: (a, b) => `„${a}“ ist jetzt Teil von „${b}“`,
@@ -99,8 +99,8 @@ const TEXT = {
     assist: {
       allStatuses: "Alle Stufen",
       summary: (seen, all) => `Der Assistent sieht ${seen} von ${all} Entitäten.`,
-      sees: "👁 Sieht",
-      notSees: "🚫 Sieht nicht",
+      sees: "Sieht",
+      notSees: "Sieht nicht",
       hide: "Verbergen",
       show: "Freigeben",
       hideAll: (n) => `Alle ${n} verbergen`,
@@ -185,7 +185,7 @@ const TEXT = {
       ha: "Nur HA",
       hidden: "Ausgeblendet",
       disabled: "Deaktiviert",
-      legendTitle: "ⓘ Was bedeuten die Stufen?",
+      legendTitle: "Was bedeuten die Stufen?",
       legendHead: [
         "Stufe",
         "Assistent",
@@ -277,11 +277,11 @@ const TEXT = {
       inDups: "Teil einer Dublette",
       reviewed: "erledigt",
       apply: (n) => `${n} Vorschläge übernehmen`,
-      reset: "↺ Erneut prüfen",
+      reset: "Erneut prüfen",
       resetTip: "Wieder in die Aufräum-Liste nehmen und abgelehnte Vorschläge zurückholen.",
       standalone: (i) => `Funktionen ohne Gerät: ${i}`,
       standaloneInfo: (n) => `${n} Szenen, Skripte, Helfer … – je Funktion Raum, Status, Name`,
-      suggestions: (n) => `💡 ${n} Vorschläge – angehakt wird übernommen`,
+      suggestions: (n) => `${n} Vorschläge – angehakt wird übernommen`,
       sArea: (r) => `Raum → ${r}`,
       sName: (n) => `Name → ${n}`,
       sKind: (k) => `Kategorie → ${k}`,
@@ -315,32 +315,32 @@ const TEXT = {
       byRoom: "nach Raum",
       byWrites: "nach Schreibrate",
       selectAll: (n) => `alle ${n} gezeigten auswählen`,
-      askAi: "🤖 KI zu Auswahl fragen",
+      askAi: "KI zu Auswahl fragen",
     },
     house: {
       info: "Das Gerüst des Hauses: Etagen (oben → unten über die Ebene), Räume je Etage – mit den Geräten darin, damit klar ist, welches Bad welches ist –, Raumgruppen und Notizen für den Assistenten.",
       notesInfo: "Kurze Hinweise, die in die Hausbeschreibung für den Assistenten kommen.",
-      aiRooms: "🤖 KI: Räume den Etagen zuordnen",
+      aiRooms: "KI: Räume den Etagen zuordnen",
       aiRoomsInfo: "Die KI sieht sich jeden Raum mit seinen Geräten an und schlägt die Etage vor – mit Grund. Übernommen wird nur, was du anhakst.",
-      aiRunning: "🤖 KI ordnet Räume zu …",
+      aiRunning: "KI ordnet Räume zu …",
       levelClash: "Zwei Etagen haben dieselbe Ebene – dann weiß der Assistent nicht, was oben und unten ist. Ebene: oben höher, unten niedriger (Erdgeschoss 0).",
     },
     dupRoom: "Raum für die Hauptentität",
     fnAi: {
-      ask: "🤖 Was ist das?",
-      again: "🤖 Neu fragen",
-      running: "🤖 KI sieht sich die Funktionen an …",
+      ask: "Was ist das?",
+      again: "Neu fragen",
+      running: "KI sieht sich die Funktionen an …",
     },
     tele: {
       apply: "Für Auswahl setzen",
       none: "Nichts ausgewählt.",
-      used: (n) => `⚠️ ${n}× in Automationen/Skripten benutzt`,
+      used: (n) => `${n}× in Automationen/Skripten benutzt`,
       confirmUsed: (n) => `${n} der ausgewählten Funktionen werden in Automationen oder Skripten benutzt. Deaktiviert liefern sie keine Werte mehr. Trotzdem deaktivieren?`,
     },
     devNamePh: "Name in Home Assistant, z. B. Licht Flur",
     aliasPh: "weitere Namen, mit Komma getrennt – z. B. Licht oben, Deckenlicht",
     fn: {
-      title: "⚙️ Funktionen",
+      title: "Funktionen",
       kindAuto: (k) => `Kategorie: automatisch (${k})`,
       namePh: (n) => `Name – jetzt: ${n}`,
       technical: (n) => `Technische Werte (${n})`,
@@ -352,9 +352,9 @@ const TEXT = {
     confirmDelete: (name) => `„${name}“ endgültig löschen? Das lässt sich nicht zurücknehmen.`,
     deleted: (name) => `„${name}“ gelöscht`,
     orphansInfo: "Verwaist = einzelne Entitäten, die keine Integration mehr liefert (das Gerät oder der Wert ist aus HA verschwunden, nur der Eintrag ist übrig). Oft nur vorübergehend: Gerät aus, Zubehör ab, Wert kommt nur bei Meldung. Drei Wege: „Entfernen“ – landet im Archiv und lässt sich dort samt Name, Raum und Aliasen wiederherstellen. „Ins Archiv“ – bleibt in HA, taucht hier aber nicht mehr auf. Oder einfach stehen lassen.",
-    archiveIn: "📦 Ins Archiv",
+    archiveIn: "Ins Archiv",
     archiveTip: "Behalten, aber hier nicht mehr zeigen. Im Archiv jederzeit zurückholbar.",
-    archiveChip: (n) => `📦 Archiv ${n}`,
+    archiveChip: (n) => `Archiv ${n}`,
     openChip: (n) => `Offen ${n}`,
     archiveInfo: "Was du behalten oder entfernt hast. Behaltenes kommt mit „Zurück in die Liste“ wieder; Entferntes legt „Wiederherstellen“ wieder an – mit Name, Raum, Aliasen und Status. Liefert die Integration es später wieder, findet sie es über dieselbe ID.",
     archiveKept: "behalten",
@@ -455,9 +455,9 @@ const TEXT = {
       noDevices: "no devices yet",
       more: (n) => `+${n} more`,
       nameTaken: "This room name exists already. Home Assistant allows every name only once – e.g. “Upstairs bath” and “Downstairs bath”.",
-      fnAsk: (n) => `🤖 Look through the ${n} devices of this room`,
+      fnAsk: (n) => `Look through the ${n} devices of this room`,
     },
-    aiReview: "🤖 AI review",
+    aiReview: "AI review",
     aiAt: "AI review",
     aiTasks: {
       floors: "floors",
@@ -467,8 +467,8 @@ const TEXT = {
       functions: "functions",
     },
     aiRunning: (task, n, total) => `AI checks: ${task} (${n}/${total})`,
-    aiNone: "No AI review yet. “🤖 AI review” asks your language model about floors, duplicates, orphaned and silent devices – one question at a time, so the voice assistant stays free.",
-    aiFloorsTitle: "🤖 AI proposal: rooms to floors",
+    aiNone: "No AI review yet. “AI review” asks your language model about floors, duplicates, orphaned and silent devices – one question at a time, so the voice assistant stays free.",
+    aiFloorsTitle: "AI proposal: rooms to floors",
     applySelected: "Apply selected",
     levelClash: "Careful: two floors would get the same number. Please check the numbers (0 = ground floor, higher = further up), then tick.",
     aiSame: (name) => `AI: same – use “${name}”`,
@@ -481,9 +481,9 @@ const TEXT = {
       delete: "delete",
     },
     aiAdvice: (a) => `AI: ${a}`,
-    aiPick: "🤖 Select as AI says",
-    modeRooms: "🏠 Draw rooms",
-    modeDevices: "💡 Place devices",
+    aiPick: "Select as AI says",
+    modeRooms: "Draw rooms",
+    modeDevices: "Place devices",
     hintRooms: "Drag a rectangle = new room (or “+ Room”). Move rooms, resize at the bottom right corner. Devices are only faded in this mode.",
     hintDevices: "Drag devices to their spot – also into another room or from the tray. Rooms stay fixed in this mode.",
     groupsTitle: "Room groups",
@@ -506,7 +506,7 @@ const TEXT = {
     mergeChoose: "– choose room –",
     mergeInfo: (name) =>
           `All devices and entities move to the chosen room. “${name}” stays there as an alias so the name is still understood. Then “${name}” is deleted – can be undone.`,
-    mergeRefs: (name) => `⚠️ These automations/scripts use “${name}” directly and will point nowhere – please adjust them afterwards:`,
+    mergeRefs: (name) => `These automations/scripts use “${name}” directly and will point nowhere – please adjust them afterwards:`,
     mergeNoRefs: "No automation or script uses the room directly.",
     mergeDo: "Merge",
     mergedInto: (a, b) => `“${a}” is now part of “${b}”`,
@@ -524,8 +524,8 @@ const TEXT = {
     assist: {
       allStatuses: "All levels",
       summary: (seen, all) => `The assistant sees ${seen} of ${all} entities.`,
-      sees: "👁 Sees",
-      notSees: "🚫 Does not see",
+      sees: "Sees",
+      notSees: "Does not see",
       hide: "Hide",
       show: "Expose",
       hideAll: (n) => `Hide all ${n}`,
@@ -610,7 +610,7 @@ const TEXT = {
       ha: "HA only",
       hidden: "Hidden",
       disabled: "Disabled",
-      legendTitle: "ⓘ What do the levels mean?",
+      legendTitle: "What do the levels mean?",
       legendHead: [
         "Level",
         "Assistant",
@@ -702,11 +702,11 @@ const TEXT = {
       inDups: "part of a duplicate",
       reviewed: "done",
       apply: (n) => `Apply ${n} proposals`,
-      reset: "↺ Check again",
+      reset: "Check again",
       resetTip: "Back into the clean-up list, with rejected proposals.",
       standalone: (i) => `Functions without device: ${i}`,
       standaloneInfo: (n) => `${n} scenes, scripts, helpers … – room, status, name per function`,
-      suggestions: (n) => `💡 ${n} proposals – ticked ones are applied`,
+      suggestions: (n) => `${n} proposals – ticked ones are applied`,
       sArea: (r) => `room → ${r}`,
       sName: (n) => `name → ${n}`,
       sKind: (k) => `category → ${k}`,
@@ -740,32 +740,32 @@ const TEXT = {
       byRoom: "by room",
       byWrites: "by write rate",
       selectAll: (n) => `select all ${n} shown`,
-      askAi: "🤖 Ask the AI about the selection",
+      askAi: "Ask the AI about the selection",
     },
     house: {
       info: "The frame of the house: floors (top → bottom by level), rooms per floor – with the devices in them, so it is clear which bathroom is which –, room groups and notes for the assistant.",
       notesInfo: "Short hints that go into the house description for the assistant.",
-      aiRooms: "🤖 AI: rooms to floors",
+      aiRooms: "AI: rooms to floors",
       aiRoomsInfo: "The AI looks at each room with its devices and suggests the floor – with a reason. Only what you tick is applied.",
-      aiRunning: "🤖 AI places rooms …",
+      aiRunning: "AI places rooms …",
       levelClash: "Two floors share a level – then the assistant cannot tell up from down. Level: higher above, lower below (ground floor 0).",
     },
     dupRoom: "Room for the main entity",
     fnAi: {
-      ask: "🤖 What is this?",
-      again: "🤖 Ask again",
-      running: "🤖 The AI is looking at the functions …",
+      ask: "What is this?",
+      again: "Ask again",
+      running: "The AI is looking at the functions …",
     },
     tele: {
       apply: "Set for selection",
       none: "Nothing selected.",
-      used: (n) => `⚠️ used ${n}× in automations/scripts`,
+      used: (n) => `used ${n}× in automations/scripts`,
       confirmUsed: (n) => `${n} of the selected functions are used in automations or scripts. Disabled, they send no values. Disable anyway?`,
     },
     devNamePh: "Name in Home Assistant, e.g. Hall light",
     aliasPh: "more names, separated by commas – e.g. ceiling light, top light",
     fn: {
-      title: "⚙️ Functions",
+      title: "Functions",
       kindAuto: (k) => `Category: automatic (${k})`,
       namePh: (n) => `Name – now: ${n}`,
       technical: (n) => `Technical values (${n})`,
@@ -777,9 +777,9 @@ const TEXT = {
     confirmDelete: (name) => `Delete “${name}” for good? This cannot be undone.`,
     deleted: (name) => `“${name}” deleted`,
     orphansInfo: "Orphaned = single entities no integration provides any more (the device or value is gone from HA, only the entry is left). Often only for a while: device off, accessory unplugged, value only while reporting. Three ways: “Remove” – goes to the archive and can be restored there with name, area and aliases. “To archive” – stays in HA but no longer shows here. Or just leave it.",
-    archiveIn: "📦 To archive",
+    archiveIn: "To archive",
     archiveTip: "Keep it, but stop showing it here. Can be brought back from the archive any time.",
-    archiveChip: (n) => `📦 Archive ${n}`,
+    archiveChip: (n) => `Archive ${n}`,
     openChip: (n) => `Open ${n}`,
     archiveInfo: "What you kept or removed. Kept items return with “Back to the list”; removed ones are created again by “Restore” – with name, area, aliases and status. If the integration provides them again later, it finds them by the same id.",
     archiveKept: "kept",
@@ -854,7 +854,7 @@ const TEXT = {
 };
 
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.16.1";
+const PANEL_VERSION = "0.16.2";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -863,7 +863,7 @@ const KIND_ICON = {
   scene: "🎬", script: "📜", automation: "⚙️", weather: "⛅", list: "📝", presence: "👤", button: "🔘",
   setting: "🎚️", update: "⬆️", other: "▫️",
 };
-const kindIcon = (kind) => KIND_ICON[kind] || "▫️";
+const kindIcon = (kind) => ic(`kind:${kind || "other"}`);
 // Union of rectangles {x, y, w, h}: the covered cells and the outer edges (shared edges between members drop out).
 const groupOutline = (rects) => {
   const xs = [...new Set(rects.flatMap((r) => [r.x, r.x + r.w]))].sort((a, b) => a - b);
@@ -903,8 +903,40 @@ const STATUSES = ["assistant", "ha", "hidden", "disabled"];
 const ICON_PICKS = ["mdi:ceiling-light", "mdi:lamp", "mdi:floor-lamp", "mdi:led-strip-variant", "mdi:power-socket-de", "mdi:blinds",
   "mdi:window-shutter", "mdi:radiator", "mdi:air-conditioner", "mdi:fan", "mdi:speaker", "mdi:television", "mdi:robot-vacuum",
   "mdi:water-pump", "mdi:garage", "mdi:door", "mdi:thermometer", "mdi:motion-sensor", "mdi:washing-machine", "mdi:coffee-maker"];
-const STATUS_ICON = { assistant: "🗣️", ha: "🏠", hidden: "🙈", disabled: "⛔" };
-const ROLE_ICON = { control: "🎛️", measure: "📈", technical: "🔧", other: "▫️" };
+// Symbols: HA's own icons (Material Design Icons via <ha-icon>); every name checked against HA's icon list.
+const KIND_MDI = {
+  light: "lightbulb-outline", shading: "blinds-horizontal", window: "window-closed-variant", door: "door",
+  socket: "power-socket-de", switch: "toggle-switch-outline", heating: "thermostat", fan: "fan", water: "water-outline",
+  lock: "lock-outline", media: "speaker", voice: "microphone-outline", camera: "cctv", vacuum: "robot-vacuum",
+  garden: "sprout-outline", contact: "door-open", motion: "motion-sensor", alarm: "alarm-light-outline",
+  temperature: "thermometer", humidity: "water-percent", energy: "lightning-bolt-outline", battery: "battery-outline",
+  sensor: "chart-line", scene: "palette-outline", script: "script-text-outline", automation: "robot-outline",
+  weather: "weather-partly-cloudy", list: "format-list-checks", presence: "account-outline", button: "gesture-tap-button",
+  setting: "tune-variant", update: "update", other: "shape-outline",
+};
+const ICON = {
+  "st:assistant": ["account-voice", "🗣️"], "st:ha": ["home-outline", "🏠"], "st:hidden": ["eye-off-outline", "🙈"], "st:disabled": ["cancel", "⛔"],
+  "role:control": ["gesture-tap", "🎛️"], "role:measure": ["chart-line-variant", "📈"], "role:technical": ["wrench-outline", "🔧"], "role:other": ["dots-horizontal", "▫️"],
+  "sec:overview": ["view-dashboard-outline", "🏁"], "sec:focus": ["broom", "🧹"], "sec:inventory": ["format-list-bulleted", "📦"],
+  "sec:map": ["floor-plan", "🗺️"], "sec:house": ["home-city-outline", "🏠"],
+  ai: ["creation", "✨"], sugs: ["playlist-check", "☑"], info: ["information-outline", "ⓘ"], warn: ["alert-outline", "⚠"],
+  area: ["map-marker-outline", "📍"], name: ["form-textbox", "✏"], aliases: ["tag-outline", "🏷"], arrow: ["arrow-right", "→"],
+  map: ["map-outline", "🗺"], archive: ["archive-outline", "📦"], removed: ["delete-outline", "🗑"], done: ["check-circle-outline", "✓"],
+  todo: ["circle-outline", "•"], check: ["check", "✓"], eye: ["eye-outline", "👁"], palette: ["palette-outline", "🎨"],
+  standalone: ["puzzle-outline", "🧩"], party: ["party-popper", "🎉"], edit: ["pencil-outline", "✏"], restore: ["restore", "↺"],
+  fns: ["view-list-outline", "☰"], menu: ["menu", "☰"], convert: ["swap-horizontal", "⇄"], move: ["cursor-move", "✥"], draw: ["vector-square-edit", "▭"], valve: ["valve", "🚰"],
+};
+// a symbol by name: "kind:light", "st:hidden", "ai" …
+const ic = (name, cls = "") => {
+  const kind = name.startsWith("kind:") ? name.slice(5) : null;
+  const mdi = kind ? KIND_MDI[kind] || KIND_MDI.other : ICON[name]?.[0];
+  const fallback = kind ? KIND_ICON[kind] || KIND_ICON.other : ICON[name]?.[1] || "";
+  return customElements.get("ha-icon") && mdi
+    ? `<ha-icon class="ic ${cls}" icon="mdi:${mdi}"></ha-icon>`
+    : `<span class="ic ${cls}">${fallback}</span>`;
+};
+const STATUS_ICON = new Proxy({}, { get: (_, st) => ic(`st:${String(st)}`) });
+const ROLE_ICON = new Proxy({}, { get: (_, r) => ic(`role:${String(r)}`) });
 // the same split as status.py on the server
 const CONTROL_DOMAINS = new Set(["alarm_control_panel", "button", "climate", "cover", "fan", "humidifier", "input_boolean", "input_button",
   "input_number", "input_select", "lawn_mower", "light", "lock", "media_player", "number", "remote", "scene", "script", "select", "siren",
@@ -920,7 +952,7 @@ const TOGGLE_DOMAINS = new Set(["light", "switch", "fan", "input_boolean", "sire
 const ACTIVE_STATES = new Set(["on", "open", "opening", "closing", "playing", "heat", "cool", "heat_cool", "auto", "dry", "fan_only", "unlocked", "unlocking"]);
 
 const SECTIONS = ["overview", "focus", "inventory", "map", "house"];
-const SECTION_ICON = { overview: "🏁", focus: "🧹", inventory: "📦", map: "🗺️", house: "🏠" };
+const SECTION_ICON = new Proxy({}, { get: (_, sec) => ic(`sec:${String(sec)}`) });
 const SUBS = ["devices", "functions", "duplicates", "orphans", "history"];
 // kinds HA can show a switch as (its own "Show as"); only then does the assistant understand "light …"
 const KIND_DOMAIN = { light: "light", shading: "cover", fan: "fan", lock: "lock", water: "valve" };
@@ -1064,7 +1096,7 @@ class HauskartePanel extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
       <header>
-        <button id="menu" class="icon" title="Menu" ${this._narrow ? "" : "hidden"}>☰</button>
+        <button id="menu" class="icon" title="Menu" ${this._narrow ? "" : "hidden"}>${ic("menu")}</button>
         <h1>${esc(t.title)}</h1>
         <span class="grow"></span>
         <span id="ver" class="hver"></span>
@@ -1388,7 +1420,7 @@ class HauskartePanel extends HTMLElement {
     const t = this._t;
     const sorted = [...new Set(kindsPresent)].sort((a, b) => (t.kinds[a] || a).localeCompare(t.kinds[b] || b));
     return `<select id="dev-kind"><option value="">${esc(t.allKinds)}</option>${sorted
-      .map((k) => `<option value="${k}" ${this._devKind === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k] || k)}</option>`)
+      .map((k) => `<option value="${k}" ${this._devKind === k ? "selected" : ""}>${esc(t.kinds[k] || k)}</option>`)
       .join("")}</select>`;
   }
 
@@ -1402,7 +1434,7 @@ class HauskartePanel extends HTMLElement {
       case "devices":
         return `${search}${this._kindFilter(d.devices.flatMap((g) => g.devices.map((x) => x.kind)))}${this._roomFilter("dev-room", this._devRoom)}
           <select id="dev-filter">${["", "todo", "sug", "silent", ...STATUSES]
-            .map((f) => `<option value="${f}" ${this._devFilter === f ? "selected" : ""}>${f && STATUS_ICON[f] ? `${STATUS_ICON[f]} ` : ""}${esc(t.dl.filter[f] || t.st[f])}</option>`)
+            .map((f) => `<option value="${f}" ${this._devFilter === f ? "selected" : ""}>${esc(t.dl.filter[f] || t.st[f])}</option>`)
             .join("")}</select>
           <div class="chips"><button data-devgroup="room" class="chip ${this._devGroup === "room" ? "active" : ""}">${esc(t.byRoom)}</button>
             <button data-devgroup="integration" class="chip ${this._devGroup === "integration" ? "active" : ""}">${esc(t.byIntegration)}</button></div>`;
@@ -1410,7 +1442,7 @@ class HauskartePanel extends HTMLElement {
         const ents = this._exposure?.entities || [];
         return `${search}${this._kindFilter(ents.map((x) => x.kind))}${this._roomFilter("dev-room", this._devRoom)}
           <select id="assist-status"><option value="">${esc(t.assist.allStatuses)}</option>
-            ${STATUSES.map((st) => `<option value="${st}" ${this._assistStatus === st ? "selected" : ""}>${STATUS_ICON[st]} ${esc(t.st[st])}</option>`).join("")}</select>
+            ${STATUSES.map((st) => `<option value="${st}" ${this._assistStatus === st ? "selected" : ""}>${esc(t.st[st])}</option>`).join("")}</select>
           <select id="fn-sort"><option value="room">${esc(t.fl.byRoom)}</option><option value="writes" ${this._fnSort === "writes" ? "selected" : ""}>${esc(t.fl.byWrites)}</option></select>
           <label class="check"><input id="assist-tech" type="checkbox" ${this._assistTech ? "checked" : ""}> ${esc(t.assist.technical)}</label>`;
       }
@@ -1418,9 +1450,9 @@ class HauskartePanel extends HTMLElement {
         return this._archiveView
           ? this._archiveChips("entity", c.orphans)
           : `${this._archiveChips("entity", c.orphans)}
-          ${d.orphans.some((g) => g.ai) ? `<button data-act="ai-orphans-pick" class="secondary ai">${esc(t.aiPick)}</button>` : ""}
+          ${d.orphans.some((g) => g.ai) ? `<button data-act="ai-orphans-pick" class="secondary ai">${ic("ai")} ${esc(t.aiPick)}</button>` : ""}
           <span class="grow"></span>
-          <button data-act="archive-orphans" class="secondary" title="${esc(t.archiveTip)}">${esc(t.archiveIn)}</button>
+          <button data-act="archive-orphans" class="secondary" title="${esc(t.archiveTip)}">${ic("archive")} ${esc(t.archiveIn)}</button>
           <button data-act="remove-orphans" class="secondary danger">${esc(t.removeSelected)}</button>`;
       case "history":
         return `<span class="grow"></span><button data-act="undo" class="secondary">${esc(t.undo)}</button>`;
@@ -1453,7 +1485,7 @@ class HauskartePanel extends HTMLElement {
     const p = d.progress;
     const c = this._counts();
     const step = (done, title, detail, go, label, primary = false) => `<div class="ovstep ${done ? "done" : ""}">
-        <span class="ovmark">${done ? "✓" : "•"}</span>
+        <span class="ovmark">${ic(done ? "check" : "todo")}</span>
         <div class="ename"><b>${esc(title)}</b><span class="muted small">${esc(detail)}</span></div>
         <button data-section-go="${go}" class="${primary ? "" : "secondary"}">${esc(label)}</button></div>`;
     const left = c.queue + c.dups;
@@ -1477,7 +1509,7 @@ class HauskartePanel extends HTMLElement {
         ${d.llm ? (d.ai?.at ? `<br>${esc(t.aiAt)}: ${esc(when(d.ai.at))}` : `<br>${esc(t.aiNone)}`) : `<br>${esc(t.noLlm)}`}</div>
       <div class="row">
         <button data-act="scan" ${p.running ? "disabled" : ""}>${esc(t.scan)}</button>
-        ${d.llm ? `<button data-act="ai-review" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.aiReview)}</button>` : ""}
+        ${d.llm ? `<button data-act="ai-review" class="secondary ai" ${p.running ? "disabled" : ""}>${ic("ai")} ${esc(t.aiReview)}</button>` : ""}
         <button data-act="scan-rules" class="secondary" ${p.running ? "disabled" : ""}>${esc(t.scanRules)}</button>
         ${c.safe ? `<button data-act="apply-safe" class="secondary" ${p.running ? "disabled" : ""}>${esc(t.applySafe)} (${c.safe})</button>` : ""}</div>
       <p class="muted small">${esc(t.ov.checkInfo)}</p></div>`;
@@ -1519,7 +1551,7 @@ class HauskartePanel extends HTMLElement {
       const next = units.slice(1, 4).map((n) => devices.get(n)?.name || standalone.get(n)?.integration || n);
       if (next.length) html += `<p class="muted small">${esc(t.fc.next(next.join(" · "), units.length - 1))}</p>`;
     } else {
-      html += `<div class="card done"><h2>🎉 ${esc(room ? t.fc.roomDone : t.fc.allDone)}</h2><p class="muted">${esc(t.fc.allDoneInfo)}</p>
+      html += `<div class="card done"><h2>${ic("party")} ${esc(room ? t.fc.roomDone : t.fc.allDone)}</h2><p class="muted">${esc(t.fc.allDoneInfo)}</p>
         <div class="row"><button data-go-sub="devices" class="secondary">${esc(t.fc.toInventory)}</button>
           <button data-section-go="map" class="secondary">${esc(t.ov.toMap)}</button></div></div>`;
     }
@@ -1544,7 +1576,7 @@ class HauskartePanel extends HTMLElement {
     const flags = [
       x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : "",
       x.in_duplicates ? `<span class="reason">${esc(t.dc.inDups)}</span>` : "",
-      x.reviewed && !focus ? `<span class="reason ok">✓ ${esc(t.dc.reviewed)}</span>` : "",
+      x.reviewed && !focus ? `<span class="reason ok">${ic("done")} ${esc(t.dc.reviewed)}</span>` : "",
     ].join("");
     const main = x.functions.filter((f) => !f.technical);
     const tech = x.functions.filter((f) => f.technical);
@@ -1558,17 +1590,17 @@ class HauskartePanel extends HTMLElement {
         data-entry="${esc(x.config_entry_id || "")}" data-name="${esc(x.name)}">
       <div class="dchead"><span class="kicon">${kindIcon(x.kind)}</span>
         <div class="ename">${this._devNameField(x)}<span class="muted small">${esc(where)}</span>${flags}</div></div>
-      ${x.what ? `<div class="what">🤖 ${esc(x.what)}</div>` : ""}
-      ${x.ai ? `<div class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">🤖 ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</div>` : ""}
+      ${x.what ? `<div class="what">${ic("ai")} ${esc(x.what)}</div>` : ""}
+      ${x.ai ? `<div class="ailine ${x.ai.advice === "keep" ? "no" : "yes"}">${ic("ai")} ${esc(t.aiAdvice(t.advice[x.ai.advice]))} · ${esc(x.ai.reason)}</div>` : ""}
       <div class="dcrow">
         <label class="fld"><span>${esc(t.area)}</span><select data-dev-area="${esc(x.device_id)}" class="devarea">${this._areaOptions(x.area_id || "")}</select></label>
         <label class="fld" title="${esc(t.st.deviceTip)}"><span>${esc(t.dc.status)}</span>
-          <select class="stsel" data-dev-status="${esc(x.device_id)}" data-name="${esc(x.name)}">${this._statusOptions(x.status || "ha")}</select></label>
-        <label class="check"><input type="checkbox" data-dev-map="${esc(x.device_id)}" ${x.on_map ? "checked" : ""}> 🗺️ ${esc(t.onMap)}</label>
+          <span class="withico">${STATUS_ICON[x.status || "ha"]}<select class="stsel" data-dev-status="${esc(x.device_id)}" data-name="${esc(x.name)}">${this._statusOptions(x.status || "ha")}</select></span></label>
+        <label class="check"><input type="checkbox" data-dev-map="${esc(x.device_id)}" ${x.on_map ? "checked" : ""}> ${ic("map")} ${esc(t.onMap)}</label>
         <span class="grow"></span>${this._fnAiBar([x])}
       </div>
       ${this._suggestionsHtml(sugs, x.functions, x.unit)}
-      <details class="fns" ${keepOpen(`fn:${x.device_id}`, focus)}><summary>${esc(`${t.fn.title} · ${t.deviceFns(x.functions.length)}: ${roles}`)}${used.length ? ` · 🗣️ ${esc(used.join(", "))}` : ""}</summary>
+      <details class="fns" ${keepOpen(`fn:${x.device_id}`, focus)}><summary>${ic("fns")} ${esc(`${t.fn.title} · ${t.deviceFns(x.functions.length)}: ${roles}`)}${used.length ? ` · ${STATUS_ICON.assistant} ${esc(used.join(", "))}` : ""}</summary>
         ${this._statusLegend(x.unit)}
         ${main.map((f) => this._fnRow(f)).join("")}
         ${tech.length ? `<details ${keepOpen(`fntech:${x.device_id}`, false)}><summary class="muted small">${esc(t.fn.technical(tech.length))}</summary>${tech.map((f) => this._fnRow(f)).join("")}</details>` : ""}
@@ -1581,7 +1613,7 @@ class HauskartePanel extends HTMLElement {
     const t = this._t;
     return `<div class="actions">
       ${n ? `<button data-act="unit-apply">${esc(t.dc.apply(n))}</button>` : ""}
-      ${x.reviewed ? `<button data-act="unit-reset" class="flat" title="${esc(t.dc.resetTip)}">${esc(t.dc.reset)}</button>` : ""}
+      ${x.reviewed ? `<button data-act="unit-reset" class="flat" title="${esc(t.dc.resetTip)}">${ic("restore")} ${esc(t.dc.reset)}</button>` : ""}
       <span class="grow"></span>
       ${x.device_id ? `<button data-act="dev-delete" class="flat danger" ${x.deletable ? "" : `disabled title="${esc(t.noDelete)}"`}>${esc(t.del)}</button>` : ""}</div>`;
   }
@@ -1590,10 +1622,10 @@ class HauskartePanel extends HTMLElement {
   _standaloneCard(s, focus = false) {
     const t = this._t;
     return `<div class="card devcard ${focus ? "focus" : ""}" data-unit="${esc(s.unit)}">
-      <div class="dchead"><span class="kicon">🧩</span>
+      <div class="dchead"><span class="kicon">${ic("standalone")}</span>
         <div class="ename"><b>${esc(t.dc.standalone(s.integration))}</b><span class="muted small">${esc(t.dc.standaloneInfo(s.functions.length))}</span></div></div>
       ${this._suggestionsHtml(s.suggestions || [], s.functions, s.unit)}
-      <details class="fns" ${keepOpen(`fn:${s.unit}`, focus)}><summary>${esc(`${t.fn.title} · ${t.deviceFns(s.functions.length)}`)}</summary>
+      <details class="fns" ${keepOpen(`fn:${s.unit}`, focus)}><summary>${ic("fns")} ${esc(`${t.fn.title} · ${t.deviceFns(s.functions.length)}`)}</summary>
         ${this._statusLegend(s.unit)}${s.functions.map((f) => this._fnRow(f, true)).join("")}</details>
       ${focus ? this._focusFoot((s.suggestions || []).length) : this._listFoot(s, (s.suggestions || []).length)}
     </div>`;
@@ -1607,20 +1639,23 @@ class HauskartePanel extends HTMLElement {
     const rows = sugs.map((s) => {
       const f = s.entity_id ? fn(s.entity_id) : null;
       const who = f ? `${f.name}: ` : "";
-      let icon = "💡";
+      const to = (a, b) => `${a}${ic("arrow", "arr")}${b}`;
+      const domainIcon = { light: ic("kind:light"), cover: ic("kind:shading"), fan: ic("kind:fan"), lock: ic("kind:lock"), valve: ic("valve") };
+      let icon = ic("info");
       let text = "";
-      if (s.type === "area") [icon, text] = ["📍", `${who}${t.dc.sArea(this._areaName(s.value))}`];
-      else if (s.type === "name") [icon, text] = ["✏️", `${who}${t.dc.sName(s.value)}`];
-      else if (s.type === "status") [icon, text] = [`${STATUS_ICON[f.status]}→${STATUS_ICON[s.value]}`, `${who}${t.st[f.status]} → ${t.st[s.value]}`];
-      else if (s.type === "kind") [icon, text] = [kindIcon(s.value), `${who}${t.dc.sKind(t.kinds[s.value] || s.value)}`];
-      else if (s.type === "convert") [icon, text] = ["💡", t.dc.sConvert(f.name, t.dc.domains[s.value] || s.value)];
-      else if (s.type === "aliases") [icon, text] = ["🏷️", `${who}${t.dc.sAliases(s.value.join(", "))}`];
+      if (s.type === "area") [icon, text] = [ic("area"), `${who}${t.dc.sArea(this._areaName(s.value))}`];
+      else if (s.type === "name") [icon, text] = [ic("name"), `${who}${t.dc.sName(s.value)}`];
+      else if (s.type === "status") [icon, text] = [to(STATUS_ICON[f.status], STATUS_ICON[s.value]), `${who}${t.st[f.status]} → ${t.st[s.value]}`];
+      else if (s.type === "kind") [icon, text] = [to(kindIcon(f.kind), kindIcon(s.value)), `${who}${t.dc.sKind(t.kinds[s.value] || s.value)}`];
+      // "show as" is a step in HA itself: its own sign, so it is not mistaken for the category
+      else if (s.type === "convert") [icon, text] = [`${ic("convert")}${domainIcon[s.value] || ic("kind:other")}`, t.dc.sConvert(f.name, t.dc.domains[s.value] || s.value)];
+      else if (s.type === "aliases") [icon, text] = [ic("aliases"), `${who}${t.dc.sAliases(s.value.join(", "))}`];
       const why = s.reason || (s.reasons || []).map((r) => this._reason(r)).join(" · ");
       const ai = s.source === "ai" || s.source === "llm";
       return `<label class="sug"><input type="checkbox" data-sug="${esc(`${unit}|${s.id}`)}" ${s.type === "convert" ? "" : "checked"}><span class="sicon">${icon}</span>
-        <span>${esc(text)}${ai ? " 🤖" : ""}${why ? `<span class="muted small"> – ${esc(why)}</span>` : ""}</span></label>`;
+        <span>${esc(text)}${ai ? ` ${ic("ai", "aimark")}` : ""}${why ? `<span class="muted small"> – ${esc(why)}</span>` : ""}</span></label>`;
     });
-    return `<div class="sugs"><div class="sugshead">${esc(t.dc.suggestions(sugs.length))}</div>${rows.join("")}</div>`;
+    return `<div class="sugs"><div class="sugshead">${ic("sugs")} ${esc(t.dc.suggestions(sugs.length))}</div>${rows.join("")}</div>`;
   }
 
   // ---- inventory: devices ------------------------------------------------------
@@ -1683,10 +1718,10 @@ class HauskartePanel extends HTMLElement {
       <summary><span class="kicon small">${kindIcon(x.kind)}</span><span class="grow"><b>${esc(x.name)}</b>
         <span class="muted small">${esc([this._devGroup === "integration" ? x.area : x.integration, x.model].filter(Boolean).join(" · "))}</span></span>
         ${x.status ? `<span title="${esc(t.st[x.status])}">${STATUS_ICON[x.status]}</span>` : ""}
-        ${x.on_map ? `<span title="${esc(t.onMap)}">🗺️</span>` : ""}
+        ${x.on_map ? `<span title="${esc(t.onMap)}">${ic("map")}</span>` : ""}
         ${x.silent ? `<span class="reason danger">${esc(t.silent)}</span>` : ""}
-        ${n ? `<span class="count">💡${n}</span>` : ""}
-        ${x.reviewed ? `<span class="ok" title="${esc(t.dc.reviewed)}">✓</span>` : ""}</summary>
+        ${n ? `<span class="count" title="${esc(t.dc.suggestions(n))}">${ic("sugs")}${n}</span>` : ""}
+        ${x.reviewed ? `<span class="ok" title="${esc(t.dc.reviewed)}">${ic("done")}</span>` : ""}</summary>
       <div class="lazybody"></div></details>`;
   }
 
@@ -1696,10 +1731,10 @@ class HauskartePanel extends HTMLElement {
     const key = `unit:${s.unit}`;
     this._lazy.set(key, () => this._standaloneCard(s));
     return `<details class="devitem" data-lazy="${esc(key)}" ${keepOpen(key, false)}>
-      <summary><span class="kicon small">🧩</span><span class="grow"><b>${esc(s.integration)}</b>
+      <summary><span class="kicon small">${ic("standalone")}</span><span class="grow"><b>${esc(s.integration)}</b>
         <span class="muted small">${esc(t.dc.standaloneInfo(s.functions.length))}</span></span>
-        ${n ? `<span class="count">💡${n}</span>` : ""}
-        ${s.reviewed ? `<span class="ok" title="${esc(t.dc.reviewed)}">✓</span>` : ""}</summary>
+        ${n ? `<span class="count" title="${esc(t.dc.suggestions(n))}">${ic("sugs")}${n}</span>` : ""}
+        ${s.reviewed ? `<span class="ok" title="${esc(t.dc.reviewed)}">${ic("done")}</span>` : ""}</summary>
       <div class="lazybody"></div></details>`;
   }
 
@@ -1756,12 +1791,12 @@ class HauskartePanel extends HTMLElement {
           <span class="muted small">${this._fnWhat(x)}</span>
           <span class="muted small">${esc([x.entity_id, x.device].filter(Boolean).join(" · "))}</span>
           ${tags.length ? `<span class="muted small">${esc(tags.join(" · "))}</span>` : ""}
-          ${x.used_in ? `<span class="reason">${esc(t.tele.used(x.used_in))}</span>` : ""}
-          <details class="aliases" ${keepOpen(`edit:${x.entity_id}`, false)}><summary>✏️ ${esc(t.adjust)}${x.aliases.length ? ` · 🏷️ ${esc(x.aliases.join(", "))}` : ""}</summary>
+          ${x.used_in ? `<span class="reason">${ic("warn")} ${esc(t.tele.used(x.used_in))}</span>` : ""}
+          <details class="aliases" ${keepOpen(`edit:${x.entity_id}`, false)}><summary>${ic("edit")} ${esc(t.adjust)}${x.aliases.length ? ` · ${ic("aliases")} ${esc(x.aliases.join(", "))}` : ""}</summary>
             ${this._fnRow(x)}</details></div>
         <button data-act="assist-move" data-eid="${esc(x.entity_id)}" data-to="${exposed ? (x.hidden ? "hidden" : "ha") : "assistant"}" class="${exposed ? "flat" : "secondary"}">${esc(exposed ? a.hide : a.show)}</button></div>`;
     };
-    const column = (items, title) => {
+    const column = (items, title, titleIcon = "") => {
       let room;
       const rows = items
         .slice(0, limit)
@@ -1771,7 +1806,7 @@ class HauskartePanel extends HTMLElement {
           return head + row(x);
         })
         .join("");
-      return `<div class="card acol"><div class="floorhead"><h2>${esc(title)} (${items.length})</h2></div>
+      return `<div class="card acol"><div class="floorhead"><h2>${titleIcon} ${esc(title)} (${items.length})</h2></div>
         ${rows || `<p class="muted">${esc(a.none)}</p>`}
         ${items.length > limit ? `<button data-act="assist-more" class="secondary wide">${esc(t.showMore)} (${items.length - limit})</button>` : ""}</div>`;
     };
@@ -1782,11 +1817,11 @@ class HauskartePanel extends HTMLElement {
     const bulk = `<div class="card row bulkbar"><label class="check"><input type="checkbox" id="fsel-all"> ${esc(t.fl.selectAll(rendered))}</label>
       <span class="grow"></span><select id="fsel-status" class="stsel">${this._statusOptions("hidden")}</select>
       <button data-act="fsel-apply" class="secondary">${esc(t.tele.apply)}</button>
-      ${this._data.llm ? `<button data-act="fsel-ai" class="secondary ai" ${this._data.progress.running ? "disabled" : ""}>${esc(t.fl.askAi)}</button>` : ""}</div>`;
+      ${this._data.llm ? `<button data-act="fsel-ai" class="secondary ai" ${this._data.progress.running ? "disabled" : ""}>${ic("ai")} ${esc(t.fl.askAi)}</button>` : ""}</div>`;
     const cols =
       this._assistStatus || byWrites
-        ? `<div class="acols one">${column(shown, this._assistStatus ? `${STATUS_ICON[this._assistStatus]} ${t.st[this._assistStatus]}` : t.fl.byWrites)}</div>`
-        : `<div class="acols">${column(shown.filter((x) => x.status === "assistant"), a.sees)}${column(shown.filter((x) => x.status !== "assistant"), a.notSees)}</div>`;
+        ? `<div class="acols one">${column(shown, this._assistStatus ? t.st[this._assistStatus] : t.fl.byWrites, this._assistStatus ? STATUS_ICON[this._assistStatus] : "")}</div>`
+        : `<div class="acols">${column(shown.filter((x) => x.status === "assistant"), a.sees, STATUS_ICON.assistant)}${column(shown.filter((x) => x.status !== "assistant"), a.notSees, ic("st:hidden"))}</div>`;
     list.innerHTML = `<div class="info">${esc(t.fl.info)}</div>${this._statusLegend("functions")}<p class="muted">${esc(a.summary(seen, all.length))}</p>${bulk}${cols}`;
   }
 
@@ -1802,8 +1837,8 @@ class HauskartePanel extends HTMLElement {
             .map(
               (g) => `<details class="card" data-group ${keepOpen(`orphans:${g.integration}`, false)} data-ai-advice="${g.ai?.advice || ""}">
           <summary><b>${esc(g.integration)}</b> · ${g.entities.length}${g.running ? "" : ` · <span class="danger">${esc(t.integrationDown)}</span>`}
-            ${g.ai ? `<span class="aibadge ${g.ai.advice}">🤖 ${esc(t.advice[g.ai.advice])}</span>` : ""}</summary>
-          ${g.ai ? `<div class="ailine ${g.ai.advice === "remove" ? "yes" : g.ai.advice === "keep" ? "no" : ""}">🤖 ${esc(t.aiAdvice(t.advice[g.ai.advice]))} · ${esc(g.ai.reason)}</div>` : ""}
+            ${g.ai ? `<span class="aibadge ${g.ai.advice}">${ic("ai")} ${esc(t.advice[g.ai.advice])}</span>` : ""}</summary>
+          ${g.ai ? `<div class="ailine ${g.ai.advice === "remove" ? "yes" : g.ai.advice === "keep" ? "no" : ""}">${ic("ai")} ${esc(t.aiAdvice(t.advice[g.ai.advice]))} · ${esc(g.ai.reason)}</div>` : ""}
           <label class="check"><input type="checkbox" data-orphan-group> ${esc(t.all)}</label>
           ${g.entities
             .map(
@@ -1842,8 +1877,8 @@ class HauskartePanel extends HTMLElement {
     const p = this._data.progress;
     const aiBar = this._data.llm
       ? `<div class="card aicard row">${p.running && p.phase === "ai"
-          ? `<span class="running">${esc(t.house.aiRunning)}</span>`
-          : `<button data-act="ai-rooms" class="secondary ai" ${p.running ? "disabled" : ""}>${esc(t.house.aiRooms)}</button><span class="muted grow">${esc(t.house.aiRoomsInfo)}</span>`}</div>`
+          ? `<span class="running">${ic("ai")} ${esc(t.house.aiRunning)}</span>`
+          : `<button data-act="ai-rooms" class="secondary ai" ${p.running ? "disabled" : ""}>${ic("ai")} ${esc(t.house.aiRooms)}</button><span class="muted grow">${esc(t.house.aiRoomsInfo)}</span>`}</div>`
       : "";
     return `<div class="info">${esc(t.house.info)}</div>${clash ? `<div class="info warn">${esc(t.house.levelClash)}</div>` : ""}${aiBar}${this._roomsHtml()}
       <details class="card" ${keepOpen("notes", false)}><summary><b>${esc(t.notes)}</b></summary>
@@ -1860,25 +1895,25 @@ class HauskartePanel extends HTMLElement {
     const kindChoices = Object.keys(t.kinds).sort((a, b) => t.kinds[a].localeCompare(t.kinds[b]));
     const kind = e.kind_override || e.kind;
     let shownAs = "";
-    if (e.wrapped_as) shownAs = `<div class="muted small">💡 ${esc(t.dc.shownAs(e.wrapped_as))}</div>`;
-    else if (e.wraps) shownAs = `<div class="muted small">💡 ${esc(t.dc.wraps(e.wraps))}</div>`;
+    if (e.wrapped_as) shownAs = `<div class="muted small">${ic("info")} ${esc(t.dc.shownAs(e.wrapped_as))}</div>`;
+    else if (e.wraps) shownAs = `<div class="muted small">${ic("info")} ${esc(t.dc.wraps(e.wraps))}</div>`;
     else if (e.domain === "switch" && !e.technical && kind === "switch" && e.status !== "disabled") {
       // a plain switch: what does it switch? one click sets the category (and offers "show as" next)
       shownAs = `<div class="kindpick"><span class="muted small">${esc(t.dc.whatSwitches)}</span>
         ${SWITCH_PICKS.map((k) => `<button data-act="fn-kind-pick" data-eid="${esc(e.entity_id)}" data-kind="${k}" class="chip">${kindIcon(k)} ${esc(t.kinds[k])}</button>`).join("")}</div>`;
     } else if (e.domain === "switch" && !e.technical && KIND_DOMAIN[kind] && (e.status === "assistant" || e.status === "ha")) {
-      shownAs = `<div class="ailine">💡 ${esc(t.dc.convertHint(t.dc.domains[KIND_DOMAIN[kind]]))}
+      shownAs = `<div class="ailine">${ic("info")} ${esc(t.dc.convertHint(t.dc.domains[KIND_DOMAIN[kind]]))}
         <button data-act="fn-convert" data-eid="${esc(e.entity_id)}" data-domain="${KIND_DOMAIN[kind]}" class="flat inline">${esc(t.dc.convertDo(t.dc.domains[KIND_DOMAIN[kind]]))}</button></div>`;
     }
     return `<div class="fnrow st-${e.status}">
-        <div class="fnhead"><select class="stsel" data-fn-status="${esc(e.entity_id)}">${this._statusOptions(e.status)}</select>
+        <div class="fnhead"><span class="stico">${STATUS_ICON[e.status]}</span><select class="stsel" data-fn-status="${esc(e.entity_id)}">${this._statusOptions(e.status)}</select>
           <span>${this._fnWhat(e)}</span>
           <span class="muted small">${esc(e.entity_id)}</span></div>
         ${shownAs}
         <div class="fnfields">
           <input data-fn-name="${esc(e.entity_id)}" value="${esc(e.own_name || "")}" placeholder="${esc(t.fn.namePh(e.name))}">
           <select data-fn-kind="${esc(e.entity_id)}"><option value="">${esc(t.fn.kindAuto(t.kinds[e.auto_kind || e.kind] || e.auto_kind || e.kind))}</option>
-            ${kindChoices.map((k) => `<option value="${k}" ${e.kind_override === k ? "selected" : ""}>${kindIcon(k)} ${esc(t.kinds[k])}</option>`).join("")}</select>
+            ${kindChoices.map((k) => `<option value="${k}" ${e.kind_override === k ? "selected" : ""}>${esc(t.kinds[k])}</option>`).join("")}</select>
           ${withArea ? `<select data-ent-area="${esc(e.entity_id)}">${this._areaOptions(e.area_id || "")}</select>` : ""}
           ${this._aliasInput(e.entity_id, e.aliases)}</div></div>`;
   }
@@ -1930,7 +1965,7 @@ class HauskartePanel extends HTMLElement {
             <span class="muted">${esc(r.reason)} · ${Math.round(r.confidence * 100)} %</span></div></div>`,
       )
       .join("");
-    return `<div class="card aicard"><b>${esc(t.aiFloorsTitle)}</b>
+    return `<div class="card aicard"><b>${ic("ai")} ${esc(t.aiFloorsTitle)}</b>
       ${clash ? `<div class="ailine no">${esc(t.levelClash)}</div>` : ""}
       ${floorRows}${roomRows}
       <div class="actions"><button data-act="ai-floors-apply">${esc(t.applySelected)}</button></div></div>`;
@@ -1995,7 +2030,7 @@ class HauskartePanel extends HTMLElement {
                 <select ${x.attr}="${esc(x.key)}" class="devarea">${options(x.suggested || cv.members[0])}</select></div>`,
             )
             .join("")}
-          ${refs.length ? `<div class="ailine no">${esc(t.mergeRefs(r.name))} ${refs.map((x) => esc(x.name)).join(", ")}</div>` : ""}
+          ${refs.length ? `<div class="ailine no">${ic("warn")} ${esc(t.mergeRefs(r.name))} ${refs.map((x) => esc(x.name)).join(", ")}</div>` : ""}
           <div class="actions"><button data-act="convert-do">${esc(t.convertDo)}</button>
             <button data-act="convert-cancel" class="flat">${esc(t.cancel)}</button></div>`
         : `<div class="actions"><button data-act="convert-cancel" class="flat">${esc(t.cancel)}</button></div>`}
@@ -2020,7 +2055,7 @@ class HauskartePanel extends HTMLElement {
         .join("")}</select>
       <div class="muted small">${esc(t.mergeInfo(r.name))}</div>
       ${refs === null ? "" : refs.length
-        ? `<div class="ailine no">${esc(t.mergeRefs(r.name))} ${refs.map((x) => esc(x.name)).join(", ")}</div>`
+        ? `<div class="ailine no">${ic("warn")} ${esc(t.mergeRefs(r.name))} ${refs.map((x) => esc(x.name)).join(", ")}</div>`
         : `<div class="muted small">${esc(t.mergeNoRefs)}</div>`}
       <div class="actions"><button data-act="merge-do">${esc(t.mergeDo)}</button>
         <button data-act="merge-cancel" class="flat">${esc(t.cancel)}</button></div></div>`;
@@ -2033,7 +2068,7 @@ class HauskartePanel extends HTMLElement {
         <input class="rname" data-area-name="${esc(r.area_id)}" value="${esc(r.name)}">
         ${this._floorSelect("data-area-floor", r.area_id, r.floor_id)}
         <span class="counts">${this._countsHtml(r.counts)}</span>
-        ${r.position ? `<span class="muted" title="${esc(t.onMapShort)}">🗺️</span>` : ""}
+        ${r.position ? `<span class="muted" title="${esc(t.onMapShort)}">${ic("map")}</span>` : ""}
         <span class="roomacts">${this._mergeButton(r)}${this._convertButton(r)}</span>
       </div>${r.devices.length ? `<div class="wdevs">${this._roomDevicesHtml(r)}</div>` : ""}${this._mergeForm(r)}${this._convertForm(r)}`;
     const loose = m.rooms.filter((r) => !r.floor_id);
@@ -2069,7 +2104,7 @@ class HauskartePanel extends HTMLElement {
     const ai = g.ai;
     const pick = ai?.same && ai.primary ? ai.primary : g.primary;
     const aiLine = ai
-      ? `<div class="ailine ${ai.same ? "yes" : "no"}">🤖 ${esc(ai.same ? t.aiSame(g.members.find((m) => m.entity_id === ai.primary)?.title || "") : t.aiDifferent)} · ${esc(ai.reason)}</div>`
+      ? `<div class="ailine ${ai.same ? "yes" : "no"}">${ic("ai")} ${esc(ai.same ? t.aiSame(g.members.find((m) => m.entity_id === ai.primary)?.title || "") : t.aiDifferent)} · ${esc(ai.reason)}</div>`
       : "";
     return `<div class="card dup" data-key="${esc(g.key)}">
       <div class="head"><span class="kicon">${kindIcon(primary.kind)}</span>
@@ -2128,20 +2163,20 @@ class HauskartePanel extends HTMLElement {
 
   _statusOptions(selected) {
     const t = this._t;
-    return STATUSES.map((s) => `<option value="${s}" ${s === selected ? "selected" : ""}>${STATUS_ICON[s]} ${esc(t.st[s])}</option>`).join("");
+    return STATUSES.map((s) => `<option value="${s}" ${s === selected ? "selected" : ""}>${esc(t.st[s])}</option>`).join("");
   }
 
   // The same legend wherever a status can be chosen.
   _statusLegend(where = "") {
     const t = this._t;
-    const yes = (b) => (b ? "✓" : "–");
+    const yes = (b) => (b ? ic("check") : "–");
     const rows = [
       ["assistant", true, true, true],
       ["ha", false, true, true],
       ["hidden", false, false, true],
       ["disabled", false, false, false],
     ];
-    return `<details class="legend" ${keepOpen(`legend:${where}`, false)}><summary>${esc(t.st.legendTitle)}</summary>
+    return `<details class="legend" ${keepOpen(`legend:${where}`, false)}><summary>${ic("info")} ${esc(t.st.legendTitle)}</summary>
       <table class="legendtab"><tr>${t.st.legendHead.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>
         ${rows.map(([s, a, v, d]) => `<tr><td>${STATUS_ICON[s]} ${esc(t.st[s])}</td><td>${yes(a)}</td><td>${yes(v)}</td><td>${yes(d)}</td></tr>`).join("")}</table>
       <p class="muted small">${esc(t.st.legendNote)}</p></details>`;
@@ -2163,10 +2198,10 @@ class HauskartePanel extends HTMLElement {
     const d = this._data;
     if (!d.llm || !devices.length) return "";
     const ids = devices.map((x) => x.device_id).join(",");
-    if (d.progress.running && d.progress.task === "functions") return `<div class="ailine running">${esc(t.fnAi.running)}</div>`;
+    if (d.progress.running && d.progress.task === "functions") return `<div class="ailine running">${ic("ai")} ${esc(t.fnAi.running)}</div>`;
     const asked = devices.some((x) => x.what);
     return `<div class="row aibar">
-      <button data-act="ai-fn" data-devices="${esc(ids)}" class="secondary ai small" ${d.progress.running ? "disabled" : ""}>${esc(devices.length > 1 ? t.wiz.fnAsk(devices.length) : asked ? t.fnAi.again : t.fnAi.ask)}</button>
+      <button data-act="ai-fn" data-devices="${esc(ids)}" class="secondary ai small" ${d.progress.running ? "disabled" : ""}>${ic("ai")} ${esc(devices.length > 1 ? t.wiz.fnAsk(devices.length) : asked ? t.fnAi.again : t.fnAi.ask)}</button>
 </div>`;
   }
 
@@ -2190,7 +2225,7 @@ class HauskartePanel extends HTMLElement {
     const t = this._t;
     const n = (this._data.archive || []).filter((i) => i.kind === kind).length;
     return `<div class="chips"><button data-archive-view="0" class="chip ${this._archiveView ? "" : "active"}">${esc(t.openChip(open))}</button>
-      <button data-archive-view="1" class="chip ${this._archiveView ? "active" : ""}">${esc(t.archiveChip(n))}</button></div>`;
+      <button data-archive-view="1" class="chip ${this._archiveView ? "active" : ""}">${ic("archive")} ${esc(t.archiveChip(n))}</button></div>`;
   }
 
   _archiveHtml(kind) {
@@ -2201,7 +2236,7 @@ class HauskartePanel extends HTMLElement {
       ${items.length
         ? items
             .map(
-              (i) => `<div class="card row archrow"><span>${i.how === "removed" ? "🗑️" : "📦"}</span>
+              (i) => `<div class="card row archrow"><span>${ic(i.how === "removed" ? "removed" : "archive")}</span>
                 <div class="ename"><b>${esc(i.title)}</b>
                   <span class="muted small">${esc([i.kind === "entity" ? i.id : null, i.integration, `${i.how === "removed" ? t.archiveRemoved : t.archiveKept} ${when(i.at)}`].filter(Boolean).join(" · "))}</span></div>
                 <span class="grow"></span>
@@ -2247,8 +2282,8 @@ class HauskartePanel extends HTMLElement {
   _modeChips() {
     const t = this._t;
     return `<div class="modechips"><div class="chips">
-        <button data-editmode="rooms" class="chip ${this._editMode === "rooms" ? "active" : ""}">${esc(t.modeRooms)}</button>
-        <button data-editmode="devices" class="chip ${this._editMode === "devices" ? "active" : ""}">${esc(t.modeDevices)}</button></div>
+        <button data-editmode="rooms" class="chip ${this._editMode === "rooms" ? "active" : ""}">${ic("draw")} ${esc(t.modeRooms)}</button>
+        <button data-editmode="devices" class="chip ${this._editMode === "devices" ? "active" : ""}">${ic("move")} ${esc(t.modeDevices)}</button></div>
       <span class="muted">${esc(this._editMode === "rooms" ? t.hintRooms : t.hintDevices)}</span></div>`;
   }
 
@@ -2260,7 +2295,7 @@ class HauskartePanel extends HTMLElement {
       ${this._edit ? "" : `<label class="check" title="${esc(t.tapHint)}"><input type="checkbox" id="tap-toggle" ${this._tap ? "checked" : ""}> ${esc(t.tapToggle)}</label>`}
       <span class="grow"></span></div>${this._edit ? this._modeChips() : ""}`;
     if (m.speakers_without_area.length) {
-      html += `<div class="info warn">🎙️ ${esc(t.speakersNoArea)}: ${m.speakers_without_area.map((s) => esc(s.name)).join(", ")}</div>`;
+      html += `<div class="info warn">${ic("kind:voice")} ${esc(t.speakersNoArea)}: ${m.speakers_without_area.map((s) => esc(s.name)).join(", ")}</div>`;
     }
     if (!m.floors.some((f) => f.floor_id)) html += `<div class="info">${esc(t.noFloors)}</div>`;
     if (m.unassigned_total && !this._edit) html += `<div class="muted">${esc(t.trayHint(m.unassigned_total))}</div>`;
@@ -2269,7 +2304,7 @@ class HauskartePanel extends HTMLElement {
         <div class="traylist">${m.unassigned.map((d) => this._pinHtml(d, null, "traypin")).join("")}</div></div>`;
     }
     if (this._edit) {
-      html += `<div class="muted">🏠 <button data-section-go="house" class="flat inline">${esc(t.allRooms)}</button></div>`;
+      html += `<div class="muted">${ic("sec:house")} <button data-section-go="house" class="flat inline">${esc(t.allRooms)}</button></div>`;
     }
     html += m.floors.map((f) => this._floorHtml(f)).join("");
     list.innerHTML = html;
@@ -2318,7 +2353,7 @@ class HauskartePanel extends HTMLElement {
     const hidden = rooms.flatMap((r) => r.devices.filter((d) => !d.visible));
     if (this._edit && hidden.length) {
       html += `<div class="unplaced"><span class="muted">${esc(t.hidden)}:</span>
-        ${hidden.map((d) => `<button class="chip dim" data-act="map-show" data-id="${esc(d.id)}">👁 ${esc(d.name)}</button>`).join("")}</div>`;
+        ${hidden.map((d) => `<button class="chip dim" data-act="map-show" data-id="${esc(d.id)}">${ic("eye")} ${esc(d.name)}</button>`).join("")}</div>`;
     }
     return html + "</section>";
   }
@@ -2335,7 +2370,7 @@ class HauskartePanel extends HTMLElement {
       <span class="ico" ${d.icon ? "" : "data-hydrate"}>${inner}${twin}</span><span class="lbl">${esc(d.name)}</span>
       ${this._edit && !extraClass
         ? `<span class="hide" data-hide="${esc(d.id)}" title="${esc(this._t.hide)}">×</span>
-           <span class="iconedit" data-iconedit="${esc(d.id)}" data-name="${esc(d.name)}" title="${esc(this._t.iconTip(d.name))}">🎨</span>`
+           <span class="iconedit" data-iconedit="${esc(d.id)}" data-name="${esc(d.name)}" title="${esc(this._t.iconTip(d.name))}">${ic("palette")}</span>`
         : ""}</button>`;
   }
 
@@ -2361,7 +2396,7 @@ class HauskartePanel extends HTMLElement {
     const side = r.position.x + r.position.w / 2 > cols / 2 ? "east" : "";
     return `<div class="room ${side}" data-area="${esc(r.area_id)}" data-name="${esc(r.name)}" style="${this._place(r.position, cols, rows)}">
       <span class="fullname">${esc(r.name)}</span>
-      <div class="roomhead"><b>${esc(r.name)}</b>${speaker ? " 🎙️" : ""}${open ? `<span class="badge">${open}</span>` : ""}${head}
+      <div class="roomhead"><b>${esc(r.name)}</b>${speaker ? ` ${ic("kind:voice")}` : ""}${open ? `<span class="badge">${open}</span>` : ""}${head}
         ${this._edit ? `<button class="x" data-act="map-unplace" title="${esc(t.removeFromMap)}">×</button>` : ""}</div>
       ${pins}
       ${this._edit ? `<div class="handle"></div>` : ""}
@@ -2439,7 +2474,7 @@ class HauskartePanel extends HTMLElement {
     const box = root.querySelector("#icon-preview");
     if (!box) return;
     const name = this._iconName(root.querySelector("#icon-mdi")?.value);
-    box.innerHTML = name && customElements.get("ha-icon") ? `<ha-icon icon="${esc(name)}"></ha-icon>` : "🎨";
+    box.innerHTML = name && customElements.get("ha-icon") ? `<ha-icon icon="${esc(name)}"></ha-icon>` : ic("palette");
   }
 
   _closeIconDialog() {
@@ -3529,6 +3564,18 @@ const STYLE = `
   .stsel { width: auto; max-width: 170px; }
   .fnwhat { font-size: 13px; }
   .aibar { gap: 6px; margin: 4px 0; }
+  /* symbols: HA icons, sized to the text they stand next to */
+  ha-icon.ic { --mdc-icon-size: 18px; vertical-align: -3px; }
+  .kicon ha-icon.ic { --mdc-icon-size: 24px; vertical-align: 0; }
+  .kicon.small ha-icon.ic { --mdc-icon-size: 18px; }
+  .sicon ha-icon.ic { --mdc-icon-size: 22px; }
+  .sug .sicon { display: inline-flex; align-items: center; gap: 2px; min-width: 64px; color: var(--primary-color); }
+  .sug .sicon .arr { --mdc-icon-size: 14px; opacity: .6; }
+  .aimark { color: var(--accent-color, #ff9800); --mdc-icon-size: 16px; }
+  .ai ha-icon.ic, .what ha-icon.ic, .ailine ha-icon.ic { color: var(--accent-color, #ff9800); }
+  .stico, .withico { display: inline-flex; align-items: center; gap: 6px; }
+  .stico ha-icon.ic, .withico ha-icon.ic { color: var(--primary-color); --mdc-icon-size: 20px; }
+  .ovmark ha-icon.ic { --mdc-icon-size: 18px; vertical-align: 0; }
   .kindpick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
   .kindpick .chip { padding: 2px 10px; }
   .archrow { align-items: center; gap: 10px; }
