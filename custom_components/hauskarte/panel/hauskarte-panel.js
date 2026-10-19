@@ -299,6 +299,7 @@ const TEXT = {
       converted: (id) => `In HA neu: ${id}`,
       shownAs: (id) => `In HA geführt als ${id}`,
       wraps: (id) => `Zeigt den Schalter ${id}`,
+      whatSwitches: "Was schaltet das?",
     },
     dl: {
       filter: {
@@ -723,6 +724,7 @@ const TEXT = {
       converted: (id) => `New in HA: ${id}`,
       shownAs: (id) => `Shown in HA as ${id}`,
       wraps: (id) => `Shows the switch ${id}`,
+      whatSwitches: "What does it switch?",
     },
     dl: {
       filter: {
@@ -852,7 +854,7 @@ const TEXT = {
 };
 
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.16.0";
+const PANEL_VERSION = "0.16.1";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -922,6 +924,7 @@ const SECTION_ICON = { overview: "🏁", focus: "🧹", inventory: "📦", map: 
 const SUBS = ["devices", "functions", "duplicates", "orphans", "history"];
 // kinds HA can show a switch as (its own "Show as"); only then does the assistant understand "light …"
 const KIND_DOMAIN = { light: "light", shading: "cover", fan: "fan", lock: "lock", water: "valve" };
+const SWITCH_PICKS = ["light", "socket", "shading", "fan", "heating", "water"];
 
 const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -1859,7 +1862,11 @@ class HauskartePanel extends HTMLElement {
     let shownAs = "";
     if (e.wrapped_as) shownAs = `<div class="muted small">💡 ${esc(t.dc.shownAs(e.wrapped_as))}</div>`;
     else if (e.wraps) shownAs = `<div class="muted small">💡 ${esc(t.dc.wraps(e.wraps))}</div>`;
-    else if (e.domain === "switch" && !e.technical && KIND_DOMAIN[kind] && (e.status === "assistant" || e.status === "ha")) {
+    else if (e.domain === "switch" && !e.technical && kind === "switch" && e.status !== "disabled") {
+      // a plain switch: what does it switch? one click sets the category (and offers "show as" next)
+      shownAs = `<div class="kindpick"><span class="muted small">${esc(t.dc.whatSwitches)}</span>
+        ${SWITCH_PICKS.map((k) => `<button data-act="fn-kind-pick" data-eid="${esc(e.entity_id)}" data-kind="${k}" class="chip">${kindIcon(k)} ${esc(t.kinds[k])}</button>`).join("")}</div>`;
+    } else if (e.domain === "switch" && !e.technical && KIND_DOMAIN[kind] && (e.status === "assistant" || e.status === "ha")) {
       shownAs = `<div class="ailine">💡 ${esc(t.dc.convertHint(t.dc.domains[KIND_DOMAIN[kind]]))}
         <button data-act="fn-convert" data-eid="${esc(e.entity_id)}" data-domain="${KIND_DOMAIN[kind]}" class="flat inline">${esc(t.dc.convertDo(t.dc.domains[KIND_DOMAIN[kind]]))}</button></div>`;
     }
@@ -3054,6 +3061,9 @@ class HauskartePanel extends HTMLElement {
       } else if (act === "unit-reset") {
         await this._ws("review_reset", { unit: el.closest("[data-unit]").dataset.unit });
         this._toast(t.saved);
+      } else if (act === "fn-kind-pick") {
+        await this._ws("entity_update", { entity_id: el.dataset.eid, changes: { kind: el.dataset.kind } });
+        this._exposure = null;
       } else if (act === "fn-convert") {
         const r = await this._ws("convert", { entity_id: el.dataset.eid, domain: el.dataset.domain });
         this._toast(t.dc.converted(r.entity_id || ""));
@@ -3519,6 +3529,8 @@ const STYLE = `
   .stsel { width: auto; max-width: 170px; }
   .fnwhat { font-size: 13px; }
   .aibar { gap: 6px; margin: 4px 0; }
+  .kindpick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
+  .kindpick .chip { padding: 2px 10px; }
   .archrow { align-items: center; gap: 10px; }
   #icondlg { border: none; border-radius: 16px; padding: 20px; max-width: min(520px, 92vw); width: 100%;
     background: var(--card-background-color); color: var(--primary-text-color); box-shadow: 0 8px 32px rgba(0,0,0,.4); }

@@ -111,7 +111,13 @@ def suggestions(proposals: list[dict], functions: list[dict]) -> list[dict]:
         ai = f.get("ai") or {}
         if ai.get("status") and ai["status"] != f["status"]:
             add(f"status:{eid}", "status", ai["status"], eid, "ai", reason=ai.get("reason", ""))
-        if ai.get("kind") and ai["kind"] != f.get("kind"):
+        # categories only where they matter: what a function switches; sensors bring theirs along
+        if (
+            ai.get("kind")
+            and ai["kind"] != f.get("kind")
+            and f.get("role") == "control"
+            and not f.get("technical")
+        ):
             add(f"kind:{eid}", "kind", ai["kind"], eid, "ai", reason=ai.get("reason", ""))
         kind = out[f"kind:{eid}"]["value"] if f"kind:{eid}" in out else f.get("kind")
         wanted_status = out[f"status:{eid}"]["value"] if f"status:{eid}" in out else f["status"]

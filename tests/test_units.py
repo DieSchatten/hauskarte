@@ -13,7 +13,8 @@ def _row(entity_id, exposed, proposed_exposed, status=None, aliases=None):
 
 
 def _fn(entity_id, domain, kind, status, ai=None):
-    return {"entity_id": entity_id, "domain": domain, "kind": kind, "status": status, "ai": ai}
+    role = "control" if domain in ("switch", "light") else "measure"
+    return {"entity_id": entity_id, "domain": domain, "kind": kind, "status": status, "ai": ai, "role": role}
 
 
 def test_rules_and_ai_in_one_list_ai_wins():
@@ -103,3 +104,11 @@ def test_done_until_new_functions_only():
     assert units.still_done("a|b", ["a"])  # one went away: still done
     assert not units.still_done("a|b", ["a", "b", "c"])  # a new one: back in the queue
     assert not units.still_done(None, ["a"])
+
+
+def test_ai_categories_only_for_what_switches():
+    ai = {"status": None, "kind": "setting", "reason": "Firmware"}
+    firmware = _fn("update.fw", "update", "update", "ha", ai)
+    firmware["technical"] = True
+    power = _fn("sensor.power", "sensor", "energy", "ha", {"status": None, "kind": "sensor", "reason": "x"})
+    assert units.suggestions([], [firmware, power]) == []
