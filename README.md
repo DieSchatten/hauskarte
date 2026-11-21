@@ -151,8 +151,12 @@ Der Dienst `hauskarte.scan` (`use_llm: true|false`) startet einen Durchlauf von 
 
 Voraussetzung: Home Assistant 2025.8 oder neuer.
 
-**HACS:** *HACS → Benutzerdefinierte Repositories* → dieses Repository als *Integration* hinzufügen → *Hauskarte*
-herunterladen → Home Assistant neu starten.
+**Marketplace (ab Home Assistant 2026.11):** *Einstellungen → Marketplace*, dieses Repository als
+benutzerdefiniertes Repository vom Typ *Integration* hinzufügen → *Hauskarte* herunterladen → Home Assistant neu
+starten. Updates erscheinen danach wie jedes andere Update.
+
+**HACS (bis Home Assistant 2026.10):** *HACS → Benutzerdefinierte Repositories* → dieses Repository als
+*Integration* hinzufügen → *Hauskarte* herunterladen → Home Assistant neu starten.
 
 **Von Hand:** `custom_components/hauskarte` nach `config/custom_components/` kopieren, neu starten.
 
@@ -180,5 +184,5 @@ Hauskarte ("house map") tidies up Home Assistant and gives people and language m
   status and category per function, reviews duplicates, orphans and silent devices. It only receives device names,
   manufacturer, model, integration, entity types and the list of areas.
 
-Install via HACS as a custom repository (category *Integration*) or copy `custom_components/hauskarte`, restart,
-then add the *Hauskarte* integration. Back up first: it writes to the device and entity registries.
+Install it as a custom repository (category *Integration*) from the Marketplace (Home Assistant 2026.11 and newer)
+or HACS (older versions), or copy `custom_components/hauskarte`. Restart, then add the *Hauskarte* integration. Back up first: it writes to the device and entity registries.
