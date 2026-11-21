@@ -854,7 +854,7 @@ const TEXT = {
 };
 
 // Set by the release script together with manifest.json; compared with the server to spot a stale page.
-const PANEL_VERSION = "0.16.2";
+const PANEL_VERSION = "0.16.3";
 
 const KIND_ICON = {
   light: "💡", shading: "⛱️", window: "🪟", door: "🚪", socket: "🔌", switch: "🔘", heating: "🌡️", fan: "🌀",
@@ -2205,7 +2205,7 @@ class HauskartePanel extends HTMLElement {
 </div>`;
   }
 
-  // One status for several functions; lists already loaded (Assistant tab, telemetry) follow at once.
+  // One status for several functions; the function list already loaded follows at once.
   async _setStatus(ids, status) {
     const res = await this._ws("set_status", { entity_ids: ids, status });
     for (const x of this._exposure?.entities || []) if (ids.includes(x.entity_id)) this._patchStatus(x, status);

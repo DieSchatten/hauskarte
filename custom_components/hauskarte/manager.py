@@ -111,7 +111,6 @@ class HauskarteManager:
             "history_checked": False,
             "ai": {},
             "kind_override": {},
-            "wizard": {"pos": None, "done": [], "finished": False, "dismissed": False},
             "icons": {},
             "groups": [],
             "irrelevant": {},
@@ -141,6 +140,7 @@ class HauskarteManager:
     async def async_load(self) -> None:
         if stored := await self._store.async_load():
             self.data.update(stored)
+        self.data.pop("wizard", None)  # the start assistant of 0.15 and older
         if self.data.get("irrelevant"):
             self._migrate_irrelevant()
 
@@ -322,29 +322,6 @@ class HauskarteManager:
             self._save()
 
     # --- decisions ------------------------------------------------------
-
-    def decide(self, pid: str, status: str) -> None:
-        prop = self.data["proposals"].get(pid)
-        if status == STATUS_OPEN:
-            # "show again": forget the decision, the next scan brings it back
-            self.data["decisions"].pop(pid, None)
-            if prop:
-                prop["status"] = STATUS_OPEN
-            self._save()
-            return
-        if prop is None:
-            raise HomeAssistantError(f"Unknown proposal {pid}")
-        self.data["decisions"][pid] = {
-            "status": status,
-            "fingerprint": prop["fingerprint"],
-            "title": prop["title"],
-            "at": dt_util.utcnow().isoformat(),
-        }
-        if status == STATUS_IGNORED:
-            del self.data["proposals"][pid]
-        else:
-            prop["status"] = status
-        self._save()
 
     # --- writing --------------------------------------------------------
 
@@ -976,17 +953,6 @@ class HauskarteManager:
         self._changed()
         return {"changes": len(records)}
 
-    def set_kind_override(self, entity_id: str, kind: str | None) -> None:
-        old = self.data["kind_override"].get(entity_id)
-        if kind:
-            self.data["kind_override"][entity_id] = kind
-        else:
-            self.data["kind_override"].pop(entity_id, None)
-        self._push_undo(
-            None, entity_id, [{"type": "kind_override", "target": entity_id, "old": old, "new": kind}]
-        )
-        self._changed()
-
     def _ai_view(self, inv: dict) -> dict:
         """The stored AI review, minus what has been done meanwhile."""
         ai = self.data.get("ai") or {}
@@ -1059,44 +1025,6 @@ class HauskarteManager:
         self._push_undo(None, name, [{"type": "area_created", "target": area.id, "old": None, "new": name}])
         self._changed()
         return area.id
-
-    def set_wizard(self, changes: dict) -> dict:
-        """Where the user is in the start assistant; survives restarts and other devices."""
-        wizard = self.data.setdefault(
-            "wizard", {"pos": None, "done": [], "finished": False, "dismissed": False}
-        )
-        if changes.get("reset"):
-            wizard.update(pos=None, done=[], finished=False, dismissed=False)
-        if "pos" in changes:
-            wizard["pos"] = changes["pos"]
-        if changes.get("done") and changes["done"] not in wizard["done"]:
-            wizard["done"].append(changes["done"])
-        for key in ("finished", "dismissed"):
-            if key in changes:
-                wizard[key] = bool(changes[key])
-        self._save()
-        return wizard
-
-    def set_device_areas(self, items: list[dict]) -> dict:
-        """Several devices to their rooms in one undo step."""
-        dev_reg = dr.async_get(self.hass)
-        area_reg = ar.async_get(self.hass)
-        records = []
-        for item in items:
-            dev = dev_reg.async_get(item["device_id"])
-            area_id = item.get("area_id") or None
-            if (
-                dev is None
-                or dev.area_id == area_id
-                or (area_id and area_reg.async_get_area(area_id) is None)
-            ):
-                continue
-            records.append({"type": "device_area", "target": dev.id, "old": dev.area_id, "new": area_id})
-            dev_reg.async_update_device(dev.id, area_id=area_id)
-            self._refresh_unit(f"device:{dev.id}")
-        self._push_undo(None, f"{len(records)} Geräte", records)
-        self._changed()
-        return {"changes": len(records)}
 
     def area_references(self, area_id: str) -> dict:
         """Automations and scripts that name this room directly (devices keep their ids when rooms merge)."""
@@ -1700,24 +1628,6 @@ class HauskarteManager:
             for d in g["devices"]:
                 d["ai"] = silent_ai.get(d["device_id"]) if d["silent"] else None
         return groups
-
-    def set_device_disabled(self, device_id: str, disabled: bool) -> None:
-        """Switch a device (and with it its entities) off or on again. Undoable."""
-        dev_reg = dr.async_get(self.hass)
-        dev = dev_reg.async_get(device_id)
-        if dev is None:
-            raise HomeAssistantError("Device no longer exists")
-        new = dr.DeviceEntryDisabler.USER if disabled else None
-        if dev.disabled_by == new:
-            return
-        old = dev.disabled_by.value if dev.disabled_by else None
-        dev_reg.async_update_device(device_id, disabled_by=new)
-        self._push_undo(
-            None,
-            dev.name_by_user or dev.name or device_id,
-            [{"type": "device_disabled", "target": device_id, "old": old, "new": new.value if new else None}],
-        )
-        self._changed()
 
     def _with_wrap_cache(self, func):
         """Run func with the switch_as_x lookup read once (it is needed for every function)."""
@@ -2415,36 +2325,6 @@ class HauskarteManager:
                     continue
         return counts
 
-    async def telemetry(self) -> dict:
-        """Functions that are technical or write a lot – the ones that clutter HA most often."""
-        writes = await self.load_writes()
-        used = self.used_in()
-        return self._with_wrap_cache(lambda: self._telemetry_list(writes, used))
-
-    def _telemetry_list(self, writes: dict[str, int], used: dict[str, int]) -> dict:
-        ent_reg = er.async_get(self.hass)
-        dev_reg = dr.async_get(self.hass)
-        items = []
-        for ent in ent_reg.entities.values():
-            if ent.platform == DOMAIN or ent.disabled_by is not None:
-                continue  # our own description sensor; what is off already clutters nothing
-            n = writes.get(ent.entity_id)
-            technical = ent.entity_category is not None
-            if not technical and (n or 0) < fn_status.WRITES_BUSY:
-                continue
-            dev = dev_reg.async_get(ent.device_id) if ent.device_id else None
-            item = self._function(None, ent, None)
-            item.update(
-                writes=n,
-                used_in=used.get(ent.entity_id, 0),
-                integration=ent.platform,
-                device_id=ent.device_id,
-                device=(dev.name_by_user or dev.name) if dev else None,
-            )
-            items.append(item)
-        items.sort(key=lambda x: (-(x["writes"] or 0), x["name"].lower()))
-        return {"entities": items, "busy": fn_status.WRITES_BUSY, "counted": bool(writes)}
-
     # --- AI: what is this device, and which status for its functions --------
 
     def _function_payload(self, device_id: str, writes: dict[str, int], used: dict[str, int]) -> dict | None:
@@ -2538,27 +2418,6 @@ class HauskarteManager:
             self.progress["running"] = False
             self.progress["phase"] = None
             self._save()
-
-    def take_function_suggestions(self, device_ids: list[str]) -> dict:
-        """Put the functions of these devices on the status the AI suggested – one undo step."""
-        store = self.data.get("fn_ai") or {}
-        ent_reg = er.async_get(self.hass)
-        records: list[dict] = []
-        for device_id in device_ids:
-            for entity_id, suggestion in (store.get(device_id) or {}).get("functions", {}).items():
-                ent = ent_reg.async_get(entity_id)
-                if ent is None or ent.device_id != device_id:
-                    continue
-                current = self._entity_status(ent)
-                wanted = suggestion.get("status")
-                if not wanted or current == wanted or suggestion.get("from", current) != current:
-                    continue  # nothing about the status, already there, or decided otherwise since
-                self._apply_status(entity_id, wanted, records)
-        self._decided_by_hand(records)
-        if records:
-            self._push_undo(None, f"KI-Vorschläge ({len(device_ids)} Geräte)", records)
-            self._changed()
-        return {"changes": len(records)}
 
     def update_entity(self, entity_id: str, changes: dict) -> dict:
         """One function (entity): status, own name, kind, aliases – in one undo step."""
@@ -2874,8 +2733,6 @@ class HauskarteManager:
             ],
             "ai": self._ai_view(inv),
             "groups": groups,
-            "wizard": self.data.get("wizard")
-            or {"pos": None, "done": [], "finished": False, "dismissed": False},
             "merged": [
                 {
                     "key": k,
@@ -2900,11 +2757,6 @@ class HauskarteManager:
                     p["title"].lower(),
                 ),
             ),
-            "ignored": [
-                {"id": pid, "title": d.get("title", pid), "at": d["at"]}
-                for pid, d in self.data["decisions"].items()
-                if d["status"] == STATUS_IGNORED
-            ],
             "history": [
                 {"batch": b["batch"], "title": b["title"], "at": b["at"], "changes": len(b["records"])}
                 for b in reversed(self.data["undo"][-30:])

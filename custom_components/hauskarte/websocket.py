@@ -9,7 +9,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN, STATUS_IGNORED, STATUS_LATER, STATUS_OPEN
+from .const import DOMAIN
 from .manager import HauskarteManager
 from .status import STATUSES
 
@@ -25,9 +25,7 @@ def async_register(hass: HomeAssistant) -> None:
     for command in (
         ws_state,
         ws_scan,
-        ws_apply,
         ws_apply_safe,
-        ws_decide,
         ws_undo,
         ws_position,
         ws_note,
@@ -41,16 +39,13 @@ def async_register(hass: HomeAssistant) -> None:
         ws_place_item,
         ws_item_visible,
         ws_remove_orphans,
-        ws_device_disabled,
         ws_device_status,
-        ws_telemetry,
         ws_review,
         ws_review_reset,
         ws_convert,
         ws_archive,
         ws_unarchive,
         ws_ai_functions,
-        ws_ai_functions_take,
         ws_device_name,
         ws_exposure,
         ws_entity_aliases,
@@ -65,9 +60,6 @@ def async_register(hass: HomeAssistant) -> None:
         ws_device_area,
         ws_ai_review,
         ws_apply_floor_plan,
-        ws_kind_override,
-        ws_wizard,
-        ws_device_areas,
         ws_item_icon,
         ws_area_references,
         ws_merge_areas,
@@ -128,48 +120,10 @@ def ws_scan(hass, connection, msg) -> None:
 
 
 @websocket_api.require_admin
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "hauskarte/apply",
-        vol.Required("proposal_id"): str,
-        vol.Required("values"): {
-            vol.Optional("area_id"): vol.Any(str, None),
-            vol.Optional("name"): vol.Any(str, None),
-            vol.Optional("on_map"): bool,
-            vol.Optional("entities"): {
-                str: {
-                    vol.Optional("exposed"): bool,
-                    vol.Optional("status"): _STATUS,
-                    vol.Optional("aliases"): [str],
-                    vol.Optional("remove"): bool,
-                }
-            },
-        },
-    }
-)
-@callback
-def ws_apply(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.apply(msg["proposal_id"], msg["values"]))
-
-
-@websocket_api.require_admin
 @websocket_api.websocket_command({vol.Required("type"): "hauskarte/apply_safe", vol.Optional("ids"): [str]})
 @callback
 def ws_apply_safe(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.apply_safe(msg.get("ids")))
-
-
-@websocket_api.require_admin
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "hauskarte/decide",
-        vol.Required("proposal_id"): str,
-        vol.Required("status"): vol.In([STATUS_OPEN, STATUS_LATER, STATUS_IGNORED]),
-    }
-)
-@callback
-def ws_decide(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.decide(msg["proposal_id"], msg["status"]))
 
 
 @websocket_api.require_admin
@@ -474,32 +428,12 @@ async def ws_convert(hass, connection, msg) -> None:
 
 
 @websocket_api.require_admin
-@websocket_api.websocket_command({vol.Required("type"): "hauskarte/telemetry"})
-@websocket_api.async_response
-async def ws_telemetry(hass, connection, msg) -> None:
-    manager = _manager(hass)
-    if manager is None:
-        connection.send_error(msg["id"], "not_loaded", "Hauskarte is not set up")
-        return
-    connection.send_result(msg["id"], await manager.telemetry())
-
-
-@websocket_api.require_admin
 @websocket_api.websocket_command(
     {vol.Required("type"): "hauskarte/ai_functions", vol.Required("device_ids"): [str]}
 )
 @callback
 def ws_ai_functions(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: {"started": m.start_functions_review(msg["device_ids"])})
-
-
-@websocket_api.require_admin
-@websocket_api.websocket_command(
-    {vol.Required("type"): "hauskarte/ai_functions_take", vol.Required("device_ids"): [str]}
-)
-@callback
-def ws_ai_functions_take(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.take_function_suggestions(msg["device_ids"]))
 
 
 @websocket_api.require_admin
@@ -513,19 +447,6 @@ def ws_ai_functions_take(hass, connection, msg) -> None:
 @callback
 def ws_device_status(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.set_device_status(msg["device_id"], msg["status"]))
-
-
-@websocket_api.require_admin
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "hauskarte/device_disabled",
-        vol.Required("device_id"): str,
-        vol.Required("disabled"): bool,
-    }
-)
-@callback
-def ws_device_disabled(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.set_device_disabled(msg["device_id"], msg["disabled"]))
 
 
 @websocket_api.require_admin
@@ -651,54 +572,6 @@ def ws_ai_review(hass, connection, msg) -> None:
 @callback
 def ws_apply_floor_plan(hass, connection, msg) -> None:
     _run(hass, connection, msg, lambda m: m.apply_floor_plan(msg["floors"], msg["rooms"]))
-
-
-@websocket_api.require_admin
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "hauskarte/kind_override",
-        vol.Required("entity_id"): str,
-        vol.Required("kind"): vol.Any(str, None),
-    }
-)
-@callback
-def ws_kind_override(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.set_kind_override(msg["entity_id"], msg["kind"]))
-
-
-@websocket_api.require_admin
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "hauskarte/wizard",
-        vol.Optional("pos"): vol.Any(str, None),
-        vol.Optional("done"): str,
-        vol.Optional("finished"): bool,
-        vol.Optional("dismissed"): bool,
-        vol.Optional("reset"): bool,
-    }
-)
-@callback
-def ws_wizard(hass, connection, msg) -> None:
-    _run(
-        hass,
-        connection,
-        msg,
-        lambda m: m.set_wizard({k: v for k, v in msg.items() if k not in ("id", "type")}),
-    )
-
-
-@websocket_api.require_admin
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "hauskarte/device_areas",
-        vol.Required("items"): [
-            {vol.Required("device_id"): str, vol.Required("area_id"): vol.Any(str, None)}
-        ],
-    }
-)
-@callback
-def ws_device_areas(hass, connection, msg) -> None:
-    _run(hass, connection, msg, lambda m: m.set_device_areas(msg["items"]))
 
 
 @websocket_api.require_admin
